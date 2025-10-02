@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllAppleAccounts, addAppleAccount, deleteAppleAccount } from '@/lib/storage';
+import { getAllAppleAccounts, addAppleAccount, updateAppleAccount, deleteAppleAccount } from '@/lib/storage';
 
 export async function GET() {
   try {
@@ -13,12 +13,23 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { appleEmail, password } = await request.json();
-    const account = await addAppleAccount(appleEmail, password);
+    const { appleEmail, remainingCredit, password } = await request.json();
+    const account = await addAppleAccount(appleEmail, remainingCredit, password);
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add apple account error:', error);
     return NextResponse.json({ error: 'Failed to add apple account' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, appleEmail, remainingCredit } = await request.json();
+    await updateAppleAccount(id, appleEmail, remainingCredit);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update apple account error:', error);
+    return NextResponse.json({ error: 'Failed to update apple account' }, { status: 500 });
   }
 }
 

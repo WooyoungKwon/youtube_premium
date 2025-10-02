@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getYoutubeAccountsByApple, addYoutubeAccount, deleteYoutubeAccount } from '@/lib/storage';
+import { getYoutubeAccountsByApple, addYoutubeAccount, updateYoutubeAccount, deleteYoutubeAccount } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -18,12 +18,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { appleAccountId, youtubeEmail, nickname } = await request.json();
-    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname);
+    const { appleAccountId, youtubeEmail, nickname, renewalDate } = await request.json();
+    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname, renewalDate);
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add youtube account error:', error);
     return NextResponse.json({ error: 'Failed to add youtube account' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, youtubeEmail, nickname, renewalDate } = await request.json();
+    await updateYoutubeAccount(id, youtubeEmail, nickname, renewalDate);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update youtube account error:', error);
+    return NextResponse.json({ error: 'Failed to update youtube account' }, { status: 500 });
   }
 }
 

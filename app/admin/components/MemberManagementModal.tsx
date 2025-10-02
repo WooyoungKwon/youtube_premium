@@ -1,25 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  useSensor,
-  useSensors,
-  PointerSensor,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useState, useEffect, useMemo } from 'react';
 
 interface AppleAccount {
   id: string;
@@ -49,144 +30,109 @@ interface Member {
 }
 
 type Step = 'apple' | 'youtube' | 'members';
+type SortOrder = 'oldest' | 'newest';
 
-// Sortable 아이템 컴포넌트들
-function SortableAppleItem({ account, onSelect, onDelete, isSelected }: {
+// 일반 아이템 컴포넌트들
+function AppleItem({ account, onSelect, onEdit, onDelete }: {
   account: AppleAccount;
   onSelect: () => void;
+  onEdit: () => void;
   onDelete: () => void;
-  isSelected: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: account.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
-        isSelected 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50'
-      }`}
+      className="p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center gap-3"
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
-        </svg>
-      </div>
       <div className="flex-1" onClick={onSelect}>
         <p className="text-gray-900 font-medium">{account.appleEmail}</p>
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
-      >
-        삭제
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+        >
+          수정
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+        >
+          삭제
+        </button>
+      </div>
     </div>
   );
 }
 
-function SortableYoutubeItem({ account, onSelect, onDelete, isSelected }: {
+function YoutubeItem({ account, onSelect, onEdit, onDelete, isSelected }: {
   account: YoutubeAccount;
   onSelect: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   isSelected: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: account.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
       className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
         isSelected 
           ? 'border-blue-500 bg-blue-50' 
           : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50'
       }`}
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
-        </svg>
-      </div>
       <div className="flex-1" onClick={onSelect}>
         <p className="text-gray-900 font-medium">{account.youtubeEmail}</p>
         {account.nickname && <p className="text-sm text-blue-600 font-medium">닉네임: {account.nickname}</p>}
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
-      >
-        삭제
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+        >
+          수정
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+        >
+          삭제
+        </button>
+      </div>
     </div>
   );
 }
 
-function SortableMemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
+function MemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
   member: Member;
   onEdit: () => void;
   onDelete: () => void;
   onUpdateStatus: (id: string, status: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: member.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
-    <tr ref={setNodeRef} style={style} className="border-b-2 border-gray-200 hover:bg-blue-50">
-      <td className="px-4 py-3">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 inline-block">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
-          </svg>
-        </div>
-      </td>
-      <td className="px-4 py-3 text-gray-900 font-medium">{member.nickname}</td>
+    <tr className="border-b border-gray-300 hover:bg-gray-50">
+      <td className="px-4 py-3 text-gray-900">{member.nickname}</td>
       <td className="px-4 py-3 text-gray-900">{member.email}</td>
-      <td className="px-4 py-3 text-gray-900">
-        {new Date(member.joinDate).toLocaleDateString()}
-      </td>
-      <td className="px-4 py-3 text-gray-900">
-        {new Date(member.paymentDate).toLocaleDateString()}
-      </td>
+      <td className="px-4 py-3 text-gray-900">{member.joinDate}</td>
+      <td className="px-4 py-3 text-gray-900">{member.paymentDate}</td>
       <td className="px-4 py-3 text-gray-900">{member.name}</td>
       <td className="px-4 py-3">
         <select
           value={member.depositStatus}
           onChange={(e) => onUpdateStatus(member.id, e.target.value)}
-          className="px-2 py-1 border-2 border-gray-300 rounded bg-white text-gray-900 font-medium"
+          className="px-2 py-1 border border-gray-300 rounded text-sm"
         >
           <option value="pending">대기</option>
           <option value="completed">완료</option>
@@ -197,13 +143,13 @@ function SortableMemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+            className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
           >
             수정
           </button>
           <button
             onClick={onDelete}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+            className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
           >
             삭제
           </button>
@@ -213,7 +159,10 @@ function SortableMemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
   );
 }
 
-export default function MemberManagementModal({ onClose }: { onClose: () => void }) {
+export default function MemberManagementModal({ isOpen, onClose }: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   const [step, setStep] = useState<Step>('apple');
   const [appleAccounts, setAppleAccounts] = useState<AppleAccount[]>([]);
   const [youtubeAccounts, setYoutubeAccounts] = useState<YoutubeAccount[]>([]);
@@ -221,11 +170,15 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [selectedApple, setSelectedApple] = useState<AppleAccount | null>(null);
   const [selectedYoutube, setSelectedYoutube] = useState<YoutubeAccount | null>(null);
   
-  // 새 계정/회원 추가 상태
+  // 편집 상태
+  const [editingApple, setEditingApple] = useState<AppleAccount | null>(null);
+  const [editingYoutube, setEditingYoutube] = useState<YoutubeAccount | null>(null);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  
+  // 추가 관련 상태
   const [showAddApple, setShowAddApple] = useState(false);
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
@@ -236,36 +189,89 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [newPaymentDate, setNewPaymentDate] = useState('');
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
 
-  // 드래그 앤 드롭 상태
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  // 정렬 상태
+  const [appleSortOrder, setAppleSortOrder] = useState<SortOrder>('newest');
+  const [youtubeSortOrder, setYoutubeSortOrder] = useState<SortOrder>('newest');
+  const [memberSortOrder, setMemberSortOrder] = useState<SortOrder>('newest');
+
+  // 정렬된 배열들 (useMemo로 정렬 상태 유지)
+  const sortedAppleAccounts = useMemo(() => {
+    return [...appleAccounts].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return appleSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [appleAccounts, appleSortOrder]);
+
+  const sortedYoutubeAccounts = useMemo(() => {
+    return [...youtubeAccounts].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return youtubeSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [youtubeAccounts, youtubeSortOrder]);
+
+  const sortedMembers = useMemo(() => {
+    return [...members].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return memberSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [members, memberSortOrder]);
 
   useEffect(() => {
-    fetchAppleAccounts();
-  }, []);
+    if (isOpen) {
+      fetchAppleAccounts();
+    }
+  }, [isOpen]);
 
   const fetchAppleAccounts = async () => {
-    const res = await fetch('/api/admin/apple-accounts');
-    const data = await res.json();
-    setAppleAccounts(data);
+    try {
+      const res = await fetch('/api/admin/apple-accounts');
+      if (res.ok) {
+        const data = await res.json();
+        setAppleAccounts(data);
+      }
+    } catch (error) {
+      console.error('Apple 계정을 가져오는데 실패했습니다:', error);
+    }
   };
 
   const fetchYoutubeAccounts = async (appleId: string) => {
-    const res = await fetch(`/api/admin/youtube-accounts?appleId=${appleId}`);
-    const data = await res.json();
-    setYoutubeAccounts(data);
+    try {
+      const res = await fetch(`/api/admin/youtube-accounts?appleId=${appleId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setYoutubeAccounts(data);
+      }
+    } catch (error) {
+      console.error('YouTube 계정을 가져오는데 실패했습니다:', error);
+    }
   };
 
   const fetchMembers = async (youtubeId: string) => {
-    const res = await fetch(`/api/admin/members?youtubeId=${youtubeId}`);
-    const data = await res.json();
-    setMembers(data);
+    try {
+      const res = await fetch(`/api/admin/members?youtubeId=${youtubeId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data);
+      }
+    } catch (error) {
+      console.error('회원을 가져오는데 실패했습니다:', error);
+    }
+  };
+
+  // 정렬 핸들러 (상태만 변경)
+  const handleSortApple = () => {
+    setAppleSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
+  };
+
+  const handleSortYoutube = () => {
+    setYoutubeSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
+  };
+
+  const handleSortMember = () => {
+    setMemberSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
   };
 
   const handleAppleSelect = async (apple: AppleAccount) => {
@@ -282,86 +288,169 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
 
   const handleAddApple = async () => {
     if (!newAppleEmail.trim()) return;
-    await fetch('/api/admin/apple-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appleEmail: newAppleEmail }),
-    });
-    setNewAppleEmail('');
-    setShowAddApple(false);
-    fetchAppleAccounts();
+    
+    try {
+      const res = await fetch('/api/admin/apple-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appleEmail: newAppleEmail }),
+      });
+      
+      if (res.ok) {
+        setNewAppleEmail('');
+        setShowAddApple(false);
+        await fetchAppleAccounts();
+      }
+    } catch (error) {
+      console.error('Apple 계정 추가에 실패했습니다:', error);
+    }
+  };
+
+  const handleEditApple = (apple: AppleAccount) => {
+    setEditingApple(apple);
+    setNewAppleEmail(apple.appleEmail);
+    setShowAddApple(true);
+  };
+
+  const handleUpdateApple = async () => {
+    if (!editingApple || !newAppleEmail.trim()) return;
+    
+    try {
+      const res = await fetch(`/api/admin/apple-accounts/${editingApple.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appleEmail: newAppleEmail }),
+      });
+      
+      if (res.ok) {
+        setEditingApple(null);
+        setNewAppleEmail('');
+        setShowAddApple(false);
+        await fetchAppleAccounts();
+      }
+    } catch (error) {
+      console.error('Apple 계정 수정에 실패했습니다:', error);
+    }
   };
 
   const handleDeleteApple = async (id: string) => {
-    if (!confirm('이 Apple 계정과 연결된 모든 데이터가 삭제됩니다. 계속하시겠습니까?')) return;
-    await fetch(`/api/admin/apple-accounts?id=${id}`, { method: 'DELETE' });
-    fetchAppleAccounts();
+    try {
+      const res = await fetch(`/api/admin/apple-accounts/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        await fetchAppleAccounts();
+      }
+    } catch (error) {
+      console.error('Apple 계정 삭제에 실패했습니다:', error);
+    }
   };
 
   const handleAddYoutube = async () => {
-    if (!newYoutubeEmail.trim() || !selectedApple) return;
-    await fetch('/api/admin/youtube-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        appleAccountId: selectedApple.id,
-        youtubeEmail: newYoutubeEmail,
-        nickname: newYoutubeNickname,
-      }),
-    });
-    setNewYoutubeEmail('');
-    setNewYoutubeNickname('');
-    setShowAddYoutube(false);
-    fetchYoutubeAccounts(selectedApple.id);
+    if (!selectedApple || !newYoutubeEmail.trim()) return;
+    
+    try {
+      const res = await fetch('/api/admin/youtube-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appleAccountId: selectedApple.id,
+          youtubeEmail: newYoutubeEmail,
+          nickname: newYoutubeNickname,
+        }),
+      });
+      
+      if (res.ok) {
+        setNewYoutubeEmail('');
+        setNewYoutubeNickname('');
+        setShowAddYoutube(false);
+        await fetchYoutubeAccounts(selectedApple.id);
+      }
+    } catch (error) {
+      console.error('YouTube 계정 추가에 실패했습니다:', error);
+    }
+  };
+
+  const handleEditYoutube = (youtube: YoutubeAccount) => {
+    setEditingYoutube(youtube);
+    setNewYoutubeEmail(youtube.youtubeEmail);
+    setNewYoutubeNickname(youtube.nickname || '');
+    setShowAddYoutube(true);
+  };
+
+  const handleUpdateYoutube = async () => {
+    if (!editingYoutube || !newYoutubeEmail.trim()) return;
+    
+    try {
+      const res = await fetch(`/api/admin/youtube-accounts/${editingYoutube.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          youtubeEmail: newYoutubeEmail,
+          nickname: newYoutubeNickname,
+        }),
+      });
+      
+      if (res.ok) {
+        setEditingYoutube(null);
+        setNewYoutubeEmail('');
+        setNewYoutubeNickname('');
+        setShowAddYoutube(false);
+        if (selectedApple) {
+          await fetchYoutubeAccounts(selectedApple.id);
+        }
+      }
+    } catch (error) {
+      console.error('YouTube 계정 수정에 실패했습니다:', error);
+    }
   };
 
   const handleDeleteYoutube = async (id: string) => {
-    if (!confirm('이 YouTube 계정과 연결된 모든 회원이 삭제됩니다. 계속하시겠습니까?')) return;
-    await fetch(`/api/admin/youtube-accounts?id=${id}`, { method: 'DELETE' });
-    if (selectedApple) fetchYoutubeAccounts(selectedApple.id);
+    try {
+      const res = await fetch(`/api/admin/youtube-accounts/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok && selectedApple) {
+        await fetchYoutubeAccounts(selectedApple.id);
+      }
+    } catch (error) {
+      console.error('YouTube 계정 삭제에 실패했습니다:', error);
+    }
   };
 
   const handleAddMember = async () => {
-    if (!newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim() || !selectedYoutube) return;
+    if (!selectedYoutube || !newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim()) return;
     
-    const today = new Date().toISOString().split('T')[0];
-    
-    await fetch('/api/admin/members', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        youtubeAccountId: selectedYoutube.id,
-        nickname: newMemberNickname,
-        email: newMemberEmail,
-        name: newMemberName,
-        joinDate: newJoinDate ? newJoinDate : today,
-        paymentDate: newPaymentDate ? newPaymentDate : today,
-        depositStatus: newDepositStatus,
-      }),
-    });
-    setNewMemberNickname('');
-    setNewMemberEmail('');
-    setNewMemberName('');
-    setNewJoinDate('');
-    setNewPaymentDate('');
-    setNewDepositStatus('pending');
-    setShowAddMember(false);
-    fetchMembers(selectedYoutube.id);
-  };
-
-  const handleDeleteMember = async (id: string) => {
-    if (!confirm('이 회원을 삭제하시겠습니까?')) return;
-    await fetch(`/api/admin/members?id=${id}`, { method: 'DELETE' });
-    if (selectedYoutube) fetchMembers(selectedYoutube.id);
-  };
-
-  const handleUpdateMemberStatus = async (id: string, status: string) => {
-    await fetch('/api/admin/members', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, depositStatus: status }),
-    });
-    if (selectedYoutube) fetchMembers(selectedYoutube.id);
+    try {
+      const res = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          youtubeAccountId: selectedYoutube.id,
+          nickname: newMemberNickname,
+          email: newMemberEmail,
+          name: newMemberName,
+          joinDate: newJoinDate,
+          paymentDate: newPaymentDate,
+          depositStatus: newDepositStatus,
+        }),
+      });
+      
+      if (res.ok) {
+        setNewMemberNickname('');
+        setNewMemberEmail('');
+        setNewMemberName('');
+        setNewJoinDate('');
+        setNewPaymentDate('');
+        setNewDepositStatus('pending');
+        setShowAddMember(false);
+        await fetchMembers(selectedYoutube.id);
+      }
+    } catch (error) {
+      console.error('회원 추가에 실패했습니다:', error);
+    }
   };
 
   const handleEditMember = (member: Member) => {
@@ -369,154 +458,197 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    
-    // 날짜 형식을 YYYY-MM-DD로 변환
-    const formatDateForInput = (dateString: string) => {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      return date.toISOString().split('T')[0];
-    };
-    
-    setNewJoinDate(formatDateForInput(member.joinDate));
-    setNewPaymentDate(formatDateForInput(member.paymentDate));
+    setNewJoinDate(member.joinDate);
+    setNewPaymentDate(member.paymentDate);
     setNewDepositStatus(member.depositStatus);
+    setShowAddMember(true);
   };
 
   const handleUpdateMember = async () => {
     if (!editingMember || !newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim()) return;
     
-    await fetch('/api/admin/members', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: editingMember.id,
-        nickname: newMemberNickname,
-        email: newMemberEmail,
-        name: newMemberName,
-        joinDate: newJoinDate,
-        paymentDate: newPaymentDate,
-        depositStatus: newDepositStatus,
-      }),
-    });
-    
-    setEditingMember(null);
-    setNewMemberNickname('');
-    setNewMemberEmail('');
-    setNewMemberName('');
-    setNewJoinDate('');
-    setNewPaymentDate('');
-    setNewDepositStatus('pending');
-    if (selectedYoutube) fetchMembers(selectedYoutube.id);
+    try {
+      const res = await fetch(`/api/admin/members/${editingMember.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: newMemberNickname,
+          email: newMemberEmail,
+          name: newMemberName,
+          joinDate: newJoinDate,
+          paymentDate: newPaymentDate,
+          depositStatus: newDepositStatus,
+        }),
+      });
+      
+      if (res.ok) {
+        setEditingMember(null);
+        setNewMemberNickname('');
+        setNewMemberEmail('');
+        setNewMemberName('');
+        setNewJoinDate('');
+        setNewPaymentDate('');
+        setNewDepositStatus('pending');
+        setShowAddMember(false);
+        if (selectedYoutube) {
+          await fetchMembers(selectedYoutube.id);
+        }
+      }
+    } catch (error) {
+      console.error('회원 수정에 실패했습니다:', error);
+    }
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/members/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok && selectedYoutube) {
+        await fetchMembers(selectedYoutube.id);
+      }
+    } catch (error) {
+      console.error('회원 삭제에 실패했습니다:', error);
+    }
+  };
+
+  const handleUpdateMemberStatus = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/admin/members/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ depositStatus: status }),
+      });
+      
+      if (res.ok && selectedYoutube) {
+        await fetchMembers(selectedYoutube.id);
+      }
+    } catch (error) {
+      console.error('회원 상태 수정에 실패했습니다:', error);
+    }
   };
 
   const handleCancelEdit = () => {
-    setEditingMember(null);
-    setNewMemberNickname('');
-    setNewMemberEmail('');
-    setNewMemberName('');
-    setNewJoinDate('');
-    setNewPaymentDate('');
-    setNewDepositStatus('pending');
-  };
-
-  // 드래그 앤 드롭 핸들러
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (!over || active.id === over.id) return;
-
-    if (step === 'apple') {
-      const oldIndex = appleAccounts.findIndex(item => item.id === active.id);
-      const newIndex = appleAccounts.findIndex(item => item.id === over.id);
-      setAppleAccounts(arrayMove(appleAccounts, oldIndex, newIndex));
-    } else if (step === 'youtube') {
-      const oldIndex = youtubeAccounts.findIndex(item => item.id === active.id);
-      const newIndex = youtubeAccounts.findIndex(item => item.id === over.id);
-      setYoutubeAccounts(arrayMove(youtubeAccounts, oldIndex, newIndex));
-    } else if (step === 'members') {
-      const oldIndex = members.findIndex(item => item.id === active.id);
-      const newIndex = members.findIndex(item => item.id === over.id);
-      setMembers(arrayMove(members, oldIndex, newIndex));
+    if (editingApple) {
+      setEditingApple(null);
+      setNewAppleEmail('');
+      setShowAddApple(false);
+    }
+    if (editingYoutube) {
+      setEditingYoutube(null);
+      setNewYoutubeEmail('');
+      setNewYoutubeNickname('');
+      setShowAddYoutube(false);
+    }
+    if (editingMember) {
+      setEditingMember(null);
+      setNewMemberNickname('');
+      setNewMemberEmail('');
+      setNewMemberName('');
+      setNewJoinDate('');
+      setNewPaymentDate('');
+      setNewDepositStatus('pending');
+      setShowAddMember(false);
     }
   };
 
-  const goBack = () => {
-    if (step === 'members') {
-      setStep('youtube');
-      setSelectedYoutube(null);
-    } else if (step === 'youtube') {
-      setStep('apple');
-      setSelectedApple(null);
-    }
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {step !== 'apple' && (
-              <button
-                onClick={goBack}
-                className="text-gray-600 hover:text-gray-900 font-medium"
-              >
-                ← 뒤로
-              </button>
-            )}
-            <h2 className="text-2xl font-bold text-gray-900">
-              {step === 'apple' && '회원 관리 - Apple 계정 선택'}
-              {step === 'youtube' && `회원 관리 - YouTube 계정 선택 (${selectedApple?.appleEmail})`}
-              {step === 'members' && `가입 회원 목록 (${selectedYoutube?.youtubeEmail})`}
-            </h2>
-          </div>
-          <button onClick={onClose} className="text-2xl text-gray-500 hover:text-gray-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">회원 관리</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+          >
             ×
           </button>
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="p-6">
-          {/* Apple 계정 선택 단계 */}
+        {/* 네비게이션 */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setStep('apple')}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              step === 'apple' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Apple 계정
+          </button>
+          <button
+            onClick={() => setStep('youtube')}
+            disabled={!selectedApple}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              step === 'youtube' 
+                ? 'bg-blue-500 text-white' 
+                : selectedApple 
+                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            YouTube 계정
+          </button>
+          <button
+            onClick={() => setStep('members')}
+            disabled={!selectedYoutube}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              step === 'members' 
+                ? 'bg-blue-500 text-white' 
+                : selectedYoutube 
+                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            회원 목록
+          </button>
+        </div>
+
+        <div>
+          {/* Apple 계정 단계 */}
           {step === 'apple' && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <p className="text-gray-700 font-medium">관리할 Apple 계정을 선택해주세요</p>
-                <button
-                  onClick={() => setShowAddApple(!showAddApple)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  + Apple 계정 추가
-                </button>
+                <h3 className="text-lg font-semibold">Apple 계정 목록</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSortApple}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                  >
+                    날짜순 정렬 ({appleSortOrder === 'oldest' ? '오래된순' : '최신순'})
+                  </button>
+                  <button
+                    onClick={() => setShowAddApple(!showAddApple)}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  >
+                    + Apple 계정 추가
+                  </button>
+                </div>
               </div>
 
-              {showAddApple && (
+              {(showAddApple || editingApple) && (
                 <div className="mb-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                    {editingApple ? 'Apple 계정 수정' : 'Apple 계정 추가'}
+                  </h3>
                   <input
                     type="email"
                     value={newAppleEmail}
                     onChange={(e) => setNewAppleEmail(e.target.value)}
-                    placeholder="Apple 이메일"
+                    placeholder="Apple 이메일*"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={handleAddApple}
+                      onClick={editingApple ? handleUpdateApple : handleAddApple}
                       className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                     >
-                      추가
+                      {editingApple ? '저장' : '추가'}
                     </button>
                     <button
-                      onClick={() => setShowAddApple(false)}
+                      onClick={editingApple ? handleCancelEdit : () => setShowAddApple(false)}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                     >
                       취소
@@ -525,60 +657,72 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 </div>
               )}
 
-              <SortableContext items={appleAccounts.map(a => a.id)} strategy={verticalListSortingStrategy}>
-                <div className="grid gap-3">
-                  {appleAccounts.map((apple) => (
-                    <SortableAppleItem
-                      key={apple.id}
-                      account={apple}
-                      onSelect={() => handleAppleSelect(apple)}
-                      onDelete={() => handleDeleteApple(apple.id)}
-                      isSelected={false}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
+              <div className="grid gap-4">
+                {sortedAppleAccounts.map((apple) => (
+                  <AppleItem
+                    key={apple.id}
+                    account={apple}
+                    onSelect={() => handleAppleSelect(apple)}
+                    onEdit={() => handleEditApple(apple)}
+                    onDelete={() => handleDeleteApple(apple.id)}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
-          {/* YouTube 계정 선택 단계 */}
-          {step === 'youtube' && (
+          {/* YouTube 계정 단계 */}
+          {step === 'youtube' && selectedApple && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <p className="text-gray-700 font-medium">관리할 YouTube 계정을 선택해주세요</p>
-                <button
-                  onClick={() => setShowAddYoutube(!showAddYoutube)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  + YouTube 계정 추가
-                </button>
+                <div>
+                  <h3 className="text-lg font-semibold">YouTube 계정 목록</h3>
+                  <p className="text-sm text-gray-600">선택된 Apple 계정: {selectedApple.appleEmail}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSortYoutube}
+                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm"
+                  >
+                    날짜순 정렬 ({youtubeSortOrder === 'oldest' ? '오래된순' : '최신순'})
+                  </button>
+                  <button
+                    onClick={() => setShowAddYoutube(!showAddYoutube)}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  >
+                    + YouTube 계정 추가
+                  </button>
+                </div>
               </div>
 
-              {showAddYoutube && (
+              {(showAddYoutube || editingYoutube) && (
                 <div className="mb-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                    {editingYoutube ? 'YouTube 계정 수정' : 'YouTube 계정 추가'}
+                  </h3>
                   <input
                     type="email"
                     value={newYoutubeEmail}
                     onChange={(e) => setNewYoutubeEmail(e.target.value)}
-                    placeholder="YouTube 이메일"
+                    placeholder="YouTube 이메일*"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <input
                     type="text"
                     value={newYoutubeNickname}
                     onChange={(e) => setNewYoutubeNickname(e.target.value)}
-                    placeholder="닉네임"
+                    placeholder="닉네임 (선택사항)"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={handleAddYoutube}
+                      onClick={editingYoutube ? handleUpdateYoutube : handleAddYoutube}
                       className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                     >
-                      추가
+                      {editingYoutube ? '저장' : '추가'}
                     </button>
                     <button
-                      onClick={() => setShowAddYoutube(false)}
+                      onClick={editingYoutube ? handleCancelEdit : () => setShowAddYoutube(false)}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                     >
                       취소
@@ -587,33 +731,43 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 </div>
               )}
 
-              <SortableContext items={youtubeAccounts.map(y => y.id)} strategy={verticalListSortingStrategy}>
-                <div className="grid gap-3">
-                  {youtubeAccounts.map((youtube) => (
-                    <SortableYoutubeItem
-                      key={youtube.id}
-                      account={youtube}
-                      onSelect={() => handleYoutubeSelect(youtube)}
-                      onDelete={() => handleDeleteYoutube(youtube.id)}
-                      isSelected={false}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
+              <div className="grid gap-4">
+                {sortedYoutubeAccounts.map((youtube) => (
+                  <YoutubeItem
+                    key={youtube.id}
+                    account={youtube}
+                    onSelect={() => handleYoutubeSelect(youtube)}
+                    onEdit={() => handleEditYoutube(youtube)}
+                    onDelete={() => handleDeleteYoutube(youtube.id)}
+                    isSelected={selectedYoutube?.id === youtube.id}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
           {/* 회원 목록 단계 */}
-          {step === 'members' && (
+          {step === 'members' && selectedYoutube && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <p className="text-gray-700 font-medium">가입된 회원 목록입니다</p>
-                <button
-                  onClick={() => setShowAddMember(!showAddMember)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  + 회원 추가
-                </button>
+                <div>
+                  <h3 className="text-lg font-semibold">회원 목록</h3>
+                  <p className="text-sm text-gray-600">선택된 YouTube 계정: {selectedYoutube.youtubeEmail}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSortMember}
+                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm"
+                  >
+                    날짜순 정렬 ({memberSortOrder === 'oldest' ? '오래된순' : '최신순'})
+                  </button>
+                  <button
+                    onClick={() => setShowAddMember(!showAddMember)}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  >
+                    + 회원 추가
+                  </button>
+                </div>
               </div>
 
               {(showAddMember || editingMember) && (
@@ -649,16 +803,6 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                         type="date"
                         value={newJoinDate}
                         onChange={(e) => setNewJoinDate(e.target.value)}
-                        onKeyDown={(e) => {
-                          // Allow keyboard input for date
-                          if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' || e.key === 'Enter') {
-                            return;
-                          }
-                          if (!/[0-9-]/.test(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        placeholder="yyyy-mm-dd"
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
@@ -668,16 +812,6 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                         type="date"
                         value={newPaymentDate}
                         onChange={(e) => setNewPaymentDate(e.target.value)}
-                        onKeyDown={(e) => {
-                          // Allow keyboard input for date
-                          if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' || e.key === 'Enter') {
-                            return;
-                          }
-                          if (!/[0-9-]/.test(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        placeholder="yyyy-mm-dd"
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
@@ -715,7 +849,6 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 <table className="w-full border-2 border-gray-300">
                   <thead className="bg-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900"></th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">닉네임</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">이메일</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">가입날짜</th>
@@ -726,24 +859,21 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                     </tr>
                   </thead>
                   <tbody>
-                    <SortableContext items={members.map(m => m.id)} strategy={verticalListSortingStrategy}>
-                      {members.map((member) => (
-                        <SortableMemberRow
-                          key={member.id}
-                          member={member}
-                          onEdit={() => handleEditMember(member)}
-                          onDelete={() => handleDeleteMember(member.id)}
-                          onUpdateStatus={handleUpdateMemberStatus}
-                        />
-                      ))}
-                    </SortableContext>
+                    {sortedMembers.map((member) => (
+                      <MemberRow
+                        key={member.id}
+                        member={member}
+                        onEdit={() => handleEditMember(member)}
+                        onDelete={() => handleDeleteMember(member.id)}
+                        onUpdateStatus={handleUpdateMemberStatus}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
-          </div>
-        </DndContext>
+        </div>
       </div>
     </div>
   );

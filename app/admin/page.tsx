@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { MemberRequest } from '@/types';
-import MemberManagementModal from './components/MemberManagementModal';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,7 +10,6 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<MemberRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [showMemberModal, setShowMemberModal] = useState(false);
 
   useEffect(() => {
     // 세션 스토리지에서 인증 상태 확인
@@ -211,15 +209,15 @@ export default function AdminPage() {
               <p className="text-gray-600 mt-1">YouTube Premium 회원 신청 관리</p>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowMemberModal(true)}
+              <a
+                href="/admin/members"
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 회원 관리
-              </button>
+              </a>
               <a
                 href="/api/admin/export"
                 download
@@ -390,11 +388,6 @@ export default function AdminPage() {
           )}
         </div>
       </div>
-
-      {/* 회원 관리 모달 */}
-      {showMemberModal && (
-        <MemberManagementModal onClose={() => setShowMemberModal(false)} />
-      )}
     </div>
   );
 }

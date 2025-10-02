@@ -70,6 +70,10 @@ export async function initDatabase() {
       await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS depositor_name VARCHAR(255)`;
       await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS nickname VARCHAR(255)`;
       
+      // 새 필드 추가
+      await sql`ALTER TABLE apple_accounts ADD COLUMN IF NOT EXISTS remaining_credit INTEGER DEFAULT 0`;
+      await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS renewal_date DATE`;
+      
       // members 테이블 마이그레이션 (이전 스키마 → 새 스키마)
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS nickname VARCHAR(255)`;
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS email VARCHAR(255)`;
@@ -154,7 +158,11 @@ export async function getAllAppleAccounts() {
   try {
     await initDatabase();
     const { rows } = await sql`
-      SELECT id, apple_email as "appleEmail", created_at as "createdAt"
+      SELECT 
+        id, 
+        apple_email as "appleEmail", 
+        remaining_credit as "remainingCredit",
+        created_at as "createdAt"
       FROM apple_accounts
       ORDER BY created_at DESC
     `;
@@ -165,14 +173,22 @@ export async function getAllAppleAccounts() {
   }
 }
 
-export async function addAppleAccount(appleEmail: string, password?: string) {
+export async function addAppleAccount(appleEmail: string, remainingCredit?: number, password?: string) {
   await initDatabase();
   const id = Date.now().toString();
   await sql`
-    INSERT INTO apple_accounts (id, apple_email, password, created_at)
-    VALUES (${id}, ${appleEmail}, ${password || null}, CURRENT_TIMESTAMP)
+    INSERT INTO apple_accounts (id, apple_email, remaining_credit, password, created_at)
+    VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, ${password || null}, CURRENT_TIMESTAMP)
   `;
-  return { id, appleEmail };
+  return { id, appleEmail, remainingCredit: remainingCredit || 0 };
+}
+
+export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number) {
+  await sql`
+    UPDATE apple_accounts
+    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}
+    WHERE id = ${id}
+  `;
 }
 
 export async function deleteAppleAccount(id: string) {
@@ -190,6 +206,7 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
         apple_account_id as "appleAccountId",
         youtube_email as "youtubeEmail",
         nickname,
+        renewal_date as "renewalDate",
         created_at as "createdAt"
       FROM youtube_accounts
       WHERE apple_account_id = ${appleAccountId}
@@ -202,14 +219,25 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
   }
 }
 
-export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string) {
+export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
   await initDatabase();
   const id = Date.now().toString();
   await sql`
-    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, created_at)
-    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, CURRENT_TIMESTAMP)
+    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, created_at)
+    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, CURRENT_TIMESTAMP)
   `;
-  return { id, appleAccountId, youtubeEmail, nickname };
+  return { id, appleAccountId, youtubeEmail, nickname, renewalDate };
+}
+
+export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
+  await sql`
+    UPDATE youtube_accounts
+    SET 
+      youtube_email = ${youtubeEmail},
+      nickname = ${nickname || null},
+      renewal_date = ${renewalDate || null}
+    WHERE id = ${id}
+  `;
 }
 
 export async function deleteYoutubeAccount(id: string) {
