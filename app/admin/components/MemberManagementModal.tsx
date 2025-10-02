@@ -1,6 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface AppleAccount {
   id: string;
@@ -31,6 +50,169 @@ interface Member {
 
 type Step = 'apple' | 'youtube' | 'members';
 
+// Sortable 아이템 컴포넌트들
+function SortableAppleItem({ account, onSelect, onDelete, isSelected }: {
+  account: AppleAccount;
+  onSelect: () => void;
+  onDelete: () => void;
+  isSelected: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: account.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
+        isSelected 
+          ? 'border-blue-500 bg-blue-50' 
+          : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50'
+      }`}
+    >
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
+        </svg>
+      </div>
+      <div className="flex-1" onClick={onSelect}>
+        <p className="text-gray-900 font-medium">{account.appleEmail}</p>
+        <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+      >
+        삭제
+      </button>
+    </div>
+  );
+}
+
+function SortableYoutubeItem({ account, onSelect, onDelete, isSelected }: {
+  account: YoutubeAccount;
+  onSelect: () => void;
+  onDelete: () => void;
+  isSelected: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: account.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-4 border-2 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
+        isSelected 
+          ? 'border-blue-500 bg-blue-50' 
+          : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50'
+      }`}
+    >
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
+        </svg>
+      </div>
+      <div className="flex-1" onClick={onSelect}>
+        <p className="text-gray-900 font-medium">{account.youtubeEmail}</p>
+        {account.nickname && <p className="text-sm text-blue-600 font-medium">닉네임: {account.nickname}</p>}
+        <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+      >
+        삭제
+      </button>
+    </div>
+  );
+}
+
+function SortableMemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
+  member: Member;
+  onEdit: () => void;
+  onDelete: () => void;
+  onUpdateStatus: (id: string, status: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: member.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b-2 border-gray-200 hover:bg-blue-50">
+      <td className="px-4 py-3">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 inline-block">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 6h10v1H3zM3 9h10v1H3z"/>
+          </svg>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-gray-900 font-medium">{member.nickname}</td>
+      <td className="px-4 py-3 text-gray-900">{member.email}</td>
+      <td className="px-4 py-3 text-gray-900">
+        {new Date(member.joinDate).toLocaleDateString()}
+      </td>
+      <td className="px-4 py-3 text-gray-900">
+        {new Date(member.paymentDate).toLocaleDateString()}
+      </td>
+      <td className="px-4 py-3 text-gray-900">{member.name}</td>
+      <td className="px-4 py-3">
+        <select
+          value={member.depositStatus}
+          onChange={(e) => onUpdateStatus(member.id, e.target.value)}
+          className="px-2 py-1 border-2 border-gray-300 rounded bg-white text-gray-900 font-medium"
+        >
+          <option value="pending">대기</option>
+          <option value="completed">완료</option>
+          <option value="failed">실패</option>
+        </select>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex gap-2">
+          <button
+            onClick={onEdit}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+          >
+            수정
+          </button>
+          <button
+            onClick={onDelete}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+          >
+            삭제
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function MemberManagementModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<Step>('apple');
   const [appleAccounts, setAppleAccounts] = useState<AppleAccount[]>([]);
@@ -53,6 +235,16 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [newJoinDate, setNewJoinDate] = useState('');
   const [newPaymentDate, setNewPaymentDate] = useState('');
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
+
+  // 드래그 앤 드롭 상태
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     fetchAppleAccounts();
@@ -177,8 +369,16 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(member.joinDate);
-    setNewPaymentDate(member.paymentDate);
+    
+    // 날짜 형식을 YYYY-MM-DD로 변환
+    const formatDateForInput = (dateString: string) => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    };
+    
+    setNewJoinDate(formatDateForInput(member.joinDate));
+    setNewPaymentDate(formatDateForInput(member.paymentDate));
     setNewDepositStatus(member.depositStatus);
   };
 
@@ -219,6 +419,32 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
     setNewDepositStatus('pending');
   };
 
+  // 드래그 앤 드롭 핸들러
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over || active.id === over.id) return;
+
+    if (step === 'apple') {
+      const oldIndex = appleAccounts.findIndex(item => item.id === active.id);
+      const newIndex = appleAccounts.findIndex(item => item.id === over.id);
+      setAppleAccounts(arrayMove(appleAccounts, oldIndex, newIndex));
+    } else if (step === 'youtube') {
+      const oldIndex = youtubeAccounts.findIndex(item => item.id === active.id);
+      const newIndex = youtubeAccounts.findIndex(item => item.id === over.id);
+      setYoutubeAccounts(arrayMove(youtubeAccounts, oldIndex, newIndex));
+    } else if (step === 'members') {
+      const oldIndex = members.findIndex(item => item.id === active.id);
+      const newIndex = members.findIndex(item => item.id === over.id);
+      setMembers(arrayMove(members, oldIndex, newIndex));
+    }
+  };
+
   const goBack = () => {
     if (step === 'members') {
       setStep('youtube');
@@ -253,7 +479,13 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
           </button>
         </div>
 
-        <div className="p-6">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="p-6">
           {/* Apple 계정 선택 단계 */}
           {step === 'apple' && (
             <div>
@@ -293,30 +525,19 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 </div>
               )}
 
-              <div className="grid gap-3">
-                {appleAccounts.map((apple) => (
-                  <div
-                    key={apple.id}
-                    className="p-4 border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors flex justify-between items-center"
-                  >
-                    <div
-                      onClick={() => handleAppleSelect(apple)}
-                      className="flex-1 cursor-pointer"
-                    >
-                      <div className="font-bold text-lg text-gray-900">{apple.appleEmail}</div>
-                      <div className="text-sm text-gray-600 font-medium">
-                        생성일: {new Date(apple.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteApple(apple.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <SortableContext items={appleAccounts.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                <div className="grid gap-3">
+                  {appleAccounts.map((apple) => (
+                    <SortableAppleItem
+                      key={apple.id}
+                      account={apple}
+                      onSelect={() => handleAppleSelect(apple)}
+                      onDelete={() => handleDeleteApple(apple.id)}
+                      isSelected={false}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
           )}
 
@@ -366,35 +587,19 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 </div>
               )}
 
-              <div className="grid gap-3">
-                {youtubeAccounts.map((youtube) => (
-                  <div
-                    key={youtube.id}
-                    className="p-4 border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors flex justify-between items-center"
-                  >
-                    <div
-                      onClick={() => handleYoutubeSelect(youtube)}
-                      className="flex-1 cursor-pointer"
-                    >
-                      <div className="font-bold text-lg text-gray-900">
-                        {youtube.youtubeEmail}
-                        {youtube.nickname && (
-                          <span className="ml-2 text-blue-600">({youtube.nickname})</span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 font-medium">
-                        생성일: {new Date(youtube.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteYoutube(youtube.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <SortableContext items={youtubeAccounts.map(y => y.id)} strategy={verticalListSortingStrategy}>
+                <div className="grid gap-3">
+                  {youtubeAccounts.map((youtube) => (
+                    <SortableYoutubeItem
+                      key={youtube.id}
+                      account={youtube}
+                      onSelect={() => handleYoutubeSelect(youtube)}
+                      onDelete={() => handleDeleteYoutube(youtube.id)}
+                      isSelected={false}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
           )}
 
@@ -510,6 +715,7 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 <table className="w-full border-2 border-gray-300">
                   <thead className="bg-gray-200">
                     <tr>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900"></th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">닉네임</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">이메일</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">가입날짜</th>
@@ -520,52 +726,24 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                     </tr>
                   </thead>
                   <tbody>
-                    {members.map((member) => (
-                      <tr key={member.id} className="border-b-2 border-gray-200 hover:bg-blue-50">
-                        <td className="px-4 py-3 text-gray-900 font-medium">{member.nickname}</td>
-                        <td className="px-4 py-3 text-gray-900">{member.email}</td>
-                        <td className="px-4 py-3 text-gray-900">
-                          {new Date(member.joinDate).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900">
-                          {new Date(member.paymentDate).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 text-gray-900">{member.name}</td>
-                        <td className="px-4 py-3">
-                          <select
-                            value={member.depositStatus}
-                            onChange={(e) => handleUpdateMemberStatus(member.id, e.target.value)}
-                            className="px-2 py-1 border-2 border-gray-300 rounded bg-white text-gray-900 font-medium"
-                          >
-                            <option value="pending">대기</option>
-                            <option value="completed">완료</option>
-                            <option value="failed">실패</option>
-                          </select>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditMember(member)}
-                              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(member.id)}
-                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    <SortableContext items={members.map(m => m.id)} strategy={verticalListSortingStrategy}>
+                      {members.map((member) => (
+                        <SortableMemberRow
+                          key={member.id}
+                          member={member}
+                          onEdit={() => handleEditMember(member)}
+                          onDelete={() => handleDeleteMember(member.id)}
+                          onUpdateStatus={handleUpdateMemberStatus}
+                        />
+                      ))}
+                    </SortableContext>
                   </tbody>
                 </table>
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </DndContext>
       </div>
     </div>
   );
