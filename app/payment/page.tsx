@@ -1,0 +1,306 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+export default function PaymentPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [months, setMonths] = useState(1);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const MONTHLY_PRICE = 4000;
+  
+  // 할인 적용된 가격 계산
+  const calculatePrice = (selectedMonths: number) => {
+    if (selectedMonths === 6) {
+      return 23000; // 24000 -> 23000 (1000원 할인)
+    } else if (selectedMonths === 12) {
+      return 45000; // 48000 -> 45000 (3000원 할인)
+    } else {
+      return selectedMonths * MONTHLY_PRICE;
+    }
+  };
+
+  const totalPrice = calculatePrice(months);
+  const originalPrice = months * MONTHLY_PRICE;
+  const discount = originalPrice - totalPrice;
+  const hasDiscount = discount > 0;
+
+  useEffect(() => {
+    // URL에서 requestId 확인
+    const requestId = searchParams.get('requestId');
+    const userEmail = searchParams.get('email');
+    
+    if (!requestId || !userEmail) {
+      // requestId나 email이 없으면 메인 페이지로 리다이렉트
+      router.push('/');
+      return;
+    }
+    
+    setEmail(userEmail);
+    setLoading(false);
+  }, [searchParams, router]);
+
+  const handleCopyAccount = () => {
+    navigator.clipboard.writeText('110574383789');
+    alert('계좌번호가 복사되었습니다!');
+  };
+
+  const handleComplete = () => {
+    setIsCompleted(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">로딩 중...</div>
+      </div>
+    );
+  }
+
+  // 신청 완료 화면
+  if (isCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="inline-block p-4 bg-green-100 rounded-full mb-6">
+            <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            신청이 완료되었습니다!
+          </h1>
+          <p className="text-gray-600 mb-2">
+            입금 확인 후 관리자가
+          </p>
+          <p className="text-gray-600 mb-6">
+            입력하신 연락처로 안내드리겠습니다.
+          </p>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              입금 후 24시간 이내에 프리미엄 초대가 완료됩니다.
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push('/')}
+            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+          >
+            메인으로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        {/* 헤더 */}
+        <div className="text-center mb-8">
+          <div className="inline-block p-3 bg-blue-100 rounded-full mb-4">
+            <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            마지막 단계입니다!
+          </h1>
+          <p className="text-gray-600">
+            이용 기간을 선택하고 입금하시면 모든 준비가 끝납니다
+          </p>
+        </div>
+
+        {/* 신청 정보 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-blue-900 mb-1">신청하신 이메일</p>
+              <p className="text-sm text-blue-800 font-medium">{email}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 기간 선택 */}
+        <div className="mb-8">
+          <label className="block text-lg font-semibold text-gray-800 mb-4">
+            이용 기간을 선택해주세요
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[1, 3, 6, 12].map((m) => {
+              const price = calculatePrice(m);
+              const originalPrice = m * MONTHLY_PRICE;
+              const hasDiscount = price < originalPrice;
+              
+              return (
+                <button
+                  key={m}
+                  onClick={() => setMonths(m)}
+                  className={`p-4 rounded-lg border-2 transition-all relative ${
+                    months === m
+                      ? 'border-green-600 bg-green-50 shadow-md'
+                      : 'border-gray-300 bg-white hover:border-green-300'
+                  }`}
+                >
+                  {hasDiscount && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      {m === 6 ? '1천원↓' : '3천원↓'}
+                    </div>
+                  )}
+                  <div className="text-2xl font-bold text-gray-800">{m}</div>
+                  <div className="text-sm text-gray-600">개월</div>
+                  {hasDiscount && (
+                    <div className="text-xs text-red-600 font-semibold mt-1">
+                      {price.toLocaleString()}원
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* 커스텀 개월 수 입력 */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              또는 직접 입력
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="24"
+              value={months}
+              onChange={(e) => setMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition text-gray-900"
+              placeholder="개월 수 입력 (1-24)"
+            />
+          </div>
+        </div>
+
+        {/* 요금 계산 */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 mb-8">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-gray-700">
+              <span>월 이용료</span>
+              <span className="font-semibold">{MONTHLY_PRICE.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between items-center text-gray-700">
+              <span>선택 기간</span>
+              <span className="font-semibold">{months}개월</span>
+            </div>
+            {hasDiscount && (
+              <>
+                <div className="flex justify-between items-center text-gray-500">
+                  <span className="line-through">정가</span>
+                  <span className="line-through">{originalPrice.toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between items-center text-red-600">
+                  <span className="font-bold">할인</span>
+                  <span className="font-bold">-{discount.toLocaleString()}원</span>
+                </div>
+              </>
+            )}
+            <div className="border-t border-green-300 pt-3 mt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold text-gray-800">총 결제 금액</span>
+                <div className="text-right">
+                  <span className="text-3xl font-bold text-green-600">
+                    {totalPrice.toLocaleString()}원
+                  </span>
+                  {hasDiscount && (
+                    <div className="text-xs text-green-700 font-semibold mt-1">
+                      🎉 {discount.toLocaleString()}원 절약!
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 계좌 정보 */}
+        <div className="bg-gray-50 border-2 border-gray-300 rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            입금 계좌 정보
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">은행</div>
+                <div className="text-xl font-bold text-gray-900">신한은행</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
+              <div className="flex-1">
+                <div className="text-sm text-gray-600 mb-1">계좌번호</div>
+                <div className="text-xl font-bold text-gray-900 font-mono">110574383789</div>
+              </div>
+              <button
+                onClick={handleCopyAccount}
+                className="ml-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                복사
+              </button>
+            </div>
+            <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">입금 금액</div>
+                <div className="text-2xl font-bold text-green-600">{totalPrice.toLocaleString()}원</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 안내 사항 */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-yellow-900 mb-2">입금 안내</p>
+              <ul className="text-xs text-yellow-800 space-y-1">
+                <li>• 입금자명은 신청하신 이메일 또는 이름으로 해주세요</li>
+                <li>• 입금 확인 후 관리자가 입력하신 연락처로 안내드립니다</li>
+                <li>• 입금 후 24시간 이내에 프리미엄 초대가 완료됩니다</li>
+                <li>• 문의사항이 있으시면 연락처로 문의해주세요</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push('/')}
+            className="flex-1 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+          >
+            메인으로
+          </button>
+          <button
+            onClick={handleComplete}
+            className="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            신청 완료
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
