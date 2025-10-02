@@ -13,7 +13,6 @@ interface YoutubeAccount {
   appleAccountId: string;
   youtubeEmail: string;
   nickname?: string;
-  slotNumber: number;
   createdAt: string;
 }
 
@@ -47,7 +46,6 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
-  const [newSlotNumber, setNewSlotNumber] = useState(1);
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
@@ -116,12 +114,10 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
         appleAccountId: selectedApple.id,
         youtubeEmail: newYoutubeEmail,
         nickname: newYoutubeNickname,
-        slotNumber: newSlotNumber,
       }),
     });
     setNewYoutubeEmail('');
     setNewYoutubeNickname('');
-    setNewSlotNumber(1);
     setShowAddYoutube(false);
     fetchYoutubeAccounts(selectedApple.id);
   };
@@ -134,6 +130,9 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
 
   const handleAddMember = async () => {
     if (!newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim() || !selectedYoutube) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
     await fetch('/api/admin/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -142,8 +141,8 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
         nickname: newMemberNickname,
         email: newMemberEmail,
         name: newMemberName,
-        joinDate: newJoinDate || new Date().toISOString().split('T')[0],
-        paymentDate: newPaymentDate || new Date().toISOString().split('T')[0],
+        joinDate: newJoinDate ? newJoinDate : today,
+        paymentDate: newPaymentDate ? newPaymentDate : today,
         depositStatus: newDepositStatus,
       }),
     });
@@ -302,15 +301,6 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                     placeholder="닉네임"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
-                  <input
-                    type="number"
-                    value={newSlotNumber}
-                    onChange={(e) => setNewSlotNumber(parseInt(e.target.value))}
-                    placeholder="슬롯 번호 (1-5)"
-                    min="1"
-                    max="5"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
-                  />
                   <div className="flex gap-2">
                     <button
                       onClick={handleAddYoutube}
@@ -345,7 +335,7 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                         )}
                       </div>
                       <div className="text-sm text-gray-600 font-medium">
-                        슬롯 #{youtube.slotNumber} | 생성일: {new Date(youtube.createdAt).toLocaleDateString()}
+                        생성일: {new Date(youtube.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                     <button

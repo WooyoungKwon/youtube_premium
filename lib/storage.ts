@@ -39,7 +39,6 @@ export async function initDatabase() {
         apple_account_id VARCHAR(255) NOT NULL,
         youtube_email VARCHAR(255) NOT NULL,
         nickname VARCHAR(255),
-        slot_number INTEGER NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (apple_account_id) REFERENCES apple_accounts(id) ON DELETE CASCADE
       )
@@ -175,11 +174,10 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
         apple_account_id as "appleAccountId",
         youtube_email as "youtubeEmail",
         nickname,
-        slot_number as "slotNumber",
         created_at as "createdAt"
       FROM youtube_accounts
       WHERE apple_account_id = ${appleAccountId}
-      ORDER BY slot_number ASC
+      ORDER BY created_at DESC
     `;
     return rows;
   } catch (error) {
@@ -188,14 +186,14 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
   }
 }
 
-export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, slotNumber: number, nickname?: string) {
+export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string) {
   await initDatabase();
   const id = Date.now().toString();
   await sql`
-    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, slot_number, created_at)
-    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${slotNumber}, CURRENT_TIMESTAMP)
+    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, created_at)
+    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, CURRENT_TIMESTAMP)
   `;
-  return { id, appleAccountId, youtubeEmail, nickname, slotNumber };
+  return { id, appleAccountId, youtubeEmail, nickname };
 }
 
 export async function deleteYoutubeAccount(id: string) {
