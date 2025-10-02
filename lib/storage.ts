@@ -65,11 +65,7 @@ export async function initDatabase() {
       )
     `;
     
-    await sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
-    
-    // 기존 테이블에 컬럼 추가 (이미 있으면 무시)
+    // 기존 테이블에 컬럼 추가 (이미 있으면 무시) - 인덱스 생성 전에 먼저 실행
     try {
       await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS months INTEGER`;
       await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS depositor_name VARCHAR(255)`;
@@ -88,6 +84,15 @@ export async function initDatabase() {
     } catch (e) {
       // 컬럼이 이미 존재하면 무시
       console.log('Column migration:', e);
+    }
+    
+    // 인덱스 생성 (컬럼 추가 후)
+    await sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
+    try {
+      await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
+    } catch (e) {
+      // 인덱스가 이미 존재하면 무시
     }
   } catch (error) {
     console.error('Database initialization error:', error);
