@@ -17,9 +17,10 @@ export async function GET() {
 // 신청 상태 업데이트
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { status } = body;
     
@@ -30,7 +31,7 @@ export async function PATCH(
       );
     }
     
-    const updatedRequest = await updateRequestStatus(params.id, status);
+    const updatedRequest = await updateRequestStatus(id, status);
     
     return NextResponse.json(updatedRequest);
   } catch (error) {
@@ -45,10 +46,11 @@ export async function PATCH(
 // 신청 삭제
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteRequest(params.id);
+    const { id } = await params;
+    await deleteRequest(id);
     return NextResponse.json({ message: '삭제되었습니다.' });
   } catch (error) {
     return NextResponse.json(
