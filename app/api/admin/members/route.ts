@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMembersByYoutube, addMember, updateMemberStatus, deleteMember } from '@/lib/storage';
+import { getMembersByYoutube, addMember, updateMemberDepositStatus, deleteMember } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -18,15 +18,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { youtubeAccountId, userEmail, startDate, endDate, requestId, kakaoId, phone } = await request.json();
+    const { youtubeAccountId, nickname, email, name, joinDate, paymentDate, depositStatus, requestId } = await request.json();
     const member = await addMember(
       youtubeAccountId,
-      userEmail,
-      startDate,
-      endDate,
-      requestId,
-      kakaoId,
-      phone
+      nickname,
+      email,
+      name,
+      joinDate,
+      paymentDate,
+      depositStatus,
+      requestId
     );
     return NextResponse.json(member);
   } catch (error) {
@@ -38,11 +39,11 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const { id, status } = await request.json();
-    await updateMemberStatus(id, status);
+    await updateMemberDepositStatus(id, status);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Update member status error:', error);
-    return NextResponse.json({ error: 'Failed to update member status' }, { status: 500 });
+    console.error('Update member deposit status error:', error);
+    return NextResponse.json({ error: 'Failed to update member deposit status' }, { status: 500 });
   }
 }
 

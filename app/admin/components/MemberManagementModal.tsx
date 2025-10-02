@@ -12,6 +12,7 @@ interface YoutubeAccount {
   id: string;
   appleAccountId: string;
   youtubeEmail: string;
+  nickname?: string;
   slotNumber: number;
   createdAt: string;
 }
@@ -20,12 +21,12 @@ interface Member {
   id: string;
   youtubeAccountId: string;
   requestId?: string;
-  userEmail: string;
-  kakaoId?: string;
-  phone?: string;
-  startDate: string;
-  endDate: string;
-  status: string;
+  nickname: string;
+  email: string;
+  name: string;
+  joinDate: string;
+  paymentDate: string;
+  depositStatus: string;
   createdAt: string;
 }
 
@@ -45,12 +46,14 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [showAddMember, setShowAddMember] = useState(false);
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
+  const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newSlotNumber, setNewSlotNumber] = useState(1);
+  const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [newMemberKakao, setNewMemberKakao] = useState('');
-  const [newMemberPhone, setNewMemberPhone] = useState('');
-  const [newStartDate, setNewStartDate] = useState('');
-  const [newEndDate, setNewEndDate] = useState('');
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newJoinDate, setNewJoinDate] = useState('');
+  const [newPaymentDate, setNewPaymentDate] = useState('');
+  const [newDepositStatus, setNewDepositStatus] = useState('pending');
 
   useEffect(() => {
     fetchAppleAccounts();
@@ -112,10 +115,12 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
       body: JSON.stringify({
         appleAccountId: selectedApple.id,
         youtubeEmail: newYoutubeEmail,
+        nickname: newYoutubeNickname,
         slotNumber: newSlotNumber,
       }),
     });
     setNewYoutubeEmail('');
+    setNewYoutubeNickname('');
     setNewSlotNumber(1);
     setShowAddYoutube(false);
     fetchYoutubeAccounts(selectedApple.id);
@@ -128,24 +133,26 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   };
 
   const handleAddMember = async () => {
-    if (!newMemberEmail.trim() || !newStartDate || !newEndDate || !selectedYoutube) return;
+    if (!newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim() || !selectedYoutube) return;
     await fetch('/api/admin/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         youtubeAccountId: selectedYoutube.id,
-        userEmail: newMemberEmail,
-        kakaoId: newMemberKakao,
-        phone: newMemberPhone,
-        startDate: newStartDate,
-        endDate: newEndDate,
+        nickname: newMemberNickname,
+        email: newMemberEmail,
+        name: newMemberName,
+        joinDate: newJoinDate || new Date().toISOString().split('T')[0],
+        paymentDate: newPaymentDate || new Date().toISOString().split('T')[0],
+        depositStatus: newDepositStatus,
       }),
     });
+    setNewMemberNickname('');
     setNewMemberEmail('');
-    setNewMemberKakao('');
-    setNewMemberPhone('');
-    setNewStartDate('');
-    setNewEndDate('');
+    setNewMemberName('');
+    setNewJoinDate('');
+    setNewPaymentDate('');
+    setNewDepositStatus('pending');
     setShowAddMember(false);
     fetchMembers(selectedYoutube.id);
   };
@@ -289,6 +296,13 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <input
+                    type="text"
+                    value={newYoutubeNickname}
+                    onChange={(e) => setNewYoutubeNickname(e.target.value)}
+                    placeholder="닉네임"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
+                  />
+                  <input
                     type="number"
                     value={newSlotNumber}
                     onChange={(e) => setNewSlotNumber(parseInt(e.target.value))}
@@ -324,7 +338,12 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                       onClick={() => handleYoutubeSelect(youtube)}
                       className="flex-1 cursor-pointer"
                     >
-                      <div className="font-bold text-lg text-gray-900">{youtube.youtubeEmail}</div>
+                      <div className="font-bold text-lg text-gray-900">
+                        {youtube.youtubeEmail}
+                        {youtube.nickname && (
+                          <span className="ml-2 text-blue-600">({youtube.nickname})</span>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-600 font-medium">
                         슬롯 #{youtube.slotNumber} | 생성일: {new Date(youtube.createdAt).toLocaleDateString()}
                       </div>
@@ -357,45 +376,57 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
               {showAddMember && (
                 <div className="mb-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
                   <input
+                    type="text"
+                    value={newMemberNickname}
+                    onChange={(e) => setNewMemberNickname(e.target.value)}
+                    placeholder="닉네임*"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
+                  />
+                  <input
                     type="email"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="회원 이메일*"
+                    placeholder="이메일*"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <input
                     type="text"
-                    value={newMemberKakao}
-                    onChange={(e) => setNewMemberKakao(e.target.value)}
-                    placeholder="카카오톡 ID"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
-                  />
-                  <input
-                    type="tel"
-                    value={newMemberPhone}
-                    onChange={(e) => setNewMemberPhone(e.target.value)}
-                    placeholder="전화번호"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    placeholder="이름*"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div>
-                      <label className="block text-sm text-gray-800 font-semibold mb-1">시작일*</label>
+                      <label className="block text-sm text-gray-800 font-semibold mb-1">가입날짜</label>
                       <input
                         type="date"
-                        value={newStartDate}
-                        onChange={(e) => setNewStartDate(e.target.value)}
+                        value={newJoinDate}
+                        onChange={(e) => setNewJoinDate(e.target.value)}
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-800 font-semibold mb-1">종료일*</label>
+                      <label className="block text-sm text-gray-800 font-semibold mb-1">결제일</label>
                       <input
                         type="date"
-                        value={newEndDate}
-                        onChange={(e) => setNewEndDate(e.target.value)}
+                        value={newPaymentDate}
+                        onChange={(e) => setNewPaymentDate(e.target.value)}
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-sm text-gray-800 font-semibold mb-1">입금여부*</label>
+                    <select
+                      value={newDepositStatus}
+                      onChange={(e) => setNewDepositStatus(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
+                    >
+                      <option value="pending">대기</option>
+                      <option value="completed">완료</option>
+                      <option value="failed">실패</option>
+                    </select>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -418,36 +449,36 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 <table className="w-full border-2 border-gray-300">
                   <thead className="bg-gray-200">
                     <tr>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">닉네임</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">이메일</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">카카오톡 ID</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">전화번호</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">시작일</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">종료일</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">상태</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">가입날짜</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">결제일</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">이름</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">입금여부</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">작업</th>
                     </tr>
                   </thead>
                   <tbody>
                     {members.map((member) => (
                       <tr key={member.id} className="border-b-2 border-gray-200 hover:bg-blue-50">
-                        <td className="px-4 py-3 text-gray-900 font-medium">{member.userEmail}</td>
-                        <td className="px-4 py-3 text-gray-900">{member.kakaoId || '-'}</td>
-                        <td className="px-4 py-3 text-gray-900">{member.phone || '-'}</td>
+                        <td className="px-4 py-3 text-gray-900 font-medium">{member.nickname}</td>
+                        <td className="px-4 py-3 text-gray-900">{member.email}</td>
                         <td className="px-4 py-3 text-gray-900">
-                          {new Date(member.startDate).toLocaleDateString()}
+                          {new Date(member.joinDate).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-gray-900">
-                          {new Date(member.endDate).toLocaleDateString()}
+                          {new Date(member.paymentDate).toLocaleDateString()}
                         </td>
+                        <td className="px-4 py-3 text-gray-900">{member.name}</td>
                         <td className="px-4 py-3">
                           <select
-                            value={member.status}
+                            value={member.depositStatus}
                             onChange={(e) => handleUpdateMemberStatus(member.id, e.target.value)}
                             className="px-2 py-1 border-2 border-gray-300 rounded bg-white text-gray-900 font-medium"
                           >
-                            <option value="active">활성</option>
-                            <option value="expired">만료</option>
-                            <option value="suspended">정지</option>
+                            <option value="pending">대기</option>
+                            <option value="completed">완료</option>
+                            <option value="failed">실패</option>
                           </select>
                         </td>
                         <td className="px-4 py-3">
