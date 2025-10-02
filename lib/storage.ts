@@ -79,6 +79,11 @@ export async function initDatabase() {
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS payment_date DATE`;
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(50) DEFAULT 'pending'`;
       
+      // 기존 컬럼의 NOT NULL 제약조건 제거
+      await sql`ALTER TABLE members ALTER COLUMN user_email DROP NOT NULL`;
+      await sql`ALTER TABLE members ALTER COLUMN start_date DROP NOT NULL`;
+      await sql`ALTER TABLE members ALTER COLUMN end_date DROP NOT NULL`;
+      
       // 기존 컬럼 삭제는 데이터 손실 위험이 있으므로 나중에 수동으로 처리
       // DROP COLUMN user_email, kakao_id, phone, start_date, end_date, status
     } catch (e) {
