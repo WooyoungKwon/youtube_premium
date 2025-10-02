@@ -78,10 +78,26 @@ export async function initDatabase() {
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS payment_date DATE`;
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(50) DEFAULT 'pending'`;
       
-      // 기존 컬럼의 NOT NULL 제약조건 제거
-      await sql`ALTER TABLE members ALTER COLUMN user_email DROP NOT NULL`;
-      await sql`ALTER TABLE members ALTER COLUMN start_date DROP NOT NULL`;
-      await sql`ALTER TABLE members ALTER COLUMN end_date DROP NOT NULL`;
+      // 기존 컬럼의 NOT NULL 제약조건 제거 - 강제 실행
+      try {
+        await sql`ALTER TABLE members ALTER COLUMN user_email DROP NOT NULL`;
+      } catch (e) { console.log('user_email NOT NULL already removed'); }
+      
+      try {
+        await sql`ALTER TABLE members ALTER COLUMN start_date DROP NOT NULL`;
+      } catch (e) { console.log('start_date NOT NULL already removed'); }
+      
+      try {
+        await sql`ALTER TABLE members ALTER COLUMN end_date DROP NOT NULL`;
+      } catch (e) { console.log('end_date NOT NULL already removed'); }
+      
+      // youtube_accounts 테이블의 slot_number 컬럼 NOT NULL 제약 제거 - 강제 실행
+      try {
+        await sql`ALTER TABLE youtube_accounts ALTER COLUMN slot_number DROP NOT NULL`;
+        console.log('Successfully removed NOT NULL constraint from slot_number');
+      } catch (e) { 
+        console.log('slot_number NOT NULL constraint removal failed or already removed:', e); 
+      }
       
       // 기존 컬럼 삭제는 데이터 손실 위험이 있으므로 나중에 수동으로 처리
       // DROP COLUMN user_email, kakao_id, phone, start_date, end_date, status
