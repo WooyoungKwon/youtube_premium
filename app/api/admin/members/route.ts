@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMembersByYoutube, addMember, updateMemberDepositStatus, deleteMember } from '@/lib/storage';
+import { getMembersByYoutube, addMember, updateMemberDepositStatus, updateMember, deleteMember } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -38,12 +38,23 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { id, status } = await request.json();
-    await updateMemberDepositStatus(id, status);
+    const { id, depositStatus } = await request.json();
+    await updateMemberDepositStatus(id, depositStatus);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update member deposit status error:', error);
     return NextResponse.json({ error: 'Failed to update member deposit status' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, nickname, email, name, joinDate, paymentDate, depositStatus } = await request.json();
+    await updateMember(id, nickname, email, name, joinDate, paymentDate, depositStatus);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update member error:', error);
+    return NextResponse.json({ error: 'Failed to update member' }, { status: 500 });
   }
 }
 

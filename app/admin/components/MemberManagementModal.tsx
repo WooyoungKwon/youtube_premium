@@ -43,6 +43,7 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
   const [showAddApple, setShowAddApple] = useState(false);
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
@@ -166,9 +167,56 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
     await fetch('/api/admin/members', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ id, depositStatus: status }),
     });
     if (selectedYoutube) fetchMembers(selectedYoutube.id);
+  };
+
+  const handleEditMember = (member: Member) => {
+    setEditingMember(member);
+    setNewMemberNickname(member.nickname);
+    setNewMemberEmail(member.email);
+    setNewMemberName(member.name);
+    setNewJoinDate(member.joinDate);
+    setNewPaymentDate(member.paymentDate);
+    setNewDepositStatus(member.depositStatus);
+  };
+
+  const handleUpdateMember = async () => {
+    if (!editingMember || !newMemberNickname.trim() || !newMemberEmail.trim() || !newMemberName.trim()) return;
+    
+    await fetch('/api/admin/members', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingMember.id,
+        nickname: newMemberNickname,
+        email: newMemberEmail,
+        name: newMemberName,
+        joinDate: newJoinDate,
+        paymentDate: newPaymentDate,
+        depositStatus: newDepositStatus,
+      }),
+    });
+    
+    setEditingMember(null);
+    setNewMemberNickname('');
+    setNewMemberEmail('');
+    setNewMemberName('');
+    setNewJoinDate('');
+    setNewPaymentDate('');
+    setNewDepositStatus('pending');
+    if (selectedYoutube) fetchMembers(selectedYoutube.id);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMember(null);
+    setNewMemberNickname('');
+    setNewMemberEmail('');
+    setNewMemberName('');
+    setNewJoinDate('');
+    setNewPaymentDate('');
+    setNewDepositStatus('pending');
   };
 
   const goBack = () => {
@@ -363,8 +411,11 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                 </button>
               </div>
 
-              {showAddMember && (
+              {(showAddMember || editingMember) && (
                 <div className="mb-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                    {editingMember ? '회원 정보 수정' : '회원 추가'}
+                  </h3>
                   <input
                     type="text"
                     value={newMemberNickname}
@@ -393,6 +444,16 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                         type="date"
                         value={newJoinDate}
                         onChange={(e) => setNewJoinDate(e.target.value)}
+                        onKeyDown={(e) => {
+                          // Allow keyboard input for date
+                          if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' || e.key === 'Enter') {
+                            return;
+                          }
+                          if (!/[0-9-]/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        placeholder="yyyy-mm-dd"
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
@@ -402,6 +463,16 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                         type="date"
                         value={newPaymentDate}
                         onChange={(e) => setNewPaymentDate(e.target.value)}
+                        onKeyDown={(e) => {
+                          // Allow keyboard input for date
+                          if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' || e.key === 'Enter') {
+                            return;
+                          }
+                          if (!/[0-9-]/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        placeholder="yyyy-mm-dd"
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>
@@ -420,13 +491,13 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={handleAddMember}
+                      onClick={editingMember ? handleUpdateMember : handleAddMember}
                       className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                     >
-                      추가
+                      {editingMember ? '저장' : '추가'}
                     </button>
                     <button
-                      onClick={() => setShowAddMember(false)}
+                      onClick={editingMember ? handleCancelEdit : () => setShowAddMember(false)}
                       className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                     >
                       취소
@@ -472,12 +543,20 @@ export default function MemberManagementModal({ onClose }: { onClose: () => void
                           </select>
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            onClick={() => handleDeleteMember(member.id)}
-                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
-                          >
-                            삭제
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditMember(member)}
+                              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+                            >
+                              수정
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(member.id)}
+                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+                            >
+                              삭제
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

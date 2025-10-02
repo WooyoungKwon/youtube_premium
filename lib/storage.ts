@@ -262,6 +262,28 @@ export async function updateMemberDepositStatus(id: string, depositStatus: strin
   `;
 }
 
+export async function updateMember(
+  id: string,
+  nickname: string,
+  email: string,
+  name: string,
+  joinDate: string,
+  paymentDate: string,
+  depositStatus: string
+) {
+  await sql`
+    UPDATE members
+    SET 
+      nickname = ${nickname},
+      email = ${email},
+      name = ${name},
+      join_date = ${joinDate},
+      payment_date = ${paymentDate},
+      deposit_status = ${depositStatus}
+    WHERE id = ${id}
+  `;
+}
+
 export async function deleteMember(id: string) {
   await sql`DELETE FROM members WHERE id = ${id}`;
 }
