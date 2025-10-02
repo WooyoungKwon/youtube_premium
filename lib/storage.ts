@@ -10,6 +10,8 @@ export async function initDatabase() {
         email VARCHAR(255) NOT NULL,
         kakao_id VARCHAR(255),
         phone VARCHAR(50),
+        months INTEGER,
+        depositor_name VARCHAR(255),
         status VARCHAR(50) NOT NULL DEFAULT 'pending',
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -18,6 +20,14 @@ export async function initDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
+    
+    // 기존 테이블에 컬럼 추가 (이미 있으면 무시)
+    try {
+      await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS months INTEGER`;
+      await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS depositor_name VARCHAR(255)`;
+    } catch (e) {
+      // 컬럼이 이미 존재하면 무시
+    }
   } catch (error) {
     console.error('Database initialization error:', error);
   }
@@ -33,6 +43,8 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
         email,
         kakao_id as "kakaoId",
         phone,
+        months,
+        depositor_name as "depositorName",
         status,
         created_at as "createdAt"
       FROM member_requests
@@ -51,7 +63,13 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
 }
 
 // 신청 추가
-export async function addRequest(email: string, kakaoId?: string, phone?: string): Promise<MemberRequest> {
+export async function addRequest(
+  email: string, 
+  kakaoId?: string, 
+  phone?: string, 
+  months?: number, 
+  depositorName?: string
+): Promise<MemberRequest> {
   await initDatabase();
   
   // 이미 신청한 이메일인지 확인
@@ -67,8 +85,8 @@ export async function addRequest(email: string, kakaoId?: string, phone?: string
   const createdAt = new Date().toISOString();
   
   await sql`
-    INSERT INTO member_requests (id, email, kakao_id, phone, status, created_at)
-    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, 'pending', ${createdAt})
+    INSERT INTO member_requests (id, email, kakao_id, phone, months, depositor_name, status, created_at)
+    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${months || null}, ${depositorName || null}, 'pending', ${createdAt})
   `;
   
   return {
@@ -76,6 +94,8 @@ export async function addRequest(email: string, kakaoId?: string, phone?: string
     email,
     kakaoId,
     phone,
+    months,
+    depositorName,
     status: 'pending',
     createdAt,
     updatedAt: createdAt,
@@ -98,6 +118,8 @@ export async function updateRequestStatus(
       email,
       kakao_id as "kakaoId",
       phone,
+      months,
+      depositor_name as "depositorName",
       status,
       created_at as "createdAt"
   `;

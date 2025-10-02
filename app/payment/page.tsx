@@ -8,6 +8,7 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const [months, setMonths] = useState(1);
   const [email, setEmail] = useState('');
+  const [depositorName, setDepositorName] = useState('');
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -49,8 +50,37 @@ function PaymentContent() {
     alert('계좌번호가 복사되었습니다!');
   };
 
-  const handleComplete = () => {
-    setIsCompleted(true);
+  const handleComplete = async () => {
+    if (!depositorName.trim()) {
+      alert('입금자명을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 입금자명과 개월수를 포함하여 데이터 업데이트
+      const requestId = searchParams.get('requestId');
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          months,
+          depositorName,
+        }),
+      });
+
+      if (response.ok) {
+        setIsCompleted(true);
+      } else {
+        // 이미 신청한 경우에도 완료 처리
+        setIsCompleted(true);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   if (loading) {
@@ -264,6 +294,27 @@ function PaymentContent() {
           </div>
         </div>
 
+        {/* 입금자명 입력 */}
+        <div className="bg-white border-2 border-blue-300 rounded-xl p-6 mb-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            입금자명 입력 <span className="text-red-500">*</span>
+          </h3>
+          <input
+            type="text"
+            value={depositorName}
+            onChange={(e) => setDepositorName(e.target.value)}
+            placeholder="입금하실 때 사용할 이름을 입력해주세요"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            💡 입금 시 사용하실 이름과 동일하게 입력해주세요 (확인 시 사용됩니다)
+          </p>
+        </div>
+
         {/* 안내 사항 */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
@@ -273,7 +324,7 @@ function PaymentContent() {
             <div>
               <p className="text-sm font-semibold text-yellow-900 mb-2">입금 안내</p>
               <ul className="text-xs text-yellow-800 space-y-1">
-                <li>• 입금자명은 신청하신 이메일 또는 이름으로 해주세요</li>
+                <li>• 위에 입력하신 입금자명으로 입금해주세요</li>
                 <li>• 입금 확인 후 관리자가 입력하신 연락처로 안내드립니다</li>
                 <li>• 입금 후 24시간 이내에 프리미엄 초대가 완료됩니다</li>
                 <li>• 문의사항이 있으시면 연락처로 문의해주세요</li>

@@ -63,7 +63,7 @@ export default function Home() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              이메일 주소 <span className="text-red-500">*</span>
+              유튜브 이메일 주소 <span className="text-red-500">*</span>
             </label>
             <input
               type="email"

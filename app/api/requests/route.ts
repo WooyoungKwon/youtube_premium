@@ -4,7 +4,7 @@ import { addRequest } from '@/lib/storage';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, kakaoId, phone } = body;
+    const { email, kakaoId, phone, months, depositorName } = body;
     
     if (!email) {
       return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
     
-    const newRequest = await addRequest(email, kakaoId, phone);
+    const newRequest = await addRequest(email, kakaoId, phone, months, depositorName);
     
     return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {
