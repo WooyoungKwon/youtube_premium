@@ -57,15 +57,20 @@ function PaymentContent() {
     }
 
     try {
-      // 입금자명과 개월수를 포함하여 데이터 업데이트
+      // 입금자명과 개월수를 기존 신청에 업데이트
       const requestId = searchParams.get('requestId');
-      const response = await fetch('/api/requests', {
-        method: 'POST',
+      
+      if (!requestId) {
+        alert('요청 ID가 없습니다.');
+        return;
+      }
+
+      const response = await fetch(`/api/requests/${requestId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
           months,
           depositorName,
         }),
@@ -74,8 +79,7 @@ function PaymentContent() {
       if (response.ok) {
         setIsCompleted(true);
       } else {
-        // 이미 신청한 경우에도 완료 처리
-        setIsCompleted(true);
+        alert('업데이트에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error:', error);
