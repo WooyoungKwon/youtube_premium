@@ -63,7 +63,7 @@ export default function AllMembersPage() {
   const [members, setMembers] = useState<MemberWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingMember, setUpdatingMember] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('oldest');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
@@ -92,8 +92,18 @@ export default function AllMembersPage() {
       filtered = filtered.filter(member => member.depositStatus === statusFilter);
     }
     
-    // 결제일 기준 정렬
+    // 입금 상태별 우선순위와 결제일 기준 정렬
     return [...filtered].sort((a, b) => {
+      // 1. 입금 상태 우선순위 (pending > failed > completed)
+      const statusPriority = { pending: 3, failed: 2, completed: 1 };
+      const statusA = statusPriority[a.depositStatus as keyof typeof statusPriority] || 0;
+      const statusB = statusPriority[b.depositStatus as keyof typeof statusPriority] || 0;
+      
+      if (statusA !== statusB) {
+        return statusB - statusA; // 높은 우선순위가 먼저
+      }
+      
+      // 2. 같은 상태 내에서는 결제일 기준 정렬
       const dateA = new Date(a.paymentDate).getTime();
       const dateB = new Date(b.paymentDate).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
@@ -512,7 +522,7 @@ export default function AllMembersPage() {
 
       {/* 개월 수 선택 모달 */}
       {showMonthModal && selectedMember && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/20 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">결제 완료 처리</h3>
