@@ -668,7 +668,7 @@ export default function MembersPage() {
                   value={newAppleEmail}
                   onChange={(e) => setNewAppleEmail(e.target.value)}
                   placeholder="Apple 이메일*"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                 />
                 <div className="flex gap-2">
                   <button
@@ -785,14 +785,14 @@ export default function MembersPage() {
                       value={newYoutubeEmail}
                       onChange={(e) => setNewYoutubeEmail(e.target.value)}
                       placeholder="YouTube 이메일*"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                     />
                     <input
                       type="text"
                       value={newYoutubeNickname}
                       onChange={(e) => setNewYoutubeNickname(e.target.value)}
                       placeholder="닉네임 (선택사항)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                     />
                     <div className="flex gap-2">
                       <button
@@ -917,21 +917,21 @@ export default function MembersPage() {
                         value={newMemberNickname}
                         onChange={(e) => setNewMemberNickname(e.target.value)}
                         placeholder="닉네임*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                       />
                       <input
                         type="email"
                         value={newMemberEmail}
                         onChange={(e) => setNewMemberEmail(e.target.value)}
                         placeholder="이메일*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                       />
                       <input
                         type="text"
                         value={newMemberName}
                         onChange={(e) => setNewMemberName(e.target.value)}
                         placeholder="이름*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
@@ -939,14 +939,14 @@ export default function MembersPage() {
                           value={newJoinDate}
                           onChange={(e) => setNewJoinDate(e.target.value)}
                           placeholder="가입날짜"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                         />
                         <input
                           type="date"
                           value={newPaymentDate}
                           onChange={(e) => setNewPaymentDate(e.target.value)}
                           placeholder="결제일"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                         />
                       </div>
                       <div className="space-y-2">

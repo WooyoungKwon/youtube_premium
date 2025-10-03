@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMembersByYoutube, addMember, updateMemberDepositStatus, updateMember, deleteMember } from '@/lib/storage';
+import { getMembersByYoutube, addMember, updateMemberDepositStatus } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -47,28 +47,4 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
-  try {
-    const { id, nickname, email, name, joinDate, paymentDate, depositStatus } = await request.json();
-    await updateMember(id, nickname, email, name, joinDate, paymentDate, depositStatus);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Update member error:', error);
-    return NextResponse.json({ error: 'Failed to update member' }, { status: 500 });
-  }
-}
 
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
-    await deleteMember(id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Delete member error:', error);
-    return NextResponse.json({ error: 'Failed to delete member' }, { status: 500 });
-  }
-}
