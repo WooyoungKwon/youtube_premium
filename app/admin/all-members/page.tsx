@@ -62,6 +62,7 @@ export default function AllMembersPage() {
   // 데이터 상태
   const [members, setMembers] = useState<MemberWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingMember, setUpdatingMember] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -120,6 +121,45 @@ export default function AllMembersPage() {
       console.error('Failed to fetch all members:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 다음 상태 결정 함수
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case 'pending':
+        return 'completed';
+      case 'completed':
+        return 'failed';
+      case 'failed':
+        return 'pending';
+      default:
+        return 'pending';
+    }
+  };
+
+  // 상태 변경 함수
+  const handleUpdateMemberStatus = async (memberId: string, newStatus: string) => {
+    try {
+      setUpdatingMember(memberId);
+      const res = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: memberId, depositStatus: newStatus }),
+      });
+      
+      if (res.ok) {
+        // 성공 시 목록 새로고침
+        await fetchAllMembers();
+      } else {
+        console.error('Failed to update member status');
+        alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setUpdatingMember(null);
     }
   };
 
@@ -323,6 +363,9 @@ export default function AllMembersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       입금 상태
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      작업
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -364,6 +407,36 @@ export default function AllMembersPage() {
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusStyle(member.depositStatus)}`}>
                           {getStatusText(member.depositStatus)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleUpdateMemberStatus(member.id, getNextStatus(member.depositStatus))}
+                          disabled={updatingMember === member.id}
+                          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                            updatingMember === member.id
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : member.depositStatus === 'pending'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : member.depositStatus === 'completed'
+                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          }`}
+                        >
+                          {updatingMember === member.id ? (
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              처리중...
+                            </span>
+                          ) : (
+                            <>
+                              {member.depositStatus === 'pending' && '완료로 변경'}
+                              {member.depositStatus === 'completed' && '실패로 변경'}
+                              {member.depositStatus === 'failed' && '대기로 변경'}
+                            </>
+                          )}
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -185,7 +185,7 @@ export default function AdminPage() {
           <div className="mt-6 text-center">
             <a
               href="/"
-              className="text-sm text-gray-500 hover:text-gray-700 transition flex items-center justify-center gap-2"
+              className="text-sm text-gray-700 hover:text-gray-900 transition flex items-center justify-center gap-2 font-medium"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -248,7 +248,7 @@ export default function AdminPage() {
               </button>
               <a
                 href="/"
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2"
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-gray-700 hover:text-gray-900"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
