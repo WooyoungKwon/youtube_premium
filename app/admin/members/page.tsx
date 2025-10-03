@@ -31,7 +31,26 @@ interface Member {
 
 type SortOrder = 'oldest' | 'newest';
 
+// 날짜 포맷팅 함수 (시간 제거, 날짜만 표시)
+const formatDateOnly = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ko-KR');
+};
+
+// input date 형식으로 변환 (YYYY-MM-DD)
+const formatDateForInput = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0];
+};
+
 export default function MembersPage() {
+  // 인증 상태
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  
   // 데이터 상태
   const [appleAccounts, setAppleAccounts] = useState<AppleAccount[]>([]);
   const [youtubeAccounts, setYoutubeAccounts] = useState<YoutubeAccount[]>([]);
@@ -93,8 +112,50 @@ export default function MembersPage() {
   }, [members, memberSortOrder]);
 
   useEffect(() => {
-    fetchAppleAccounts();
+    // 세션 스토리지에서 인증 상태 확인
+    const authenticated = sessionStorage.getItem('adminAuthenticated');
+    if (authenticated === 'true') {
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAppleAccounts();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+
+    try {
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        sessionStorage.setItem('adminAuthenticated', 'true');
+        setIsAuthenticated(true);
+        setPassword('');
+      } else {
+        setAuthError('비밀번호가 올바르지 않습니다.');
+      }
+    } catch (error) {
+      setAuthError('로그인 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('adminAuthenticated');
+    setIsAuthenticated(false);
+    setPassword('');
+    setAuthError('');
+  };
 
   // API 호출 함수들
   const fetchAppleAccounts = async () => {
@@ -346,8 +407,8 @@ export default function MembersPage() {
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(member.joinDate);
-    setNewPaymentDate(member.paymentDate);
+    setNewJoinDate(formatDateForInput(member.joinDate));
+    setNewPaymentDate(formatDateForInput(member.paymentDate));
     setNewDepositStatus(member.depositStatus);
     setShowAddMember(true);
   };
@@ -485,6 +546,64 @@ export default function MembersPage() {
     }
   };
 
+  // 인증되지 않은 경우 로그인 폼 표시
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              회원 관리 - 관리자 로그인
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              관리자 비밀번호를 입력하세요
+            </p>
+          </div>
+          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                비밀번호
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="관리자 비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            {authError && (
+              <div className="text-red-600 text-sm text-center">{authError}</div>
+            )}
+
+            <div>
+              <button
+                type="submit"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                로그인
+              </button>
+            </div>
+
+            <div className="text-center">
+              <a
+                href="/admin"
+                className="text-indigo-600 hover:text-indigo-500 text-sm"
+              >
+                ← 관리자 대시보드로 돌아가기
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
@@ -500,6 +619,12 @@ export default function MembersPage() {
               </a>
               <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
             </div>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       </div>
@@ -900,10 +1025,10 @@ export default function MembersPage() {
                             </p>
                             <div className="flex gap-2 mt-1">
                               <span className="text-xs text-gray-500">
-                                가입: {member.joinDate}
+                                가입: {formatDateOnly(member.joinDate)}
                               </span>
                               <span className="text-xs text-gray-500">
-                                결제: {member.paymentDate}
+                                결제: {formatDateOnly(member.paymentDate)}
                               </span>
                             </div>
                             <button
