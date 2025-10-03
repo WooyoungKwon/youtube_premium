@@ -415,3 +415,41 @@ export async function deleteRequest(id: string): Promise<void> {
     WHERE id = ${id}
   `;
 }
+
+// 모든 회원을 Apple, YouTube 계정 정보와 함께 조회
+export async function getAllMembersWithDetails() {
+  await initDatabase();
+  
+  const { rows } = await sql`
+    SELECT 
+      m.id,
+      m.nickname,
+      m.email,
+      m.name,
+      m.join_date,
+      m.payment_date,
+      m.deposit_status,
+      m.created_at,
+      y.youtube_email,
+      y.nickname as youtube_nickname,
+      a.apple_email
+    FROM members m
+    LEFT JOIN youtube_accounts y ON m.youtube_account_id = y.id
+    LEFT JOIN apple_accounts a ON y.apple_account_id = a.id
+    ORDER BY m.payment_date DESC, m.created_at DESC
+  `;
+  
+  return rows.map(row => ({
+    id: row.id,
+    nickname: row.nickname,
+    email: row.email,
+    name: row.name,
+    joinDate: row.join_date,
+    paymentDate: row.payment_date,
+    depositStatus: row.deposit_status,
+    createdAt: row.created_at.toISOString(),
+    youtubeEmail: row.youtube_email,
+    youtubeNickname: row.youtube_nickname,
+    appleEmail: row.apple_email,
+  }));
+}
