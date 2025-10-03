@@ -10,11 +10,6 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<MemberRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  
-  // 월 갱신 관련 상태
-  const [monthlyUpdateLoading, setMonthlyUpdateLoading] = useState(false);
-  const [updateCandidates, setUpdateCandidates] = useState<any[]>([]);
-  const [showUpdatePreview, setShowUpdatePreview] = useState(false);
 
   useEffect(() => {
     // 세션 스토리지에서 인증 상태 확인
@@ -75,49 +70,6 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to delete request:', error);
-    }
-  };
-
-  // 월 갱신 미리보기 함수
-  const fetchUpdateCandidates = async () => {
-    try {
-      const response = await fetch('/api/admin/monthly-update');
-      if (response.ok) {
-        const data = await response.json();
-        setUpdateCandidates(data.candidateMembers || []);
-        setShowUpdatePreview(true);
-      }
-    } catch (error) {
-      console.error('Failed to fetch update candidates:', error);
-    }
-  };
-
-  // 월 갱신 실행 함수
-  const executeMonthlyUpdate = async () => {
-    if (!confirm('정말로 월 갱신을 실행하시겠습니까?\n결제일이 지난 회원들의 정보가 업데이트됩니다.')) {
-      return;
-    }
-
-    try {
-      setMonthlyUpdateLoading(true);
-      const response = await fetch('/api/admin/monthly-update', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        alert(`월 갱신이 완료되었습니다.\n업데이트된 회원 수: ${result.updatedCount}명`);
-        setShowUpdatePreview(false);
-        setUpdateCandidates([]);
-      } else {
-        const error = await response.json();
-        alert(`월 갱신 실패: ${error.error}`);
-      }
-    } catch (error) {
-      console.error('Monthly update error:', error);
-      alert('월 갱신 중 오류가 발생했습니다.');
-    } finally {
-      setMonthlyUpdateLoading(false);
     }
   };
 
@@ -275,15 +227,6 @@ export default function AdminPage() {
                 </svg>
                 전체 회원 목록
               </a>
-              <button
-                onClick={fetchUpdateCandidates}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                월 갱신
-              </button>
               <a
                 href="/api/admin/export"
                 download
@@ -454,91 +397,6 @@ export default function AdminPage() {
           )}
         </div>
       </div>
-
-      {/* 월 갱신 미리보기 모달 */}
-      {showUpdatePreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-96 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">월 갱신 대상 회원</h3>
-              <button
-                onClick={() => setShowUpdatePreview(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {updateCandidates.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">월 갱신이 필요한 회원이 없습니다.</p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600">
-                    총 <span className="font-semibold text-orange-600">{updateCandidates.length}명</span>의 회원이 월 갱신 대상입니다.
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    결제일이 지난 회원들의 결제일이 다음 달로 업데이트되고 입금 상태가 '대기'로 변경됩니다.
-                  </p>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">닉네임</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">이메일</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">현재 결제일</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">현재 상태</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {updateCandidates.map((member) => (
-                        <tr key={member.id}>
-                          <td className="px-4 py-2 text-sm text-gray-900">{member.nickname}</td>
-                          <td className="px-4 py-2 text-sm text-gray-600">{member.email}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {new Date(member.payment_date).toLocaleDateString('ko-KR')}
-                          </td>
-                          <td className="px-4 py-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              member.deposit_status === 'pending' 
-                                ? 'bg-yellow-100 text-yellow-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {member.deposit_status === 'pending' ? '대기' : '실패'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    onClick={() => setShowUpdatePreview(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={executeMonthlyUpdate}
-                    disabled={monthlyUpdateLoading}
-                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
-                  >
-                    {monthlyUpdateLoading ? '처리 중...' : '월 갱신 실행'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

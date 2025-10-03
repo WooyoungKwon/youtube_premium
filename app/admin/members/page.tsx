@@ -75,6 +75,11 @@ export default function MembersPage() {
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   
+  // 개월 수 선택 모달 상태
+  const [showMonthModal, setShowMonthModal] = useState(false);
+  const [selectedMemberForPayment, setSelectedMemberForPayment] = useState<Member | null>(null);
+  const [selectedMonths, setSelectedMonths] = useState(1);
+  
   // 폼 입력 상태
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');

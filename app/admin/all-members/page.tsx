@@ -66,6 +66,11 @@ export default function AllMembersPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // 개월 수 선택 모달 상태
+  const [showMonthModal, setShowMonthModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MemberWithDetails | null>(null);
+  const [selectedMonths, setSelectedMonths] = useState(1);
 
   // 정렬된 회원 목록
   const sortedAndFilteredMembers = useMemo(() => {
@@ -138,7 +143,7 @@ export default function AllMembersPage() {
     }
   };
 
-  // 상태 변경 함수
+  // 상태 변경 함수 (완료가 아닌 경우)
   const handleUpdateMemberStatus = async (memberId: string, newStatus: string) => {
     try {
       setUpdatingMember(memberId);
@@ -151,6 +156,46 @@ export default function AllMembersPage() {
       if (res.ok) {
         // 성공 시 목록 새로고침
         await fetchAllMembers();
+      } else {
+        console.error('Failed to update member status');
+        alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setUpdatingMember(null);
+    }
+  };
+
+  // 완료 상태로 변경 시 개월 수 선택 모달 열기
+  const handleCompletePayment = (member: MemberWithDetails) => {
+    setSelectedMember(member);
+    setSelectedMonths(1);
+    setShowMonthModal(true);
+  };
+
+  // 개월 수 선택 완료 후 결제일 업데이트
+  const handleConfirmPayment = async () => {
+    if (!selectedMember) return;
+
+    try {
+      setUpdatingMember(selectedMember.id);
+      const res = await fetch('/api/admin/members', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: selectedMember.id, 
+          depositStatus: 'completed',
+          months: selectedMonths 
+        }),
+      });
+      
+      if (res.ok) {
+        // 성공 시 목록 새로고침
+        await fetchAllMembers();
+        setShowMonthModal(false);
+        setSelectedMember(null);
       } else {
         console.error('Failed to update member status');
         alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
@@ -410,7 +455,14 @@ export default function AllMembersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => handleUpdateMemberStatus(member.id, getNextStatus(member.depositStatus))}
+                          onClick={() => {
+                            const nextStatus = getNextStatus(member.depositStatus);
+                            if (nextStatus === 'completed') {
+                              handleCompletePayment(member);
+                            } else {
+                              handleUpdateMemberStatus(member.id, nextStatus);
+                            }
+                          }}
                           disabled={updatingMember === member.id}
                           className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                             updatingMember === member.id
@@ -457,6 +509,76 @@ export default function AllMembersPage() {
           )}
         </div>
       </div>
+
+      {/* 개월 수 선택 모달 */}
+      {showMonthModal && selectedMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">결제 완료 처리</h3>
+              <button
+                onClick={() => setShowMonthModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                <span className="font-medium">{selectedMember.nickname}</span>님의 결제를 완료 처리합니다.
+              </p>
+              <p className="text-xs text-gray-500">
+                현재 결제일: {formatDateOnly(selectedMember.paymentDate)}
+              </p>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                결제한 개월 수를 선택하세요
+              </label>
+              <select
+                value={selectedMonths}
+                onChange={(e) => setSelectedMonths(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(month => (
+                  <option key={month} value={month}>
+                    {month}개월
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedMonths}개월 선택 시 결제일이 {
+                  (() => {
+                    const newDate = new Date(selectedMember.paymentDate);
+                    newDate.setMonth(newDate.getMonth() + selectedMonths);
+                    return formatDateOnly(newDate.toISOString());
+                  })()
+                }로 변경됩니다.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowMonthModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                disabled={updatingMember === selectedMember.id}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+              >
+                {updatingMember === selectedMember.id ? '처리 중...' : '완료 처리'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
