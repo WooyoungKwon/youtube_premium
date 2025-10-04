@@ -208,7 +208,6 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
         youtube_email as "youtubeEmail",
         nickname,
         renewal_date as "renewalDate",
-        remaining_credit as "remainingCredit",
         created_at as "createdAt"
       FROM youtube_accounts
       WHERE apple_account_id = ${appleAccountId}
@@ -221,24 +220,23 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
   }
 }
 
-export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string, remainingCredit?: number) {
+export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
   await initDatabase();
   const id = Date.now().toString();
   await sql`
-    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, remaining_credit, created_at)
-    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, ${remainingCredit || 0}, CURRENT_TIMESTAMP)
+    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, created_at)
+    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, CURRENT_TIMESTAMP)
   `;
-  return { id, appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit: remainingCredit || 0 };
+  return { id, appleAccountId, youtubeEmail, nickname, renewalDate };
 }
 
-export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string, remainingCredit?: number) {
+export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
   await sql`
     UPDATE youtube_accounts
     SET 
       youtube_email = ${youtubeEmail},
       nickname = ${nickname || null},
-      renewal_date = ${renewalDate || null},
-      remaining_credit = ${remainingCredit || 0}
+      renewal_date = ${renewalDate || null}
     WHERE id = ${id}
   `;
 }

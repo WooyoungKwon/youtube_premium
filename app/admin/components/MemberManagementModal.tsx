@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 interface AppleAccount {
   id: string;
   appleEmail: string;
+  remainingCredit?: number;
   createdAt: string;
 }
 
@@ -13,7 +14,6 @@ interface YoutubeAccount {
   appleAccountId: string;
   youtubeEmail: string;
   nickname?: string;
-  remainingCredit?: number;
   createdAt: string;
 }
 
@@ -46,6 +46,7 @@ function AppleItem({ account, onSelect, onEdit, onDelete }: {
     >
       <div className="flex-1" onClick={onSelect}>
         <p className="text-gray-900 font-medium">{account.appleEmail}</p>
+        <p className="text-sm text-orange-600 font-medium">잔여 크레딧: {account.remainingCredit || 0} 루피</p>
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
       </div>
       <div className="flex gap-2">
@@ -90,7 +91,6 @@ function YoutubeItem({ account, onSelect, onEdit, onDelete, isSelected }: {
       <div className="flex-1" onClick={onSelect}>
         <p className="text-gray-900 font-medium">{account.youtubeEmail}</p>
         {account.nickname && <p className="text-sm text-blue-600 font-medium">닉네임: {account.nickname}</p>}
-        <p className="text-sm text-green-600 font-medium">남은 크레딧: {account.remainingCredit || 0}/6</p>
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
       </div>
       <div className="flex gap-2">
@@ -182,9 +182,9 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [newAppleEmail, setNewAppleEmail] = useState('');
+  const [newAppleCredit, setNewAppleCredit] = useState(0);
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
-  const [newYoutubeCredit, setNewYoutubeCredit] = useState(0);
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
@@ -361,14 +361,12 @@ export default function MemberManagementModal({ isOpen, onClose }: {
           appleAccountId: selectedApple.id,
           youtubeEmail: newYoutubeEmail,
           nickname: newYoutubeNickname,
-          remainingCredit: newYoutubeCredit,
         }),
       });
       
       if (res.ok) {
         setNewYoutubeEmail('');
         setNewYoutubeNickname('');
-        setNewYoutubeCredit(0);
         setShowAddYoutube(false);
         await fetchYoutubeAccounts(selectedApple.id);
       }
@@ -381,7 +379,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setEditingYoutube(youtube);
     setNewYoutubeEmail(youtube.youtubeEmail);
     setNewYoutubeNickname(youtube.nickname || '');
-    setNewYoutubeCredit(youtube.remainingCredit || 0);
     setShowAddYoutube(true);
   };
 
@@ -395,7 +392,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         body: JSON.stringify({
           youtubeEmail: newYoutubeEmail,
           nickname: newYoutubeNickname,
-          remainingCredit: newYoutubeCredit,
         }),
       });
       
@@ -403,7 +399,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setEditingYoutube(null);
         setNewYoutubeEmail('');
         setNewYoutubeNickname('');
-        setNewYoutubeCredit(0);
         setShowAddYoutube(false);
         if (selectedApple) {
           await fetchYoutubeAccounts(selectedApple.id);
@@ -549,7 +544,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       setEditingYoutube(null);
       setNewYoutubeEmail('');
       setNewYoutubeNickname('');
-      setNewYoutubeCredit(0);
       setShowAddYoutube(false);
     }
     if (editingMember) {
@@ -724,15 +718,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     value={newYoutubeNickname}
                     onChange={(e) => setNewYoutubeNickname(e.target.value)}
                     placeholder="닉네임 (선택사항)"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
-                  />
-                  <input
-                    type="number"
-                    value={newYoutubeCredit}
-                    onChange={(e) => setNewYoutubeCredit(parseInt(e.target.value) || 0)}
-                    placeholder="남은 크레딧 (0-6)"
-                    min="0"
-                    max="6"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="flex gap-2">

@@ -18,8 +18,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit } = await request.json();
-    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit);
+    const { appleAccountId, youtubeEmail, nickname, renewalDate } = await request.json();
+    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname, renewalDate);
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add youtube account error:', error);
