@@ -33,8 +33,20 @@ export async function POST(request: Request) {
     }
 
     // 날짜 계산: 신청일 + 개월수 (한국 시간 기준)
+    console.log('Request data:', {
+      created_at: requestData.created_at,
+      months: requestData.months,
+      depositor_name: requestData.depositor_name,
+      email: requestData.email
+    });
+
     const createdDateStr = toDateString(requestData.created_at);
     const paymentDateStr = addMonthsKST(createdDateStr, requestData.months || 1);
+
+    console.log('Calculated dates:', {
+      createdDateStr,
+      paymentDateStr
+    });
 
     // 회원 등록
     const member = await addMember(
@@ -47,6 +59,8 @@ export async function POST(request: Request) {
       'completed', // 입금 완료 상태
       requestId // 신청 ID 연결
     );
+
+    console.log('Member created successfully:', member);
 
     return NextResponse.json({ 
       success: true, 

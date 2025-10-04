@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { MemberRequest } from '@/types';
 import RegisterMemberModal from './components/RegisterMemberModal';
 
+interface AdminStats {
+  totalMembers: number;
+  monthlyRevenue: number;
+  cumulativeRevenue: number;
+  pricePerMember: number;
+}
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -13,6 +20,7 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
+  const [revenueStats, setRevenueStats] = useState<AdminStats | null>(null);
 
   useEffect(() => {
     // 세션 스토리지에서 인증 상태 확인
@@ -25,6 +33,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchRequests();
+      fetchStats();
     }
   }, [isAuthenticated]);
 
@@ -39,6 +48,18 @@ export default function AdminPage() {
       console.error('Failed to fetch requests:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setRevenueStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
     }
   };
 
@@ -84,6 +105,7 @@ export default function AdminPage() {
   const handleRegisterSuccess = () => {
     alert('회원 등록이 완료되었습니다.');
     fetchRequests();
+    fetchStats(); // 수익 통계도 새로고침
   };
 
   const filteredRequests = requests.filter(req => {
@@ -109,7 +131,7 @@ export default function AdminPage() {
     );
   };
 
-  const stats = {
+  const requestStats = {
     total: requests.length,
     pending: requests.filter(r => r.status === 'pending').length,
     approved: requests.filter(r => r.status === 'approved').length,
@@ -271,25 +293,82 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Request Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="text-sm text-gray-600">전체 신청</div>
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+              <div className="text-2xl font-bold text-gray-900">{requestStats.total}</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-yellow-200">
               <div className="text-sm text-yellow-600">대기중</div>
-              <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>
+              <div className="text-2xl font-bold text-yellow-700">{requestStats.pending}</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-green-200">
               <div className="text-sm text-green-600">승인됨</div>
-              <div className="text-2xl font-bold text-green-700">{stats.approved}</div>
+              <div className="text-2xl font-bold text-green-700">{requestStats.approved}</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-red-200">
               <div className="text-sm text-red-600">거부됨</div>
-              <div className="text-2xl font-bold text-red-700">{stats.rejected}</div>
+              <div className="text-2xl font-bold text-red-700">{requestStats.rejected}</div>
             </div>
           </div>
+
+          {/* Revenue Stats */}
+          {revenueStats && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border-2 border-blue-300 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-blue-700 mb-1">총 회원 수</div>
+                    <div className="text-3xl font-bold text-blue-900">{revenueStats.totalMembers}명</div>
+                  </div>
+                  <div className="bg-blue-200 p-3 rounded-full">
+                    <svg className="w-8 h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-lg border-2 border-green-300 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-green-700 mb-1">월 수익</div>
+                    <div className="text-3xl font-bold text-green-900">
+                      {revenueStats.monthlyRevenue.toLocaleString()}원
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                      {revenueStats.pricePerMember.toLocaleString()}원 × {revenueStats.totalMembers}명
+                    </div>
+                  </div>
+                  <div className="bg-green-200 p-3 rounded-full">
+                    <svg className="w-8 h-8 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg border-2 border-purple-300 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-purple-700 mb-1">누적 수익 (10월~)</div>
+                    <div className="text-3xl font-bold text-purple-900">
+                      {revenueStats.cumulativeRevenue.toLocaleString()}원
+                    </div>
+                    <div className="text-xs text-purple-600 mt-1">
+                      2025년 10월부터 누적
+                    </div>
+                  </div>
+                  <div className="bg-purple-200 p-3 rounded-full">
+                    <svg className="w-8 h-8 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filters */}

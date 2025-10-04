@@ -314,21 +314,47 @@ export async function addMember(
   await initDatabase();
   const id = Date.now().toString();
   
+  console.log('addMember called with:', {
+    youtubeAccountId,
+    nickname,
+    email,
+    name,
+    lastPaymentDate,
+    paymentDate,
+    depositStatus,
+    requestId
+  });
+
   // 날짜는 이미 YYYY-MM-DD 형식으로 전달되어야 함 (호출하는 쪽에서 처리)
   const validLastPaymentDate = lastPaymentDate;
   const validPaymentDate = paymentDate;
+
+  // 날짜 형식 검증
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validLastPaymentDate)) {
+    throw new Error(`Invalid lastPaymentDate format: ${validLastPaymentDate}. Expected YYYY-MM-DD`);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validPaymentDate)) {
+    throw new Error(`Invalid paymentDate format: ${validPaymentDate}. Expected YYYY-MM-DD`);
+  }
   
-  await sql`
-    INSERT INTO members (
-      id, youtube_account_id, request_id, nickname, email, name,
-      last_payment_date, payment_date, deposit_status, created_at
-    )
-    VALUES (
-      ${id}, ${youtubeAccountId}, ${requestId || null}, ${nickname},
-      ${email}, ${name}, ${validLastPaymentDate}::date, ${validPaymentDate}::date, ${depositStatus},
-      CURRENT_TIMESTAMP
-    )
-  `;
+  try {
+    await sql`
+      INSERT INTO members (
+        id, youtube_account_id, request_id, nickname, email, name,
+        last_payment_date, payment_date, deposit_status, created_at
+      )
+      VALUES (
+        ${id}, ${youtubeAccountId}, ${requestId || null}, ${nickname},
+        ${email}, ${name}, ${validLastPaymentDate}::date, ${validPaymentDate}::date, ${depositStatus},
+        CURRENT_TIMESTAMP
+      )
+    `;
+    console.log('Member inserted successfully with id:', id);
+  } catch (error) {
+    console.error('SQL Insert Error:', error);
+    throw error;
+  }
+  
   return { id, youtubeAccountId, nickname, email, name, lastPaymentDate: validLastPaymentDate, paymentDate: validPaymentDate, depositStatus };
 }
 
