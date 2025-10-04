@@ -521,21 +521,17 @@ export default function MembersPage() {
     }
   };
 
-  // 상태 순환 함수 (pending → completed → failed → pending)
-  const getNextStatus = (currentStatus: string) => {
+  // 상태 순환 함수 (pending → completed → pending)
+  const cycleStatus = (currentStatus: string) => {
     switch (currentStatus) {
       case 'pending':
         return 'completed';
       case 'completed':
-        return 'failed';
-      case 'failed':
         return 'pending';
       default:
         return 'pending';
     }
-  };
-
-  // 상태에 따른 버튼 스타일
+  };  // 상태에 따른 버튼 스타일
   const getStatusButtonStyle = (status: string) => {
     switch (status) {
       case 'pending':
@@ -1142,7 +1138,7 @@ export default function MembersPage() {
                               </span>
                             </div>
                             <button
-                              onClick={() => handleUpdateMemberStatus(member.id, getNextStatus(member.depositStatus))}
+                              onClick={() => handleUpdateMemberStatus(member.id, cycleStatus(member.depositStatus))}
                               className={`mt-2 text-xs px-3 py-1 rounded transition-colors ${getStatusButtonStyle(member.depositStatus)}`}
                             >
                               {getStatusText(member.depositStatus)}

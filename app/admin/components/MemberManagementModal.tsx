@@ -181,7 +181,6 @@ function MemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
         >
           <option value="pending">대기</option>
           <option value="completed">완료</option>
-          <option value="failed">실패</option>
         </select>
       </td>
       <td className="px-4 py-3">
@@ -948,7 +947,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     >
                       <option value="pending">대기</option>
                       <option value="completed">완료</option>
-                      <option value="failed">실패</option>
                     </select>
                   </div>
                   <div className="flex gap-2">

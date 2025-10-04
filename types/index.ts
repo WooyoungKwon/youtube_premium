@@ -49,6 +49,6 @@ export interface Member {
   name: string;
   joinDate: string;
   paymentDate: string; // 다음 결제 예정일 (월 구독 갱신일)
-  depositStatus: string;
+  depositStatus: 'completed' | 'pending';
   createdAt: string;
 }

@@ -32,8 +32,6 @@ const getStatusStyle = (status: string) => {
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     case 'completed':
       return 'bg-green-100 text-green-800 border-green-200';
-    case 'failed':
-      return 'bg-red-100 text-red-800 border-red-200';
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
@@ -46,8 +44,6 @@ const getStatusText = (status: string) => {
       return '대기';
     case 'completed':
       return '완료';
-    case 'failed':
-      return '실패';
     default:
       return '대기';
   }
@@ -71,6 +67,10 @@ export default function AllMembersPage() {
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithDetails | null>(null);
   const [selectedMonths, setSelectedMonths] = useState(1);
+  
+  // 회원 정보 수정 모달 상태
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMember, setEditingMember] = useState<MemberWithDetails | null>(null);
 
   // 정렬된 회원 목록
   const sortedAndFilteredMembers = useMemo(() => {
@@ -94,12 +94,10 @@ export default function AllMembersPage() {
     
     // 입금 상태별 우선순위와 결제일 기준 정렬
     return [...filtered].sort((a, b) => {
-      // 1. 입금 상태 우선순위 (pending > failed > completed)
-      const statusPriority = { pending: 3, failed: 2, completed: 1 };
-      const statusA = statusPriority[a.depositStatus as keyof typeof statusPriority] || 0;
-      const statusB = statusPriority[b.depositStatus as keyof typeof statusPriority] || 0;
-      
-      if (statusA !== statusB) {
+    // 1. 입금 상태 우선순위 (pending > completed)
+    const statusPriority = { pending: 2, completed: 1 };
+    const statusA = statusPriority[a.depositStatus as keyof typeof statusPriority] || 0;
+    const statusB = statusPriority[b.depositStatus as keyof typeof statusPriority] || 0;      if (statusA !== statusB) {
         return statusB - statusA; // 높은 우선순위가 먼저
       }
       
@@ -139,14 +137,12 @@ export default function AllMembersPage() {
     }
   };
 
-  // 다음 상태 결정 함수
+  // 다음 상태 결정 함수 (pending ↔ completed)
   const getNextStatus = (currentStatus: string) => {
     switch (currentStatus) {
       case 'pending':
         return 'completed';
       case 'completed':
-        return 'failed';
-      case 'failed':
         return 'pending';
       default:
         return 'pending';
@@ -183,6 +179,44 @@ export default function AllMembersPage() {
     setSelectedMember(member);
     setSelectedMonths(1);
     setShowMonthModal(true);
+  };
+
+  // 회원 정보 수정 모달 열기
+  const handleEditMember = (member: MemberWithDetails) => {
+    setEditingMember(member);
+    setShowEditModal(true);
+  };
+
+  // 회원 정보 수정
+  const handleUpdateMember = async () => {
+    if (!editingMember) return;
+
+    try {
+      const res = await fetch(`/api/admin/members/${editingMember.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: editingMember.nickname,
+          email: editingMember.email,
+          name: editingMember.name,
+          joinDate: editingMember.joinDate,
+          paymentDate: editingMember.paymentDate,
+          depositStatus: editingMember.depositStatus,
+        }),
+      });
+
+      if (res.ok) {
+        await fetchAllMembers();
+        setShowEditModal(false);
+        setEditingMember(null);
+        alert('회원 정보가 수정되었습니다.');
+      } else {
+        alert('회원 정보 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating member:', error);
+      alert('오류가 발생했습니다.');
+    }
   };
 
   // 개월 수 선택 완료 후 결제일 업데이트
@@ -464,41 +498,46 @@ export default function AllMembersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            const nextStatus = getNextStatus(member.depositStatus);
-                            if (nextStatus === 'completed') {
-                              handleCompletePayment(member);
-                            } else {
-                              handleUpdateMemberStatus(member.id, nextStatus);
-                            }
-                          }}
-                          disabled={updatingMember === member.id}
-                          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                            updatingMember === member.id
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              : member.depositStatus === 'pending'
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : member.depositStatus === 'completed'
-                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          }`}
-                        >
-                          {updatingMember === member.id ? (
-                            <span className="flex items-center gap-1">
-                              <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                              처리중...
-                            </span>
-                          ) : (
-                            <>
-                              {member.depositStatus === 'pending' && '완료로 변경'}
-                              {member.depositStatus === 'completed' && '실패로 변경'}
-                              {member.depositStatus === 'failed' && '대기로 변경'}
-                            </>
-                          )}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditMember(member)}
+                            className="px-3 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => {
+                              const nextStatus = getNextStatus(member.depositStatus);
+                              if (nextStatus === 'completed') {
+                                handleCompletePayment(member);
+                              } else {
+                                handleUpdateMemberStatus(member.id, nextStatus);
+                              }
+                            }}
+                            disabled={updatingMember === member.id}
+                            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                              updatingMember === member.id
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : member.depositStatus === 'pending'
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            }`}
+                          >
+                            {updatingMember === member.id ? (
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                처리중...
+                              </span>
+                            ) : (
+                              <>
+                                {member.depositStatus === 'pending' && '완료'}
+                                {member.depositStatus === 'completed' && '대기'}
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -563,9 +602,11 @@ export default function AllMembersPage() {
               <p className="text-xs text-gray-500 mt-1">
                 {selectedMonths}개월 선택 시 다음 결제일이 {
                   (() => {
-                    const newDate = new Date(selectedMember.paymentDate);
+                    // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
+                    const [year, month, day] = selectedMember.paymentDate.split('-').map(Number);
+                    const newDate = new Date(year, month - 1, day);
                     newDate.setMonth(newDate.getMonth() + selectedMonths);
-                    return formatDateOnly(newDate.toISOString());
+                    return formatDateOnly(newDate.toISOString().split('T')[0]);
                   })()
                 }로 변경됩니다.
               </p>
@@ -584,6 +625,97 @@ export default function AllMembersPage() {
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
               >
                 {updatingMember === selectedMember.id ? '처리 중...' : '완료 처리'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 정보 수정 모달 */}
+      {showEditModal && editingMember && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-white/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">회원 정보 수정</h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingMember(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">닉네임</label>
+                <input
+                  type="text"
+                  value={editingMember.nickname}
+                  onChange={(e) => setEditingMember({...editingMember, nickname: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                <input
+                  type="email"
+                  value={editingMember.email}
+                  onChange={(e) => setEditingMember({...editingMember, email: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                <input
+                  type="text"
+                  value={editingMember.name}
+                  onChange={(e) => setEditingMember({...editingMember, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">다음 결제일</label>
+                <input
+                  type="date"
+                  value={editingMember.paymentDate}
+                  onChange={(e) => setEditingMember({...editingMember, paymentDate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                />
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-xs text-gray-600">
+                  <span className="font-medium">Apple 계정:</span> {editingMember.appleEmail}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  <span className="font-medium">YouTube 계정:</span> {editingMember.youtubeEmail}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingMember(null);
+                }}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleUpdateMember}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                저장
               </button>
             </div>
           </div>

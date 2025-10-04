@@ -52,24 +52,29 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
       }
       
-      const currentPaymentDate = new Date(memberRows[0].payment_date);
+      // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
+      const paymentDateStr = memberRows[0].payment_date;
+      const [year, month, day] = paymentDateStr.split('-').map(Number);
+      const currentPaymentDate = new Date(year, month - 1, day);
       
       // 개월 수만큼 결제일 증가
-      const newPaymentDate = new Date(currentPaymentDate);
-      newPaymentDate.setMonth(newPaymentDate.getMonth() + months);
+      currentPaymentDate.setMonth(currentPaymentDate.getMonth() + months);
+      
+      // YYYY-MM-DD 형식으로 변환
+      const newPaymentDateStr = currentPaymentDate.toISOString().split('T')[0];
       
       // 상태와 결제일 동시 업데이트
       await sql`
         UPDATE members 
         SET 
           deposit_status = ${depositStatus},
-          payment_date = ${newPaymentDate.toISOString().split('T')[0]}
+          payment_date = ${newPaymentDateStr}
         WHERE id = ${id}
       `;
       
       return NextResponse.json({ 
         success: true, 
-        newPaymentDate: newPaymentDate.toISOString().split('T')[0],
+        newPaymentDate: newPaymentDateStr,
         months: months
       });
     } else {
