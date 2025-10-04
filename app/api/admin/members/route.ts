@@ -19,7 +19,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { youtubeAccountId, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, requestId } = await request.json();
+    const body = await request.json();
+    console.log('POST /api/admin/members - Request body:', body);
+    
+    const { youtubeAccountId, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, requestId } = body;
+    
+    console.log('Calling addMember with:', {
+      youtubeAccountId,
+      nickname,
+      email,
+      name,
+      lastPaymentDate,
+      paymentDate,
+      depositStatus,
+      requestId
+    });
+    
     const member = await addMember(
       youtubeAccountId,
       nickname,
@@ -30,10 +45,17 @@ export async function POST(request: Request) {
       depositStatus,
       requestId
     );
+    
+    console.log('Member added successfully:', member);
     return NextResponse.json(member);
   } catch (error) {
     console.error('Add member error:', error);
-    return NextResponse.json({ error: 'Failed to add member' }, { status: 500 });
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    return NextResponse.json({ 
+      error: 'Failed to add member',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
 
