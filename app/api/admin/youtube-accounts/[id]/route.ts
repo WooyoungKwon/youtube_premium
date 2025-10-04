@@ -3,11 +3,12 @@ import { updateYoutubeAccount, deleteYoutubeAccount } from '@/lib/storage';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { youtubeEmail, nickname, renewalDate } = await request.json();
-    await updateYoutubeAccount(params.id, youtubeEmail, nickname, renewalDate);
+    await updateYoutubeAccount(id, youtubeEmail, nickname, renewalDate);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update youtube account error:', error);
@@ -17,10 +18,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteYoutubeAccount(params.id);
+    const { id } = await params;
+    await deleteYoutubeAccount(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete youtube account error:', error);
