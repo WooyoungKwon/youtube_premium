@@ -10,37 +10,36 @@ export async function GET() {
     `;
     const totalMembers = parseInt(memberCountRows[0].total);
 
-    // 회원당 4,000원 기준 월 수익
+    // 회원당 4,000원 기준 월 수익 (현재 회원 수 기준)
     const PRICE_PER_MEMBER = 4000;
     const monthlyRevenue = totalMembers * PRICE_PER_MEMBER;
 
-    // 10월부터의 누적 수익 계산
-    // 각 회원의 등록일(created_at)부터 현재까지의 개월 수를 계산
-    const { rows: revenueRows } = await sql`
-      SELECT 
-        COUNT(*) as member_count,
-        SUM(
-          CASE 
-            WHEN created_at >= '2025-10-01' THEN
-              -- 10월 이후 등록된 회원: 등록일부터 현재까지의 개월 수 계산
-              EXTRACT(YEAR FROM AGE(CURRENT_DATE, created_at::date)) * 12 + 
-              EXTRACT(MONTH FROM AGE(CURRENT_DATE, created_at::date)) + 1
-            ELSE
-              -- 10월 이전 회원: 10월 1일부터 현재까지의 개월 수만 계산
-              EXTRACT(YEAR FROM AGE(CURRENT_DATE, '2025-10-01'::date)) * 12 + 
-              EXTRACT(MONTH FROM AGE(CURRENT_DATE, '2025-10-01'::date)) + 1
-          END
-        ) as total_months
-      FROM members
+    // 누적 수익 = 과거 기록된 월별 수익 합계 + 현재 달 예상 수익
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // 2025년 10월부터 전월까지의 기록된 수익 합계
+    const { rows: recordedRevenueRows } = await sql`
+      SELECT COALESCE(SUM(revenue), 0) as total_recorded
+      FROM monthly_revenue
+      WHERE (year = 2025 AND month >= 10)
+         OR (year > 2025)
     `;
 
-    const totalMonths = parseFloat(revenueRows[0].total_months || '0');
-    const cumulativeRevenue = Math.floor(totalMonths * PRICE_PER_MEMBER);
+    const recordedRevenue = parseInt(recordedRevenueRows[0].total_recorded || '0');
+    
+    // 현재 달의 예상 수익 (아직 기록되지 않음)
+    const currentMonthRevenue = monthlyRevenue;
+    
+    // 누적 수익 = 기록된 수익 + 현재 달 예상 수익
+    const cumulativeRevenue = recordedRevenue + currentMonthRevenue;
 
     return NextResponse.json({
       totalMembers,
       monthlyRevenue,
       cumulativeRevenue,
+      recordedRevenue, // 과거 기록된 수익
+      currentMonthRevenue, // 현재 달 예상 수익
       pricePerMember: PRICE_PER_MEMBER,
     });
   } catch (error) {

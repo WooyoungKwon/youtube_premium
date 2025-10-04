@@ -35,13 +35,28 @@ export async function POST(request: Request) {
     // 날짜 계산: 신청일 + 개월수 (한국 시간 기준)
     console.log('Request data:', {
       created_at: requestData.created_at,
+      created_at_type: typeof requestData.created_at,
       months: requestData.months,
       depositor_name: requestData.depositor_name,
       email: requestData.email
     });
 
-    const createdDateStr = toDateString(requestData.created_at);
-    const paymentDateStr = addMonthsKST(createdDateStr, requestData.months || 1);
+    let createdDateStr: string;
+    let paymentDateStr: string;
+
+    try {
+      createdDateStr = toDateString(requestData.created_at);
+      console.log('Created date string:', createdDateStr);
+      
+      const monthsToAdd = parseInt(requestData.months) || 1;
+      console.log('Months to add:', monthsToAdd);
+      
+      paymentDateStr = addMonthsKST(createdDateStr, monthsToAdd);
+      console.log('Payment date string:', paymentDateStr);
+    } catch (dateError) {
+      console.error('Date calculation error:', dateError);
+      throw new Error(`Date calculation failed: ${dateError instanceof Error ? dateError.message : String(dateError)}`);
+    }
 
     console.log('Calculated dates:', {
       createdDateStr,
