@@ -25,6 +25,17 @@ const formatDateOnly = (dateString: string) => {
   return date.toLocaleDateString('ko-KR');
 };
 
+// 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 문제 해결)
+const formatDateForInput = (dateString: string) => {
+  if (!dateString) return '';
+  // 날짜 문자열을 그대로 반환 (이미 YYYY-MM-DD 형식이거나 ISO 형식인 경우)
+  if (dateString.includes('T')) {
+    // ISO 형식인 경우 날짜 부분만 추출
+    return dateString.split('T')[0];
+  }
+  return dateString;
+};
+
 // 상태에 따른 스타일
 const getStatusStyle = (status: string) => {
   switch (status) {
@@ -195,6 +206,11 @@ export default function AllMembersPage() {
   // 회원 정보 수정
   const handleUpdateMember = async () => {
     if (!editingMember) return;
+
+    console.log('Sending dates to API:', {
+      lastPaymentDate: editingMember.lastPaymentDate,
+      paymentDate: editingMember.paymentDate
+    });
 
     try {
       const res = await fetch(`/api/admin/members/${editingMember.id}`, {
@@ -703,7 +719,7 @@ export default function AllMembersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">이전 결제일</label>
                 <input
                   type="date"
-                  value={editingMember.lastPaymentDate}
+                  value={formatDateForInput(editingMember.lastPaymentDate)}
                   onChange={(e) => setEditingMember({...editingMember, lastPaymentDate: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                 />
@@ -713,7 +729,7 @@ export default function AllMembersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">다음 결제일</label>
                 <input
                   type="date"
-                  value={editingMember.paymentDate}
+                  value={formatDateForInput(editingMember.paymentDate)}
                   onChange={(e) => setEditingMember({...editingMember, paymentDate: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                 />

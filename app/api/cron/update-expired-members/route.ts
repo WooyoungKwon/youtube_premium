@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const result = await sql`
       UPDATE members 
       SET deposit_status = 'pending' 
-      WHERE payment_date <= ${kstToday}
+      WHERE payment_date <= ${kstToday}::date
       AND deposit_status = 'completed'
       RETURNING id, nickname, email, payment_date
     `;

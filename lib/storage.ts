@@ -115,6 +115,16 @@ export async function initDatabase() {
       console.log('Migration from join_date to last_payment_date skipped or failed:', error);
     }
     
+    // join_date 컬럼 완전히 삭제 (더 이상 사용하지 않음)
+    try {
+      await sql`
+        ALTER TABLE members 
+        DROP COLUMN IF EXISTS join_date
+      `;
+    } catch (error) {
+      console.log('Drop join_date column failed:', error);
+    }
+    
     // 인덱스 생성
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
@@ -276,8 +286,8 @@ export async function getMembersByYoutube(youtubeAccountId: string) {
         nickname,
         email,
         name,
-        last_payment_date as "lastPaymentDate",
-        payment_date as "paymentDate",
+        TO_CHAR(last_payment_date, 'YYYY-MM-DD') as "lastPaymentDate",
+        TO_CHAR(payment_date, 'YYYY-MM-DD') as "paymentDate",
         deposit_status as "depositStatus",
         created_at as "createdAt"
       FROM members
@@ -304,10 +314,22 @@ export async function addMember(
   await initDatabase();
   const id = Date.now().toString();
   
-  // 빈 문자열이면 오늘 날짜로 설정
-  const today = new Date().toISOString().split('T')[0];
-  const validLastPaymentDate = lastPaymentDate && lastPaymentDate.trim() !== '' ? lastPaymentDate : today;
-  const validPaymentDate = paymentDate && paymentDate.trim() !== '' ? paymentDate : today;
+  // 날짜 문자열을 YYYY-MM-DD 형식으로 확실하게 변환
+  const formatDate = (dateStr: string) => {
+    if (!dateStr || dateStr.trim() === '') return new Date().toISOString().split('T')[0];
+    // 이미 YYYY-MM-DD 형식이면 그대로 사용
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // ISO 형식이면 날짜 부분만 추출
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    return dateStr;
+  };
+
+  const validLastPaymentDate = formatDate(lastPaymentDate);
+  const validPaymentDate = formatDate(paymentDate);
   
   await sql`
     INSERT INTO members (
@@ -316,7 +338,7 @@ export async function addMember(
     )
     VALUES (
       ${id}, ${youtubeAccountId}, ${requestId || null}, ${nickname},
-      ${email}, ${name}, ${validLastPaymentDate}, ${validPaymentDate}, ${depositStatus},
+      ${email}, ${name}, ${validLastPaymentDate}::date, ${validPaymentDate}::date, ${depositStatus},
       CURRENT_TIMESTAMP
     )
   `;
@@ -340,14 +362,31 @@ export async function updateMember(
   paymentDate: string,
   depositStatus: string
 ) {
+  // 날짜 문자열을 YYYY-MM-DD 형식으로 확실하게 변환
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    // 이미 YYYY-MM-DD 형식이면 그대로 사용
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // ISO 형식이면 날짜 부분만 추출
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    return dateStr;
+  };
+
+  const formattedLastPaymentDate = formatDate(lastPaymentDate);
+  const formattedPaymentDate = formatDate(paymentDate);
+
   await sql`
     UPDATE members
     SET 
       nickname = ${nickname},
       email = ${email},
       name = ${name},
-      last_payment_date = ${lastPaymentDate},
-      payment_date = ${paymentDate},
+      last_payment_date = ${formattedLastPaymentDate}::date,
+      payment_date = ${formattedPaymentDate}::date,
       deposit_status = ${depositStatus}
     WHERE id = ${id}
   `;
@@ -451,8 +490,8 @@ export async function getAllMembersWithDetails() {
       m.nickname,
       m.email,
       m.name,
-      m.last_payment_date,
-      m.payment_date,
+      TO_CHAR(m.last_payment_date, 'YYYY-MM-DD') as last_payment_date,
+      TO_CHAR(m.payment_date, 'YYYY-MM-DD') as payment_date,
       m.deposit_status,
       m.created_at,
       y.youtube_email,
@@ -469,8 +508,8 @@ export async function getAllMembersWithDetails() {
     nickname: row.nickname,
     email: row.email,
     name: row.name,
-    lastPaymentDate: row.last_payment_date instanceof Date ? row.last_payment_date.toISOString().split('T')[0] : row.last_payment_date,
-    paymentDate: row.payment_date instanceof Date ? row.payment_date.toISOString().split('T')[0] : row.payment_date,
+    lastPaymentDate: row.last_payment_date,
+    paymentDate: row.payment_date,
     depositStatus: row.deposit_status,
     createdAt: row.created_at.toISOString(),
     youtubeEmail: row.youtube_email,

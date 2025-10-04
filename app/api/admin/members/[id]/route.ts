@@ -9,6 +9,13 @@ export async function PUT(
     const { nickname, email, name, lastPaymentDate, paymentDate, depositStatus } = await request.json();
     const { id } = await params;
     
+    console.log('PUT /api/admin/members/[id] - Received dates:', {
+      lastPaymentDate,
+      paymentDate,
+      lastPaymentDateType: typeof lastPaymentDate,
+      paymentDateType: typeof paymentDate
+    });
+    
     await updateMember(id, nickname, email, name, lastPaymentDate, paymentDate, depositStatus);
     return NextResponse.json({ success: true });
   } catch (error) {

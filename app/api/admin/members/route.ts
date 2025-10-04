@@ -96,7 +96,7 @@ export async function PATCH(request: Request) {
         UPDATE members 
         SET 
           deposit_status = ${depositStatus},
-          payment_date = ${newPaymentDateStr}
+          payment_date = ${newPaymentDateStr}::date
         WHERE id = ${id}
       `;
       
