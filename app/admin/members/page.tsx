@@ -63,7 +63,7 @@ export default function MembersPage() {
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newJoinDate, setNewJoinDate] = useState('');
+  const [newLastPaymentDate, setNewJoinDate] = useState('');
   const [newPaymentDate, setNewPaymentDate] = useState('');
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
   
@@ -422,7 +422,7 @@ export default function MembersPage() {
           nickname: newMemberNickname,
           email: newMemberEmail,
           name: newMemberName,
-          joinDate: newJoinDate,
+          lastPaymentDate: newLastPaymentDate,
           paymentDate: newPaymentDate,
           depositStatus: newDepositStatus,
         }),
@@ -448,7 +448,7 @@ export default function MembersPage() {
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(formatDateForInput(member.joinDate));
+    setNewJoinDate(formatDateForInput(member.lastPaymentDate));
     setNewPaymentDate(formatDateForInput(member.paymentDate));
     setNewDepositStatus(member.depositStatus);
     setShowAddMember(true);
@@ -465,7 +465,7 @@ export default function MembersPage() {
           nickname: newMemberNickname,
           email: newMemberEmail,
           name: newMemberName,
-          joinDate: newJoinDate,
+          lastPaymentDate: newLastPaymentDate,
           paymentDate: newPaymentDate,
           depositStatus: newDepositStatus,
         }),
@@ -1042,7 +1042,7 @@ export default function MembersPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="date"
-                          value={newJoinDate}
+                          value={newLastPaymentDate}
                           onChange={(e) => setNewJoinDate(e.target.value)}
                           placeholder="가입날짜"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
@@ -1131,7 +1131,7 @@ export default function MembersPage() {
                             </p>
                             <div className="flex gap-2 mt-1">
                               <span className="text-xs text-gray-500">
-                                가입: {formatDateOnly(member.joinDate)}
+                                이전 결제: {formatDateOnly(member.lastPaymentDate)}
                               </span>
                               <span className="text-xs text-gray-500">
                                 결제: {formatDateOnly(member.paymentDate)}

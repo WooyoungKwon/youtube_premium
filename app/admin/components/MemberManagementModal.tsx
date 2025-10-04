@@ -170,7 +170,7 @@ function MemberRow({ member, onEdit, onDelete, onUpdateStatus }: {
     <tr className="border-b border-gray-300 hover:bg-gray-50">
       <td className="px-4 py-3 text-gray-900">{member.nickname}</td>
       <td className="px-4 py-3 text-gray-900">{member.email}</td>
-      <td className="px-4 py-3 text-gray-900">{member.joinDate}</td>
+      <td className="px-4 py-3 text-gray-900">{member.lastPaymentDate}</td>
       <td className="px-4 py-3 text-gray-900">{member.paymentDate}</td>
       <td className="px-4 py-3 text-gray-900">{member.name}</td>
       <td className="px-4 py-3">
@@ -235,7 +235,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newJoinDate, setNewJoinDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newLastPaymentDate, setNewJoinDate] = useState(new Date().toISOString().split('T')[0]);
   const [newPaymentDate, setNewPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
 
@@ -528,7 +528,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
           nickname: newMemberNickname,
           email: newMemberEmail,
           name: newMemberName,
-          joinDate: newJoinDate,
+          lastPaymentDate: newLastPaymentDate,
           paymentDate: newPaymentDate,
           depositStatus: newDepositStatus,
         }),
@@ -555,7 +555,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(member.joinDate);
+    setNewJoinDate(member.lastPaymentDate);
     setNewPaymentDate(member.paymentDate);
     setNewDepositStatus(member.depositStatus);
     setShowAddMember(true);
@@ -572,7 +572,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
           nickname: newMemberNickname,
           email: newMemberEmail,
           name: newMemberName,
-          joinDate: newJoinDate,
+          lastPaymentDate: newLastPaymentDate,
           paymentDate: newPaymentDate,
           depositStatus: newDepositStatus,
         }),
@@ -923,7 +923,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                       <label className="block text-sm text-gray-800 font-semibold mb-1">가입날짜</label>
                       <input
                         type="date"
-                        value={newJoinDate}
+                        value={newLastPaymentDate}
                         onChange={(e) => setNewJoinDate(e.target.value)}
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
