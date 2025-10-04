@@ -149,14 +149,25 @@ export async function getAllAppleAccounts() {
   }
 }
 
-export async function addAppleAccount(appleEmail: string, remainingCredit?: number, password?: string, renewalDate?: string) {
-  await initDatabase();
-  const id = Date.now().toString();
-  await sql`
-    INSERT INTO apple_accounts (id, apple_email, remaining_credit, renewal_date, password, created_at)
-    VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, ${renewalDate || null}, ${password || null}, CURRENT_TIMESTAMP)
-  `;
-  return { id, appleEmail, remainingCredit: remainingCredit || 0, renewalDate };
+export async function addAppleAccount(appleEmail: string, remainingCredit?: number, renewalDate?: string) {
+  try {
+    console.log('addAppleAccount called with:', { appleEmail, remainingCredit, renewalDate });
+    await initDatabase();
+    const id = Date.now().toString();
+    
+    console.log('Inserting into database with id:', id);
+    await sql`
+      INSERT INTO apple_accounts (id, apple_email, remaining_credit, renewal_date, created_at)
+      VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, ${renewalDate || null}, CURRENT_TIMESTAMP)
+    `;
+    
+    const result = { id, appleEmail, remainingCredit: remainingCredit || 0, renewalDate };
+    console.log('Successfully created account:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in addAppleAccount:', error);
+    throw error;
+  }
 }
 
 export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number, renewalDate?: string) {

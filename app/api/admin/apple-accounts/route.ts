@@ -13,8 +13,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { appleEmail, remainingCredit, renewalDate, password } = await request.json();
-    const account = await addAppleAccount(appleEmail, remainingCredit, password, renewalDate);
+    const body = await request.json();
+    console.log('POST request body:', body);
+    
+    const { appleEmail, remainingCredit, renewalDate } = body;
+    console.log('Parsed values:', { appleEmail, remainingCredit, renewalDate });
+    
+    const account = await addAppleAccount(appleEmail, remainingCredit, renewalDate);
+    console.log('Created account:', account);
+    
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add apple account error:', error);

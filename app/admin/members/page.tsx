@@ -210,6 +210,12 @@ export default function MembersPage() {
     if (!newAppleEmail.trim()) return;
     
     try {
+      console.log('Sending request with:', {
+        appleEmail: newAppleEmail, 
+        remainingCredit: newAppleCredit,
+        renewalDate: newAppleRenewalDate || null
+      });
+      
       const res = await fetch('/api/admin/apple-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,15 +226,22 @@ export default function MembersPage() {
         }),
       });
       
+      console.log('Response status:', res.status);
+      const responseData = await res.json();
+      console.log('Response data:', responseData);
+      
       if (res.ok) {
         setNewAppleEmail('');
         setNewAppleCredit(0);
         setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
+      } else {
+        alert('애플 계정 추가에 실패했습니다: ' + (responseData.error || '알 수 없는 오류'));
       }
     } catch (error) {
       console.error('Apple 계정 추가에 실패했습니다:', error);
+      alert('Apple 계정 추가에 실패했습니다: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
