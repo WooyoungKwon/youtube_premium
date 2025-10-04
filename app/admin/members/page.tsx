@@ -57,6 +57,7 @@ export default function MembersPage() {
   // 폼 입력 상태
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newAppleCredit, setNewAppleCredit] = useState(0);
+  const [newAppleRenewalDate, setNewAppleRenewalDate] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newMemberNickname, setNewMemberNickname] = useState('');
@@ -212,12 +213,17 @@ export default function MembersPage() {
       const res = await fetch('/api/admin/apple-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit }),
+        body: JSON.stringify({ 
+          appleEmail: newAppleEmail, 
+          remainingCredit: newAppleCredit,
+          renewalDate: newAppleRenewalDate || null
+        }),
       });
       
       if (res.ok) {
         setNewAppleEmail('');
         setNewAppleCredit(0);
+        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -230,6 +236,7 @@ export default function MembersPage() {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
     setNewAppleCredit(apple.remainingCredit || 0);
+    setNewAppleRenewalDate(apple.renewalDate || '');
     setShowAddApple(true);
   };
 
@@ -240,13 +247,18 @@ export default function MembersPage() {
       const res = await fetch(`/api/admin/apple-accounts/${editingApple.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit }),
+        body: JSON.stringify({ 
+          appleEmail: newAppleEmail, 
+          remainingCredit: newAppleCredit,
+          renewalDate: newAppleRenewalDate || null
+        }),
       });
       
       if (res.ok) {
         setEditingApple(null);
         setNewAppleEmail('');
         setNewAppleCredit(0);
+        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -543,6 +555,7 @@ export default function MembersPage() {
       setEditingApple(null);
       setNewAppleEmail('');
       setNewAppleCredit(0);
+      setNewAppleRenewalDate('');
       setShowAddApple(false);
     }
     if (editingYoutube) {
@@ -695,6 +708,13 @@ export default function MembersPage() {
                   min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                 />
+                <input
+                  type="date"
+                  value={newAppleRenewalDate}
+                  onChange={(e) => setNewAppleRenewalDate(e.target.value)}
+                  placeholder="갱신일"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
+                />
                 <div className="flex gap-2">
                   <button
                     onClick={editingApple ? handleUpdateApple : handleAddApple}
@@ -777,6 +797,11 @@ export default function MembersPage() {
                         {apple.lastUpdated && (
                           <p className="text-xs text-gray-400">
                             마지막 업데이트: {new Date(apple.lastUpdated).toLocaleDateString()}
+                          </p>
+                        )}
+                        {apple.renewalDate && (
+                          <p className="text-xs text-green-600">
+                            갱신일: {new Date(apple.renewalDate).toLocaleDateString()}
                           </p>
                         )}
                       </div>

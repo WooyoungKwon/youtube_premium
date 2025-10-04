@@ -13,8 +13,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { appleEmail, remainingCredit, password } = await request.json();
-    const account = await addAppleAccount(appleEmail, remainingCredit, password);
+    const { appleEmail, remainingCredit, renewalDate, password } = await request.json();
+    const account = await addAppleAccount(appleEmail, remainingCredit, password, renewalDate);
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add apple account error:', error);
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, appleEmail, remainingCredit } = await request.json();
-    await updateAppleAccount(id, appleEmail, remainingCredit);
+    const { id, appleEmail, remainingCredit, renewalDate } = await request.json();
+    await updateAppleAccount(id, appleEmail, remainingCredit, renewalDate);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update apple account error:', error);

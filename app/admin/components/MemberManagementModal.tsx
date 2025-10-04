@@ -86,6 +86,11 @@ function AppleItem({
             마지막 업데이트: {new Date(account.lastUpdated).toLocaleDateString()}
           </p>
         )}
+        {account.renewalDate && (
+          <p className="text-xs text-green-600">
+            갱신일: {new Date(account.renewalDate).toLocaleDateString()}
+          </p>
+        )}
       </div>
       <div className="flex gap-2">
         <button
@@ -225,6 +230,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [showAddMember, setShowAddMember] = useState(false);
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newAppleCredit, setNewAppleCredit] = useState(0);
+  const [newAppleRenewalDate, setNewAppleRenewalDate] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newMemberNickname, setNewMemberNickname] = useState('');
@@ -340,7 +346,8 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           appleEmail: newAppleEmail,
-          remainingCredit: newAppleCredit 
+          remainingCredit: newAppleCredit,
+          renewalDate: newAppleRenewalDate || null
         }),
       });
       
@@ -359,6 +366,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
     setNewAppleCredit(apple.remainingCredit || 0);
+    setNewAppleRenewalDate(apple.renewalDate || '');
     setShowAddApple(true);
   };
 
@@ -371,7 +379,8 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           appleEmail: newAppleEmail, 
-          remainingCredit: newAppleCredit 
+          remainingCredit: newAppleCredit,
+          renewalDate: newAppleRenewalDate || null
         }),
       });
       
@@ -379,6 +388,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setEditingApple(null);
         setNewAppleEmail('');
         setNewAppleCredit(0);
+        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -623,6 +633,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       setEditingApple(null);
       setNewAppleEmail('');
       setNewAppleCredit(0);
+      setNewAppleRenewalDate('');
       setShowAddApple(false);
     }
     if (editingYoutube) {
@@ -737,6 +748,13 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     onChange={(e) => setNewAppleCredit(Number(e.target.value))}
                     placeholder="크레딧 (루피)"
                     min="0"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
+                  />
+                  <input
+                    type="date"
+                    value={newAppleRenewalDate}
+                    onChange={(e) => setNewAppleRenewalDate(e.target.value)}
+                    placeholder="갱신일"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="flex gap-2">

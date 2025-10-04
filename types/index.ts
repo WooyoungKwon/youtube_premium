@@ -26,6 +26,7 @@ export interface AppleAccount {
   id: string;
   appleEmail: string;
   remainingCredit: number;
+  renewalDate?: string;
   lastUpdated?: string;
   createdAt: string;
 }
