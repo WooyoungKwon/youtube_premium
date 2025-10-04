@@ -138,6 +138,19 @@ export async function initDatabase() {
       )
     `;
     
+    // WebAuthn 인증 정보 테이블 (Face ID, Touch ID 등)
+    await sql`
+      CREATE TABLE IF NOT EXISTS admin_credentials (
+        id VARCHAR(255) PRIMARY KEY,
+        credential_id TEXT NOT NULL UNIQUE,
+        public_key TEXT NOT NULL,
+        counter BIGINT NOT NULL DEFAULT 0,
+        device_name VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_used_at TIMESTAMP
+      )
+    `;
+    
     // 인덱스 생성 (성능 최적화)
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;

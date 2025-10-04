@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { MemberRequest } from '@/types';
 import RegisterMemberModal from './components/RegisterMemberModal';
+import WebAuthnLogin from './components/WebAuthnLogin';
 
 interface AdminStats {
   totalMembers: number;
@@ -223,45 +224,17 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
-            <div className="inline-block p-3 bg-red-100 rounded-full mb-4">
-              <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="inline-block p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">관리자 인증</h1>
-            <p className="text-gray-600">비밀번호를 입력해주세요</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
+            <p className="text-gray-600">Face ID 또는 Touch ID로 로그인하세요</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                비밀번호
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력하세요"
-                required
-                autoFocus
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition text-gray-900"
-              />
-            </div>
-
-            {authError && (
-              <div className="p-4 rounded-lg bg-red-50 text-red-800 border border-red-200">
-                {authError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition"
-            >
-              로그인
-            </button>
-          </form>
+          {/* Face ID / Touch ID 로그인 컴포넌트 */}
+          <WebAuthnLogin onSuccess={() => setIsAuthenticated(true)} />
 
           <div className="mt-6 text-center">
             <a
