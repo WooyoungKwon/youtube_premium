@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MemberRequest } from '@/types';
+import RegisterMemberModal from './components/RegisterMemberModal';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,6 +11,8 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<MemberRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
 
   useEffect(() => {
     // 세션 스토리지에서 인증 상태 확인
@@ -71,6 +74,16 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Failed to delete request:', error);
     }
+  };
+
+  const handleRegisterMember = (request: MemberRequest) => {
+    setSelectedRequest(request);
+    setIsRegisterModalOpen(true);
+  };
+
+  const handleRegisterSuccess = () => {
+    alert('회원 등록이 완료되었습니다.');
+    fetchRequests();
   };
 
   const filteredRequests = requests.filter(req => {
@@ -381,6 +394,17 @@ export default function AdminPage() {
                               </button>
                             </>
                           )}
+                          {request.status === 'approved' && (
+                            <button
+                              onClick={() => handleRegisterMember(request)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                              </svg>
+                              회원 등록
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(request.id)}
                             className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
@@ -397,6 +421,20 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+
+      {/* Register Member Modal */}
+      {selectedRequest && (
+        <RegisterMemberModal
+          isOpen={isRegisterModalOpen}
+          onClose={() => {
+            setIsRegisterModalOpen(false);
+            setSelectedRequest(null);
+          }}
+          requestId={selectedRequest.id}
+          requestEmail={selectedRequest.email}
+          onSuccess={handleRegisterSuccess}
+        />
+      )}
     </div>
   );
 }
