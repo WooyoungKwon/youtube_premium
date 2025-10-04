@@ -108,6 +108,30 @@ export default function AdminPage() {
     fetchStats(); // 수익 통계도 새로고침
   };
 
+  const handleMigrateRevenue = async () => {
+    if (!confirm('기존 회원들의 수익을 마이그레이션하시겠습니까?\n이미 기록된 회원은 건너뛰고, 새로운 회원만 추가됩니다.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/migrate-revenue', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`마이그레이션 완료!\n\n총 회원: ${data.stats.totalMembers}명\n새로 기록: ${data.stats.migratedMembers}명\n건너뛴 회원: ${data.stats.skippedMembers}명\n추가된 수익: ${data.stats.totalAmount.toLocaleString()}원`);
+        fetchStats(); // 수익 통계 새로고침
+      } else {
+        const error = await response.json();
+        alert(`마이그레이션 실패: ${error.details || error.error}`);
+      }
+    } catch (error) {
+      console.error('Migration error:', error);
+      alert('마이그레이션 중 오류가 발생했습니다.');
+    }
+  };
+
   const filteredRequests = requests.filter(req => {
     if (filter === 'all') return true;
     return req.status === filter;
@@ -315,20 +339,33 @@ export default function AdminPage() {
 
           {/* Revenue Stats */}
           {revenueStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border-2 border-blue-300 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-blue-700 mb-1">총 회원 수</div>
-                    <div className="text-3xl font-bold text-blue-900">{revenueStats.totalMembers}명</div>
-                  </div>
-                  <div className="bg-blue-200 p-3 rounded-full">
-                    <svg className="w-8 h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-gray-800">수익 현황</h2>
+                <button
+                  onClick={handleMigrateRevenue}
+                  className="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  기존 회원 수익 마이그레이션
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border-2 border-blue-300 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-blue-700 mb-1">총 회원 수</div>
+                      <div className="text-3xl font-bold text-blue-900">{revenueStats.totalMembers}명</div>
+                    </div>
+                    <div className="bg-blue-200 p-3 rounded-full">
+                      <svg className="w-8 h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
 
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-lg border-2 border-green-300 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -367,6 +404,7 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           )}
         </div>
@@ -418,6 +456,9 @@ export default function AdminPage() {
                       상태
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      회원등록
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       신청일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -449,6 +490,20 @@ export default function AdminPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.isRegistered ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            등록완료
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                            미등록
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(request.createdAt).toLocaleString('ko-KR')}
                       </td>
@@ -473,7 +528,7 @@ export default function AdminPage() {
                               </button>
                             </>
                           )}
-                          {request.status === 'approved' && (
+                          {request.status === 'approved' && !request.isRegistered && (
                             <button
                               onClick={() => handleRegisterMember(request)}
                               className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-1"
@@ -483,6 +538,14 @@ export default function AdminPage() {
                               </svg>
                               회원 등록
                             </button>
+                          )}
+                          {request.status === 'approved' && request.isRegistered && (
+                            <span className="px-3 py-1 bg-gray-300 text-gray-600 rounded cursor-not-allowed flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              등록완료
+                            </span>
                           )}
                           <button
                             onClick={() => handleDelete(request.id)}

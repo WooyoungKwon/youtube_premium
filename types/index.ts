@@ -8,6 +8,7 @@ export interface MemberRequest {
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
+  isRegistered?: boolean; // 회원으로 등록되었는지 여부
 }
 
 export interface CreateRequestDTO {

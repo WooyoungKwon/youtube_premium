@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMembersByYoutube, addMember, updateMemberDepositStatus } from '@/lib/storage';
+import { getMembersByYoutube, addMember, updateMemberDepositStatus, addRevenueRecord } from '@/lib/storage';
 import { sql } from '@vercel/postgres';
 
 export async function GET(request: Request) {
@@ -47,6 +47,35 @@ export async function POST(request: Request) {
     );
     
     console.log('Member added successfully:', member);
+    
+    // 입금 완료 상태로 회원을 추가하는 경우 수익 기록
+    if (depositStatus === 'completed') {
+      const PRICE_PER_MEMBER = 4000;
+      // requestId가 있으면 member_requests에서 개월수 조회, 없으면 1개월로 간주
+      let months = 1;
+      if (requestId) {
+        try {
+          const { rows } = await sql`
+            SELECT months FROM member_requests WHERE id = ${requestId}
+          `;
+          if (rows.length > 0 && rows[0].months) {
+            months = parseInt(rows[0].months);
+          }
+        } catch (err) {
+          console.error('Failed to fetch months from request:', err);
+        }
+      }
+      
+      const revenueAmount = months * PRICE_PER_MEMBER;
+      await addRevenueRecord(
+        member.id,
+        revenueAmount,
+        months,
+        `회원 추가 (${name}) - ${months}개월`
+      );
+      console.log('Revenue recorded:', { amount: revenueAmount, months });
+    }
+    
     return NextResponse.json(member);
   } catch (error) {
     console.error('Add member error:', error);
@@ -100,6 +129,17 @@ export async function PATCH(request: Request) {
         WHERE id = ${id}
       `;
       
+      // 수익 기록
+      const PRICE_PER_MEMBER = 4000;
+      const revenueAmount = months * PRICE_PER_MEMBER;
+      await addRevenueRecord(
+        id,
+        revenueAmount,
+        months,
+        `입금 완료 처리 - ${months}개월 연장`
+      );
+      console.log('Revenue recorded:', { memberId: id, amount: revenueAmount, months });
+      
       return NextResponse.json({ 
         success: true, 
         newPaymentDate: newPaymentDateStr,
@@ -107,6 +147,31 @@ export async function PATCH(request: Request) {
       });
     } else {
       // 기존 로직: 상태만 변경
+      // pending -> completed로 변경하는 경우 수익 기록 (개월수 정보 없이)
+      if (depositStatus === 'completed') {
+        // 회원의 request_id로 개월수 조회
+        const { rows: memberRows } = await sql`
+          SELECT m.request_id, r.months
+          FROM members m
+          LEFT JOIN member_requests r ON m.request_id = r.id
+          WHERE m.id = ${id}
+        `;
+        
+        if (memberRows.length > 0) {
+          const months = parseInt(memberRows[0].months || '1');
+          const PRICE_PER_MEMBER = 4000;
+          const revenueAmount = months * PRICE_PER_MEMBER;
+          
+          await addRevenueRecord(
+            id,
+            revenueAmount,
+            months,
+            `입금 완료 처리 - ${months}개월`
+          );
+          console.log('Revenue recorded:', { memberId: id, amount: revenueAmount, months });
+        }
+      }
+      
       await updateMemberDepositStatus(id, depositStatus);
       return NextResponse.json({ success: true });
     }

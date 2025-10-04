@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { addMember } from '@/lib/storage';
+import { addMember, addRevenueRecord } from '@/lib/storage';
 import { toDateString, addMonthsKST } from '@/lib/dateUtils';
 
 // POST: 승인된 신청을 회원으로 등록
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     // 신청 정보 조회
     const { rows: requestRows } = await sql`
-      SELECT * FROM requests WHERE id = ${requestId}
+      SELECT * FROM member_requests WHERE id = ${requestId}
     `;
 
     if (requestRows.length === 0) {
@@ -76,6 +76,20 @@ export async function POST(request: Request) {
     );
 
     console.log('Member created successfully:', member);
+
+    // 수익 기록 (입금 완료 상태일 때만)
+    const PRICE_PER_MEMBER = 4000;
+    const monthsToAdd = parseInt(requestData.months) || 1;
+    const revenueAmount = monthsToAdd * PRICE_PER_MEMBER;
+    
+    await addRevenueRecord(
+      member.id,
+      revenueAmount,
+      monthsToAdd,
+      `회원 등록 (${requestData.depositor_name || '미입력'}) - ${monthsToAdd}개월`
+    );
+    
+    console.log('Revenue recorded:', { amount: revenueAmount, months: monthsToAdd });
 
     return NextResponse.json({ 
       success: true, 

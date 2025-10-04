@@ -125,6 +125,19 @@ export async function initDatabase() {
       console.log('Drop join_date column failed:', error);
     }
     
+    // 수익 기록 테이블 (누적 수익 관리)
+    await sql`
+      CREATE TABLE IF NOT EXISTS revenue_records (
+        id VARCHAR(255) PRIMARY KEY,
+        member_id VARCHAR(255) NOT NULL,
+        amount INTEGER NOT NULL,
+        months INTEGER NOT NULL,
+        recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        description TEXT,
+        FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+      )
+    `;
+    
     // 인덱스 생성
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
@@ -133,6 +146,8 @@ export async function initDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_revenue_member ON revenue_records(member_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_revenue_recorded_at ON revenue_records(recorded_at DESC)`;
     
   } catch (error) {
     console.error('Database initialization error:', error);
@@ -145,16 +160,18 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
     await initDatabase();
     const { rows } = await sql`
       SELECT 
-        id,
-        email,
-        kakao_id as "kakaoId",
-        phone,
-        months,
-        depositor_name as "depositorName",
-        status,
-        created_at as "createdAt"
-      FROM member_requests
-      ORDER BY created_at DESC
+        mr.id,
+        mr.email,
+        mr.kakao_id as "kakaoId",
+        mr.phone,
+        mr.months,
+        mr.depositor_name as "depositorName",
+        mr.status,
+        mr.created_at as "createdAt",
+        CASE WHEN m.id IS NOT NULL THEN true ELSE false END as "isRegistered"
+      FROM member_requests mr
+      LEFT JOIN members m ON mr.id = m.request_id
+      ORDER BY mr.created_at DESC
     `;
     
     return rows.map(row => ({
@@ -529,4 +546,36 @@ export async function getAllMembersWithDetails() {
     youtubeNickname: row.youtube_nickname,
     appleEmail: row.apple_email,
   }));
+}
+
+// ===== 수익 기록 관리 =====
+
+// 수익 기록 추가
+export async function addRevenueRecord(
+  memberId: string,
+  amount: number,
+  months: number,
+  description?: string
+) {
+  await initDatabase();
+  const id = Date.now().toString();
+  
+  await sql`
+    INSERT INTO revenue_records (id, member_id, amount, months, description, recorded_at)
+    VALUES (${id}, ${memberId}, ${amount}, ${months}, ${description || ''}, CURRENT_TIMESTAMP)
+  `;
+  
+  return { id, memberId, amount, months, description };
+}
+
+// 전체 누적 수익 조회
+export async function getTotalRevenue() {
+  await initDatabase();
+  
+  const { rows } = await sql`
+    SELECT COALESCE(SUM(amount), 0) as total
+    FROM revenue_records
+  `;
+  
+  return parseInt(rows[0].total);
 }
