@@ -66,6 +66,7 @@ export async function initDatabase() {
     `;
     
     // 가입 회원 테이블 (깔끔한 스키마)
+    // payment_date: 다음 결제 예정일 (월 구독 갱신일)
     await sql`
       CREATE TABLE IF NOT EXISTS members (
         id VARCHAR(255) PRIMARY KEY,

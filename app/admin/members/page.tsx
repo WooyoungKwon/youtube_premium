@@ -1055,7 +1055,7 @@ export default function MembersPage() {
                           type="date"
                           value={newPaymentDate}
                           onChange={(e) => setNewPaymentDate(e.target.value)}
-                          placeholder="결제일"
+                          placeholder="다음 결제일"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                         />
                       </div>

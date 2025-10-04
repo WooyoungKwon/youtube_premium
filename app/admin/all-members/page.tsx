@@ -371,7 +371,7 @@ export default function AllMembersPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">결제일 정렬</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">다음 결제일 정렬</label>
               <button
                 onClick={handleSortToggle}
                 className="w-full px-3 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -413,7 +413,7 @@ export default function AllMembersPage() {
                       가입일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      결제일
+                      다음 결제일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       입금 상태
@@ -541,7 +541,7 @@ export default function AllMembersPage() {
                 <span className="font-medium">{selectedMember.nickname}</span>님의 결제를 완료 처리합니다.
               </p>
               <p className="text-xs text-gray-500">
-                현재 결제일: {formatDateOnly(selectedMember.paymentDate)}
+                현재 다음 결제일: {formatDateOnly(selectedMember.paymentDate)}
               </p>
             </div>
             
@@ -561,7 +561,7 @@ export default function AllMembersPage() {
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                {selectedMonths}개월 선택 시 결제일이 {
+                {selectedMonths}개월 선택 시 다음 결제일이 {
                   (() => {
                     const newDate = new Date(selectedMember.paymentDate);
                     newDate.setMonth(newDate.getMonth() + selectedMonths);

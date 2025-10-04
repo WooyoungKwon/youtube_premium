@@ -48,7 +48,7 @@ export interface Member {
   email: string;
   name: string;
   joinDate: string;
-  paymentDate: string;
+  paymentDate: string; // 다음 결제 예정일 (월 구독 갱신일)
   depositStatus: string;
   createdAt: string;
 }

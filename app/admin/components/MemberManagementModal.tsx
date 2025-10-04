@@ -930,7 +930,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-800 font-semibold mb-1">결제일</label>
+                      <label className="block text-sm text-gray-800 font-semibold mb-1">다음 결제일</label>
                       <input
                         type="date"
                         value={newPaymentDate}
@@ -975,7 +975,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                       <th className="px-4 py-3 text-left font-bold text-gray-900">닉네임</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">이메일</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">가입날짜</th>
-                      <th className="px-4 py-3 text-left font-bold text-gray-900">결제일</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-900">다음 결제일</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">이름</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">입금여부</th>
                       <th className="px-4 py-3 text-left font-bold text-gray-900">작업</th>
