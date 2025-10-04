@@ -602,11 +602,24 @@ export default function AllMembersPage() {
               <p className="text-xs text-gray-500 mt-1">
                 {selectedMonths}개월 선택 시 다음 결제일이 {
                   (() => {
-                    // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
-                    const [year, month, day] = selectedMember.paymentDate.split('-').map(Number);
-                    const newDate = new Date(year, month - 1, day);
-                    newDate.setMonth(newDate.getMonth() + selectedMonths);
-                    return formatDateOnly(newDate.toISOString().split('T')[0]);
+                    try {
+                      // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
+                      if (!selectedMember.paymentDate) return '날짜 없음';
+                      const parts = selectedMember.paymentDate.split('-');
+                      if (parts.length !== 3) return '날짜 형식 오류';
+                      
+                      const [year, month, day] = parts.map(Number);
+                      if (isNaN(year) || isNaN(month) || isNaN(day)) return '날짜 형식 오류';
+                      
+                      const newDate = new Date(year, month - 1, day);
+                      if (isNaN(newDate.getTime())) return '날짜 오류';
+                      
+                      newDate.setMonth(newDate.getMonth() + selectedMonths);
+                      const resultStr = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}-${String(newDate.getDate()).padStart(2, '0')}`;
+                      return formatDateOnly(resultStr);
+                    } catch (e) {
+                      return '날짜 계산 오류';
+                    }
                   })()
                 }로 변경됩니다.
               </p>
