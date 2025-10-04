@@ -7,8 +7,8 @@ interface MemberWithDetails {
   nickname: string;
   email: string;
   name: string;
-  joinDate: string;
-  paymentDate: string;
+  lastPaymentDate: string; // 이전 결제일
+  paymentDate: string; // 다음 결제일
   depositStatus: string;
   createdAt: string;
   youtubeEmail: string;
@@ -204,7 +204,7 @@ export default function AllMembersPage() {
           nickname: editingMember.nickname,
           email: editingMember.email,
           name: editingMember.name,
-          joinDate: editingMember.joinDate,
+          lastPaymentDate: editingMember.lastPaymentDate,
           paymentDate: editingMember.paymentDate,
           depositStatus: editingMember.depositStatus,
         }),
@@ -449,7 +449,7 @@ export default function AllMembersPage() {
                       계정 정보
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      가입일
+                      이전 결제일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       다음 결제일
@@ -492,7 +492,7 @@ export default function AllMembersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDateOnly(member.joinDate)}
+                        {formatDateOnly(member.lastPaymentDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDateOnly(member.paymentDate)}
@@ -695,6 +695,16 @@ export default function AllMembersPage() {
                   type="text"
                   value={editingMember.name}
                   onChange={(e) => setEditingMember({...editingMember, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">이전 결제일</label>
+                <input
+                  type="date"
+                  value={editingMember.lastPaymentDate}
+                  onChange={(e) => setEditingMember({...editingMember, lastPaymentDate: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                 />
               </div>

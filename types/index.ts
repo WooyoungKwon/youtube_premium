@@ -47,7 +47,7 @@ export interface Member {
   nickname: string;
   email: string;
   name: string;
-  joinDate: string;
+  lastPaymentDate: string; // 이전 결제일 (마지막으로 결제한 날짜)
   paymentDate: string; // 다음 결제 예정일 (월 구독 갱신일)
   depositStatus: 'completed' | 'pending';
   createdAt: string;

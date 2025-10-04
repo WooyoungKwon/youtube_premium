@@ -6,10 +6,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { nickname, email, name, joinDate, paymentDate, depositStatus } = await request.json();
+    const { nickname, email, name, lastPaymentDate, paymentDate, depositStatus } = await request.json();
     const { id } = await params;
     
-    await updateMember(id, nickname, email, name, joinDate, paymentDate, depositStatus);
+    await updateMember(id, nickname, email, name, lastPaymentDate, paymentDate, depositStatus);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update member error:', error);

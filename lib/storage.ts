@@ -66,6 +66,7 @@ export async function initDatabase() {
     `;
     
     // 가입 회원 테이블 (깔끔한 스키마)
+    // last_payment_date: 이전 결제일 (마지막으로 결제한 날짜)
     // payment_date: 다음 결제 예정일 (월 구독 갱신일)
     await sql`
       CREATE TABLE IF NOT EXISTS members (
@@ -75,7 +76,7 @@ export async function initDatabase() {
         nickname VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
-        join_date DATE NOT NULL,
+        last_payment_date DATE,
         payment_date DATE NOT NULL,
         deposit_status VARCHAR(50) NOT NULL DEFAULT 'pending',
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,6 +84,36 @@ export async function initDatabase() {
         FOREIGN KEY (request_id) REFERENCES member_requests(id) ON DELETE SET NULL
       )
     `;
+    
+    // 기존 테이블에 last_payment_date 컬럼 추가 (마이그레이션)
+    try {
+      await sql`
+        ALTER TABLE members 
+        ADD COLUMN IF NOT EXISTS last_payment_date DATE
+      `;
+    } catch (error) {
+      // 컬럼이 이미 존재하는 경우 무시
+      console.log('last_payment_date column already exists or migration failed:', error);
+    }
+    
+    // join_date를 last_payment_date로 이름 변경 (이미 데이터가 있는 경우)
+    try {
+      await sql`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'members' AND column_name = 'join_date'
+          ) AND NOT EXISTS (
+            SELECT 1 FROM members WHERE last_payment_date IS NOT NULL LIMIT 1
+          ) THEN
+            UPDATE members SET last_payment_date = join_date WHERE last_payment_date IS NULL;
+          END IF;
+        END $$;
+      `;
+    } catch (error) {
+      console.log('Migration from join_date to last_payment_date skipped or failed:', error);
+    }
     
     // 인덱스 생성
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
@@ -245,7 +276,7 @@ export async function getMembersByYoutube(youtubeAccountId: string) {
         nickname,
         email,
         name,
-        join_date as "joinDate",
+        last_payment_date as "lastPaymentDate",
         payment_date as "paymentDate",
         deposit_status as "depositStatus",
         created_at as "createdAt"
@@ -265,7 +296,7 @@ export async function addMember(
   nickname: string,
   email: string,
   name: string,
-  joinDate: string,
+  lastPaymentDate: string,
   paymentDate: string,
   depositStatus: string,
   requestId?: string
@@ -275,21 +306,21 @@ export async function addMember(
   
   // 빈 문자열이면 오늘 날짜로 설정
   const today = new Date().toISOString().split('T')[0];
-  const validJoinDate = joinDate && joinDate.trim() !== '' ? joinDate : today;
+  const validLastPaymentDate = lastPaymentDate && lastPaymentDate.trim() !== '' ? lastPaymentDate : today;
   const validPaymentDate = paymentDate && paymentDate.trim() !== '' ? paymentDate : today;
   
   await sql`
     INSERT INTO members (
       id, youtube_account_id, request_id, nickname, email, name,
-      join_date, payment_date, deposit_status, created_at
+      last_payment_date, payment_date, deposit_status, created_at
     )
     VALUES (
       ${id}, ${youtubeAccountId}, ${requestId || null}, ${nickname},
-      ${email}, ${name}, ${validJoinDate}, ${validPaymentDate}, ${depositStatus},
+      ${email}, ${name}, ${validLastPaymentDate}, ${validPaymentDate}, ${depositStatus},
       CURRENT_TIMESTAMP
     )
   `;
-  return { id, youtubeAccountId, nickname, email, name, joinDate: validJoinDate, paymentDate: validPaymentDate, depositStatus };
+  return { id, youtubeAccountId, nickname, email, name, lastPaymentDate: validLastPaymentDate, paymentDate: validPaymentDate, depositStatus };
 }
 
 export async function updateMemberDepositStatus(id: string, depositStatus: string) {
@@ -305,7 +336,7 @@ export async function updateMember(
   nickname: string,
   email: string,
   name: string,
-  joinDate: string,
+  lastPaymentDate: string,
   paymentDate: string,
   depositStatus: string
 ) {
@@ -315,7 +346,7 @@ export async function updateMember(
       nickname = ${nickname},
       email = ${email},
       name = ${name},
-      join_date = ${joinDate},
+      last_payment_date = ${lastPaymentDate},
       payment_date = ${paymentDate},
       deposit_status = ${depositStatus}
     WHERE id = ${id}
@@ -420,7 +451,7 @@ export async function getAllMembersWithDetails() {
       m.nickname,
       m.email,
       m.name,
-      m.join_date,
+      m.last_payment_date,
       m.payment_date,
       m.deposit_status,
       m.created_at,
@@ -438,7 +469,7 @@ export async function getAllMembersWithDetails() {
     nickname: row.nickname,
     email: row.email,
     name: row.name,
-    joinDate: row.join_date instanceof Date ? row.join_date.toISOString().split('T')[0] : row.join_date,
+    lastPaymentDate: row.last_payment_date instanceof Date ? row.last_payment_date.toISOString().split('T')[0] : row.last_payment_date,
     paymentDate: row.payment_date instanceof Date ? row.payment_date.toISOString().split('T')[0] : row.payment_date,
     depositStatus: row.deposit_status,
     createdAt: row.created_at.toISOString(),
