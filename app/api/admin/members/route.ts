@@ -19,13 +19,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { youtubeAccountId, nickname, email, name, joinDate, paymentDate, depositStatus, requestId } = await request.json();
+    const { youtubeAccountId, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, requestId } = await request.json();
     const member = await addMember(
       youtubeAccountId,
       nickname,
       email,
       name,
-      joinDate,
+      lastPaymentDate,
       paymentDate,
       depositStatus,
       requestId
