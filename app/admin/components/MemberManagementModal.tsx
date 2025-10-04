@@ -235,7 +235,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newLastPaymentDate, setNewJoinDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newLastPaymentDate, setNewLastPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [newPaymentDate, setNewPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
 
@@ -539,7 +539,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setNewMemberNickname('');
         setNewMemberEmail('');
         setNewMemberName('');
-        setNewJoinDate(today);
+        setNewLastPaymentDate(today);
         setNewPaymentDate(today);
         setNewDepositStatus('pending');
         setShowAddMember(false);
@@ -555,7 +555,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(member.lastPaymentDate);
+    setNewLastPaymentDate(member.lastPaymentDate);
     setNewPaymentDate(member.paymentDate);
     setNewDepositStatus(member.depositStatus);
     setShowAddMember(true);
@@ -584,7 +584,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setNewMemberNickname('');
         setNewMemberEmail('');
         setNewMemberName('');
-        setNewJoinDate(today);
+        setNewLastPaymentDate(today);
         setNewPaymentDate(today);
         setNewDepositStatus('pending');
         setShowAddMember(false);
@@ -647,7 +647,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       setNewMemberNickname('');
       setNewMemberEmail('');
       setNewMemberName('');
-      setNewJoinDate(today);
+      setNewLastPaymentDate(today);
       setNewPaymentDate(today);
       setNewDepositStatus('pending');
       setShowAddMember(false);
@@ -924,7 +924,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                       <input
                         type="date"
                         value={newLastPaymentDate}
-                        onChange={(e) => setNewJoinDate(e.target.value)}
+                        onChange={(e) => setNewLastPaymentDate(e.target.value)}
                         className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg bg-white text-gray-900"
                       />
                     </div>

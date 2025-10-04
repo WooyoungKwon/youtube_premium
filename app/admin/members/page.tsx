@@ -63,7 +63,7 @@ export default function MembersPage() {
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newLastPaymentDate, setNewJoinDate] = useState('');
+  const [newLastPaymentDate, setNewLastPaymentDate] = useState('');
   const [newPaymentDate, setNewPaymentDate] = useState('');
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
   
@@ -432,7 +432,7 @@ export default function MembersPage() {
         setNewMemberNickname('');
         setNewMemberEmail('');
         setNewMemberName('');
-        setNewJoinDate('');
+        setNewLastPaymentDate('');
         setNewPaymentDate('');
         setNewDepositStatus('pending');
         setShowAddMember(false);
@@ -448,7 +448,7 @@ export default function MembersPage() {
     setNewMemberNickname(member.nickname);
     setNewMemberEmail(member.email);
     setNewMemberName(member.name);
-    setNewJoinDate(formatDateForInput(member.lastPaymentDate));
+    setNewLastPaymentDate(formatDateForInput(member.lastPaymentDate));
     setNewPaymentDate(formatDateForInput(member.paymentDate));
     setNewDepositStatus(member.depositStatus);
     setShowAddMember(true);
@@ -476,7 +476,7 @@ export default function MembersPage() {
         setNewMemberNickname('');
         setNewMemberEmail('');
         setNewMemberName('');
-        setNewJoinDate('');
+        setNewLastPaymentDate('');
         setNewPaymentDate('');
         setNewDepositStatus('pending');
         setShowAddMember(false);
@@ -578,7 +578,7 @@ export default function MembersPage() {
       setNewMemberNickname('');
       setNewMemberEmail('');
       setNewMemberName('');
-      setNewJoinDate('');
+      setNewLastPaymentDate('');
       setNewPaymentDate('');
       setNewDepositStatus('pending');
       setShowAddMember(false);
@@ -1043,7 +1043,7 @@ export default function MembersPage() {
                         <input
                           type="date"
                           value={newLastPaymentDate}
-                          onChange={(e) => setNewJoinDate(e.target.value)}
+                          onChange={(e) => setNewLastPaymentDate(e.target.value)}
                           placeholder="가입날짜"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
                         />
