@@ -4,5 +4,8 @@
       "path": "/api/cron/update-expired-members",
       "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "env": {
+    "TZ": "Asia/Seoul"
+  }
 }
