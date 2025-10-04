@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getYoutubeAccountsByApple, addYoutubeAccount, updateYoutubeAccount, deleteYoutubeAccount } from '@/lib/storage';
+import { getYoutubeAccountsByApple, addYoutubeAccount } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -18,37 +18,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { appleAccountId, youtubeEmail, nickname, renewalDate } = await request.json();
-    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname, renewalDate);
+    const { appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit } = await request.json();
+    const account = await addYoutubeAccount(appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit);
     return NextResponse.json(account);
   } catch (error) {
     console.error('Add youtube account error:', error);
     return NextResponse.json({ error: 'Failed to add youtube account' }, { status: 500 });
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const { id, youtubeEmail, nickname, renewalDate } = await request.json();
-    await updateYoutubeAccount(id, youtubeEmail, nickname, renewalDate);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Update youtube account error:', error);
-    return NextResponse.json({ error: 'Failed to update youtube account' }, { status: 500 });
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
-    await deleteYoutubeAccount(id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Delete youtube account error:', error);
-    return NextResponse.json({ error: 'Failed to delete youtube account' }, { status: 500 });
   }
 }

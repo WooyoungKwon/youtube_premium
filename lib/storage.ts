@@ -73,6 +73,7 @@ export async function initDatabase() {
       // 새 필드 추가
       await sql`ALTER TABLE apple_accounts ADD COLUMN IF NOT EXISTS remaining_credit INTEGER DEFAULT 0`;
       await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS renewal_date DATE`;
+      await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS remaining_credit INTEGER DEFAULT 0`;
       
       // members 테이블 마이그레이션 (이전 스키마 → 새 스키마)
       await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS nickname VARCHAR(255)`;
@@ -207,6 +208,7 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
         youtube_email as "youtubeEmail",
         nickname,
         renewal_date as "renewalDate",
+        remaining_credit as "remainingCredit",
         created_at as "createdAt"
       FROM youtube_accounts
       WHERE apple_account_id = ${appleAccountId}
@@ -219,23 +221,24 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
   }
 }
 
-export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
+export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string, remainingCredit?: number) {
   await initDatabase();
   const id = Date.now().toString();
   await sql`
-    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, created_at)
-    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, CURRENT_TIMESTAMP)
+    INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, remaining_credit, created_at)
+    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, ${remainingCredit || 0}, CURRENT_TIMESTAMP)
   `;
-  return { id, appleAccountId, youtubeEmail, nickname, renewalDate };
+  return { id, appleAccountId, youtubeEmail, nickname, renewalDate, remainingCredit: remainingCredit || 0 };
 }
 
-export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
+export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string, remainingCredit?: number) {
   await sql`
     UPDATE youtube_accounts
     SET 
       youtube_email = ${youtubeEmail},
       nickname = ${nickname || null},
-      renewal_date = ${renewalDate || null}
+      renewal_date = ${renewalDate || null},
+      remaining_credit = ${remainingCredit || 0}
     WHERE id = ${id}
   `;
 }
@@ -284,6 +287,12 @@ export async function addMember(
 ) {
   await initDatabase();
   const id = Date.now().toString();
+  
+  // 빈 문자열이면 오늘 날짜로 설정
+  const today = new Date().toISOString().split('T')[0];
+  const validJoinDate = joinDate && joinDate.trim() !== '' ? joinDate : today;
+  const validPaymentDate = paymentDate && paymentDate.trim() !== '' ? paymentDate : today;
+  
   await sql`
     INSERT INTO members (
       id, youtube_account_id, request_id, nickname, email, name,
@@ -291,11 +300,11 @@ export async function addMember(
     )
     VALUES (
       ${id}, ${youtubeAccountId}, ${requestId || null}, ${nickname},
-      ${email}, ${name}, ${joinDate}, ${paymentDate}, ${depositStatus},
+      ${email}, ${name}, ${validJoinDate}, ${validPaymentDate}, ${depositStatus},
       CURRENT_TIMESTAMP
     )
   `;
-  return { id, youtubeAccountId, nickname, email, name, joinDate, paymentDate, depositStatus };
+  return { id, youtubeAccountId, nickname, email, name, joinDate: validJoinDate, paymentDate: validPaymentDate, depositStatus };
 }
 
 export async function updateMemberDepositStatus(id: string, depositStatus: string) {
