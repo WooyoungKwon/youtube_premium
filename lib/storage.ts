@@ -18,16 +18,12 @@ export async function initDatabase() {
       )
     `;
     
-    await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
-    
     // Apple 계정 테이블
     await sql`
       CREATE TABLE IF NOT EXISTS apple_accounts (
         id VARCHAR(255) PRIMARY KEY,
         apple_email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255),
+        remaining_credit INTEGER DEFAULT 0,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -39,14 +35,13 @@ export async function initDatabase() {
         apple_account_id VARCHAR(255) NOT NULL,
         youtube_email VARCHAR(255) NOT NULL,
         nickname VARCHAR(255),
+        renewal_date DATE,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (apple_account_id) REFERENCES apple_accounts(id) ON DELETE CASCADE
       )
     `;
     
-    await sql`CREATE INDEX IF NOT EXISTS idx_apple_account ON youtube_accounts(apple_account_id)`;
-    
-    // 가입 회원 테이블
+    // 가입 회원 테이블 (깔끔한 스키마)
     await sql`
       CREATE TABLE IF NOT EXISTS members (
         id VARCHAR(255) PRIMARY KEY,
@@ -64,61 +59,15 @@ export async function initDatabase() {
       )
     `;
     
-    // 기존 테이블에 컬럼 추가 (이미 있으면 무시) - 인덱스 생성 전에 먼저 실행
-    try {
-      await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS months INTEGER`;
-      await sql`ALTER TABLE member_requests ADD COLUMN IF NOT EXISTS depositor_name VARCHAR(255)`;
-      await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS nickname VARCHAR(255)`;
-      
-      // 새 필드 추가
-      await sql`ALTER TABLE apple_accounts ADD COLUMN IF NOT EXISTS remaining_credit INTEGER DEFAULT 0`;
-      await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS renewal_date DATE`;
-      await sql`ALTER TABLE youtube_accounts ADD COLUMN IF NOT EXISTS remaining_credit INTEGER DEFAULT 0`;
-      
-      // members 테이블 마이그레이션 (이전 스키마 → 새 스키마)
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS nickname VARCHAR(255)`;
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS email VARCHAR(255)`;
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS name VARCHAR(255)`;
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS join_date DATE`;
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS payment_date DATE`;
-      await sql`ALTER TABLE members ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(50) DEFAULT 'pending'`;
-      
-      // 기존 컬럼의 NOT NULL 제약조건 제거 - 강제 실행
-      try {
-        await sql`ALTER TABLE members ALTER COLUMN user_email DROP NOT NULL`;
-      } catch (e) { console.log('user_email NOT NULL already removed'); }
-      
-      try {
-        await sql`ALTER TABLE members ALTER COLUMN start_date DROP NOT NULL`;
-      } catch (e) { console.log('start_date NOT NULL already removed'); }
-      
-      try {
-        await sql`ALTER TABLE members ALTER COLUMN end_date DROP NOT NULL`;
-      } catch (e) { console.log('end_date NOT NULL already removed'); }
-      
-      // youtube_accounts 테이블의 slot_number 컬럼 NOT NULL 제약 제거 - 강제 실행
-      try {
-        await sql`ALTER TABLE youtube_accounts ALTER COLUMN slot_number DROP NOT NULL`;
-        console.log('Successfully removed NOT NULL constraint from slot_number');
-      } catch (e) { 
-        console.log('slot_number NOT NULL constraint removal failed or already removed:', e); 
-      }
-      
-      // 기존 컬럼 삭제는 데이터 손실 위험이 있으므로 나중에 수동으로 처리
-      // DROP COLUMN user_email, kakao_id, phone, start_date, end_date, status
-    } catch (e) {
-      // 컬럼이 이미 존재하면 무시
-      console.log('Column migration:', e);
-    }
-    
-    // 인덱스 생성 (컬럼 추가 후)
+    // 인덱스 생성
+    await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_apple_account ON youtube_accounts(apple_account_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
-    try {
-      await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
-    } catch (e) {
-      // 인덱스가 이미 존재하면 무시
-    }
+    await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
+    
   } catch (error) {
     console.error('Database initialization error:', error);
   }
