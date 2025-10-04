@@ -1,44 +1,34 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-
-interface AppleAccount {
-  id: string;
-  appleEmail: string;
-  remainingCredit?: number;
-  createdAt: string;
-}
-
-interface YoutubeAccount {
-  id: string;
-  appleAccountId: string;
-  youtubeEmail: string;
-  nickname?: string;
-  createdAt: string;
-}
-
-interface Member {
-  id: string;
-  youtubeAccountId: string;
-  requestId?: string;
-  nickname: string;
-  email: string;
-  name: string;
-  joinDate: string;
-  paymentDate: string;
-  depositStatus: string;
-  createdAt: string;
-}
+import { AppleAccount, YoutubeAccount, Member } from '@/types';
 
 type Step = 'apple' | 'youtube' | 'members';
 type SortOrder = 'oldest' | 'newest';
 
 // 일반 아이템 컴포넌트들
-function AppleItem({ account, onSelect, onEdit, onDelete }: {
+function AppleItem({ 
+  account, 
+  onSelect, 
+  onEdit, 
+  onDelete, 
+  onStartEditCredit, 
+  onUpdateCredit, 
+  onCancelEditCredit, 
+  editingCreditId, 
+  editingCreditValue, 
+  onEditingCreditValueChange 
+}: {
   account: AppleAccount;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onStartEditCredit: (account: AppleAccount) => void;
+  onUpdateCredit: (id: string) => void;
+  onCancelEditCredit: () => void;
+  editingCreditId: string | null;
+  editingCreditValue: number;
+  onEditingCreditValueChange: (value: number) => void;
 }) {
   return (
     <div
@@ -46,8 +36,56 @@ function AppleItem({ account, onSelect, onEdit, onDelete }: {
     >
       <div className="flex-1" onClick={onSelect}>
         <p className="text-gray-900 font-medium">{account.appleEmail}</p>
-        <p className="text-sm text-orange-600 font-medium">잔여 크레딧: {account.remainingCredit || 0} 루피</p>
+        <div className="flex items-center gap-2 mt-1">
+          {editingCreditId === account.id ? (
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-gray-600">크레딧:</span>
+              <input
+                type="number"
+                value={editingCreditValue}
+                onChange={(e) => onEditingCreditValueChange(Number(e.target.value))}
+                onClick={(e) => e.stopPropagation()}
+                min="0"
+                className="w-16 px-1 py-0.5 text-sm border border-gray-300 rounded"
+              />
+              <span className="text-sm text-gray-600">개월</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdateCredit(account.id);
+                }}
+                className="px-1 py-0.5 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+              >
+                ✓
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancelEditCredit();
+                }}
+                className="px-1 py-0.5 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartEditCredit(account);
+              }}
+              className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200"
+            >
+              잔여 크레딧: {account.remainingCredit || 0}개월
+            </button>
+          )}
+        </div>
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
+        {account.lastUpdated && (
+          <p className="text-xs text-gray-400">
+            마지막 업데이트: {new Date(account.lastUpdated).toLocaleDateString()}
+          </p>
+        )}
       </div>
       <div className="flex gap-2">
         <button
@@ -177,6 +215,10 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [editingYoutube, setEditingYoutube] = useState<YoutubeAccount | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   
+  // 크레딧 편집 상태
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
+  const [editingCreditValue, setEditingCreditValue] = useState(0);
+  
   // 추가 관련 상태
   const [showAddApple, setShowAddApple] = useState(false);
   const [showAddYoutube, setShowAddYoutube] = useState(false);
@@ -296,11 +338,15 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       const res = await fetch('/api/admin/apple-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail }),
+        body: JSON.stringify({ 
+          appleEmail: newAppleEmail,
+          remainingCredit: newAppleCredit 
+        }),
       });
       
       if (res.ok) {
         setNewAppleEmail('');
+        setNewAppleCredit(0);
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -312,6 +358,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const handleEditApple = (apple: AppleAccount) => {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
+    setNewAppleCredit(apple.remainingCredit || 0);
     setShowAddApple(true);
   };
 
@@ -322,12 +369,16 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       const res = await fetch(`/api/admin/apple-accounts/${editingApple.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail }),
+        body: JSON.stringify({ 
+          appleEmail: newAppleEmail, 
+          remainingCredit: newAppleCredit 
+        }),
       });
       
       if (res.ok) {
         setEditingApple(null);
         setNewAppleEmail('');
+        setNewAppleCredit(0);
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -348,6 +399,39 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     } catch (error) {
       console.error('Apple 계정 삭제에 실패했습니다:', error);
     }
+  };
+
+  // 크레딧 편집 관련 함수들
+  const handleStartEditCredit = (account: AppleAccount) => {
+    setEditingCreditId(account.id);
+    setEditingCreditValue(account.remainingCredit || 0);
+  };
+
+  const handleUpdateCredit = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/apple-accounts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remainingCredit: editingCreditValue }),
+      });
+      
+      if (res.ok) {
+        setEditingCreditId(null);
+        setEditingCreditValue(0);
+        await fetchAppleAccounts();
+      }
+    } catch (error) {
+      console.error('크레딧 업데이트에 실패했습니다:', error);
+    }
+  };
+
+  const handleCancelEditCredit = () => {
+    setEditingCreditId(null);
+    setEditingCreditValue(0);
+  };
+
+  const handleEditingCreditValueChange = (value: number) => {
+    setEditingCreditValue(value);
   };
 
   const handleAddYoutube = async () => {
@@ -538,6 +622,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     if (editingApple) {
       setEditingApple(null);
       setNewAppleEmail('');
+      setNewAppleCredit(0);
       setShowAddApple(false);
     }
     if (editingYoutube) {
@@ -646,6 +731,14 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     placeholder="Apple 이메일*"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
+                  <input
+                    type="number"
+                    value={newAppleCredit}
+                    onChange={(e) => setNewAppleCredit(Number(e.target.value))}
+                    placeholder="크레딧 (개월)"
+                    min="0"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
+                  />
                   <div className="flex gap-2">
                     <button
                       onClick={editingApple ? handleUpdateApple : handleAddApple}
@@ -671,6 +764,12 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     onSelect={() => handleAppleSelect(apple)}
                     onEdit={() => handleEditApple(apple)}
                     onDelete={() => handleDeleteApple(apple.id)}
+                    onStartEditCredit={handleStartEditCredit}
+                    onUpdateCredit={handleUpdateCredit}
+                    onCancelEditCredit={handleCancelEditCredit}
+                    editingCreditId={editingCreditId}
+                    editingCreditValue={editingCreditValue}
+                    onEditingCreditValueChange={handleEditingCreditValueChange}
                   />
                 ))}
               </div>

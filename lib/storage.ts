@@ -24,9 +24,21 @@ export async function initDatabase() {
         id VARCHAR(255) PRIMARY KEY,
         apple_email VARCHAR(255) NOT NULL UNIQUE,
         remaining_credit INTEGER DEFAULT 0,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // 기존 테이블에 last_updated 컬럼 추가 (마이그레이션)
+    try {
+      await sql`
+        ALTER TABLE apple_accounts 
+        ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      `;
+    } catch (error) {
+      // 컬럼이 이미 존재하는 경우 무시
+      console.log('last_updated column already exists or migration failed:', error);
+    }
     
     // YouTube 계정 테이블
     await sql`
@@ -112,6 +124,7 @@ export async function getAllAppleAccounts() {
         id, 
         apple_email as "appleEmail", 
         remaining_credit as "remainingCredit",
+        last_updated as "lastUpdated",
         created_at as "createdAt"
       FROM apple_accounts
       ORDER BY created_at DESC
@@ -136,7 +149,7 @@ export async function addAppleAccount(appleEmail: string, remainingCredit?: numb
 export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number) {
   await sql`
     UPDATE apple_accounts
-    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}
+    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, last_updated = CURRENT_TIMESTAMP
     WHERE id = ${id}
   `;
 }

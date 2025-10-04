@@ -1,33 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-
-interface AppleAccount {
-  id: string;
-  appleEmail: string;
-  createdAt: string;
-}
-
-interface YoutubeAccount {
-  id: string;
-  appleAccountId: string;
-  youtubeEmail: string;
-  nickname?: string;
-  createdAt: string;
-}
-
-interface Member {
-  id: string;
-  youtubeAccountId: string;
-  requestId?: string;
-  nickname: string;
-  email: string;
-  name: string;
-  joinDate: string;
-  paymentDate: string;
-  depositStatus: string;
-  createdAt: string;
-}
+import { AppleAccount, YoutubeAccount, Member } from '@/types';
 
 type SortOrder = 'oldest' | 'newest';
 
@@ -82,6 +56,7 @@ export default function MembersPage() {
   
   // 폼 입력 상태
   const [newAppleEmail, setNewAppleEmail] = useState('');
+  const [newAppleCredit, setNewAppleCredit] = useState(0);
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newMemberNickname, setNewMemberNickname] = useState('');
@@ -90,6 +65,10 @@ export default function MembersPage() {
   const [newJoinDate, setNewJoinDate] = useState('');
   const [newPaymentDate, setNewPaymentDate] = useState('');
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
+  
+  // 크레딧 편집 상태
+  const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
+  const [editingCreditValue, setEditingCreditValue] = useState(0);
 
   // 정렬된 배열들
   const sortedAppleAccounts = useMemo(() => {
@@ -233,11 +212,12 @@ export default function MembersPage() {
       const res = await fetch('/api/admin/apple-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail }),
+        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit }),
       });
       
       if (res.ok) {
         setNewAppleEmail('');
+        setNewAppleCredit(0);
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -249,6 +229,7 @@ export default function MembersPage() {
   const handleEditApple = (apple: AppleAccount) => {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
+    setNewAppleCredit(apple.remainingCredit || 0);
     setShowAddApple(true);
   };
 
@@ -259,18 +240,48 @@ export default function MembersPage() {
       const res = await fetch(`/api/admin/apple-accounts/${editingApple.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail }),
+        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit }),
       });
       
       if (res.ok) {
         setEditingApple(null);
         setNewAppleEmail('');
+        setNewAppleCredit(0);
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
     } catch (error) {
       console.error('Apple 계정 수정에 실패했습니다:', error);
     }
+  };
+
+  // 크레딧만 업데이트하는 함수
+  const handleStartEditCredit = (account: AppleAccount) => {
+    setEditingCreditId(account.id);
+    setEditingCreditValue(account.remainingCredit || 0);
+  };
+
+  const handleUpdateCredit = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/apple-accounts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remainingCredit: editingCreditValue }),
+      });
+      
+      if (res.ok) {
+        setEditingCreditId(null);
+        setEditingCreditValue(0);
+        await fetchAppleAccounts();
+      }
+    } catch (error) {
+      console.error('크레딧 업데이트에 실패했습니다:', error);
+    }
+  };
+
+  const handleCancelEditCredit = () => {
+    setEditingCreditId(null);
+    setEditingCreditValue(0);
   };
 
   const handleDeleteApple = async (id: string) => {
@@ -531,6 +542,7 @@ export default function MembersPage() {
     if (editingApple) {
       setEditingApple(null);
       setNewAppleEmail('');
+      setNewAppleCredit(0);
       setShowAddApple(false);
     }
     if (editingYoutube) {
@@ -675,6 +687,14 @@ export default function MembersPage() {
                   placeholder="Apple 이메일*"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                 />
+                <input
+                  type="number"
+                  value={newAppleCredit}
+                  onChange={(e) => setNewAppleCredit(Number(e.target.value))}
+                  placeholder="크레딧 (개월)"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
+                />
                 <div className="flex gap-2">
                   <button
                     onClick={editingApple ? handleUpdateApple : handleAddApple}
@@ -709,9 +729,56 @@ export default function MembersPage() {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {apple.appleEmail}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(apple.createdAt).toLocaleDateString()}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-gray-500">
+                            {new Date(apple.createdAt).toLocaleDateString()}
+                          </p>
+                          {editingCreditId === apple.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={editingCreditValue}
+                                onChange={(e) => setEditingCreditValue(Number(e.target.value))}
+                                onClick={(e) => e.stopPropagation()}
+                                min="0"
+                                className="w-16 px-1 py-0.5 text-xs border border-gray-300 rounded"
+                              />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateCredit(apple.id);
+                                }}
+                                className="px-1 py-0.5 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelEditCredit();
+                                }}
+                                className="px-1 py-0.5 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEditCredit(apple);
+                              }}
+                              className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded hover:bg-blue-200"
+                            >
+                              크레딧: {apple.remainingCredit || 0}개월
+                            </button>
+                          )}
+                        </div>
+                        {apple.lastUpdated && (
+                          <p className="text-xs text-gray-400">
+                            마지막 업데이트: {new Date(apple.lastUpdated).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                       <div className="flex gap-1 ml-2">
                         <button

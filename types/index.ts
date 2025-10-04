@@ -21,3 +21,33 @@ export interface CreateRequestDTO {
 export interface UpdateRequestDTO {
   status: 'approved' | 'rejected';
 }
+
+export interface AppleAccount {
+  id: string;
+  appleEmail: string;
+  remainingCredit: number;
+  lastUpdated?: string;
+  createdAt: string;
+}
+
+export interface YoutubeAccount {
+  id: string;
+  appleAccountId: string;
+  youtubeEmail: string;
+  nickname?: string;
+  renewalDate?: string;
+  createdAt: string;
+}
+
+export interface Member {
+  id: string;
+  youtubeAccountId: string;
+  requestId?: string;
+  nickname: string;
+  email: string;
+  name: string;
+  joinDate: string;
+  paymentDate: string;
+  depositStatus: string;
+  createdAt: string;
+}
