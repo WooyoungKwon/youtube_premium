@@ -53,7 +53,13 @@ export async function PATCH(request: Request) {
       }
       
       // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
-      const paymentDateStr = memberRows[0].payment_date;
+      let paymentDateStr = memberRows[0].payment_date;
+      
+      // Date 객체인 경우 문자열로 변환
+      if (paymentDateStr instanceof Date) {
+        paymentDateStr = paymentDateStr.toISOString().split('T')[0];
+      }
+      
       const [year, month, day] = paymentDateStr.split('-').map(Number);
       const currentPaymentDate = new Date(year, month - 1, day);
       

@@ -153,18 +153,23 @@ export default function AllMembersPage() {
   const handleUpdateMemberStatus = async (memberId: string, newStatus: string) => {
     try {
       setUpdatingMember(memberId);
+      console.log('Updating member status:', { memberId, newStatus });
+      
       const res = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: memberId, depositStatus: newStatus }),
       });
       
+      console.log('Response status:', res.status);
+      
       if (res.ok) {
         // 성공 시 목록 새로고침
         await fetchAllMembers();
       } else {
-        console.error('Failed to update member status');
-        alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+        const errorData = await res.json();
+        console.error('Failed to update member status:', errorData);
+        alert(`상태 변경에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
       }
     } catch (error) {
       console.error('Error updating member status:', error);
