@@ -314,22 +314,9 @@ export async function addMember(
   await initDatabase();
   const id = Date.now().toString();
   
-  // 날짜 문자열을 YYYY-MM-DD 형식으로 확실하게 변환
-  const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr.trim() === '') return new Date().toISOString().split('T')[0];
-    // 이미 YYYY-MM-DD 형식이면 그대로 사용
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      return dateStr;
-    }
-    // ISO 형식이면 날짜 부분만 추출
-    if (dateStr.includes('T')) {
-      return dateStr.split('T')[0];
-    }
-    return dateStr;
-  };
-
-  const validLastPaymentDate = formatDate(lastPaymentDate);
-  const validPaymentDate = formatDate(paymentDate);
+  // 날짜는 이미 YYYY-MM-DD 형식으로 전달되어야 함 (호출하는 쪽에서 처리)
+  const validLastPaymentDate = lastPaymentDate;
+  const validPaymentDate = paymentDate;
   
   await sql`
     INSERT INTO members (

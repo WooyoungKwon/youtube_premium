@@ -33,10 +33,37 @@ export function formatDateToKST(date: Date | string): string {
  * KST 기준으로 날짜에 개월 수 더하기
  */
 export function addMonthsKST(date: Date | string, months: number): string {
+  // YYYY-MM-DD 형식의 문자열이면 직접 파싱 (시간대 문제 방지)
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const [year, month, day] = date.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    d.setMonth(d.getMonth() + months);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  
   const d = typeof date === 'string' ? new Date(date) : date;
   const kstTime = new Date(d.getTime() + (9 * 60 * 60 * 1000));
-  kstTime.setMonth(kstTime.getMonth() + months);
+  kstTime.setUTCMonth(kstTime.getUTCMonth() + months);
   return kstTime.toISOString().split('T')[0];
+}
+
+/**
+ * Date 객체나 ISO 문자열을 YYYY-MM-DD 형식으로 변환 (시간대 고려)
+ */
+export function toDateString(date: Date | string): string {
+  // 이미 YYYY-MM-DD 형식이면 그대로 반환
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+  
+  // ISO 형식이면 날짜 부분만 추출
+  if (typeof date === 'string' && date.includes('T')) {
+    return date.split('T')[0];
+  }
+  
+  // Date 객체이거나 다른 형식이면 KST로 변환
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return formatDateToKST(d);
 }
 
 /**

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { addMember } from '@/lib/storage';
+import { toDateString, addMonthsKST } from '@/lib/dateUtils';
 
 // POST: 승인된 신청을 회원으로 등록
 export async function POST(request: Request) {
@@ -31,15 +32,9 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // 날짜 계산: 신청일 + 개월수
-    const createdDate = new Date(requestData.created_at);
-    const paymentDate = new Date(createdDate);
-    paymentDate.setMonth(paymentDate.getMonth() + (requestData.months || 1));
-
-    // 날짜를 YYYY-MM-DD 형식으로 변환
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0];
-    };
+    // 날짜 계산: 신청일 + 개월수 (한국 시간 기준)
+    const createdDateStr = toDateString(requestData.created_at);
+    const paymentDateStr = addMonthsKST(createdDateStr, requestData.months || 1);
 
     // 회원 등록
     const member = await addMember(
@@ -47,8 +42,8 @@ export async function POST(request: Request) {
       '임시닉네임', // 닉네임은 임시로 설정
       requestData.email,
       requestData.depositor_name || '미입력', // 입금자명을 이름으로 사용
-      formatDate(createdDate), // 신청일을 입금일로 사용
-      formatDate(paymentDate), // 다음 결제일은 개월수만큼 더한 날짜
+      createdDateStr, // 신청일을 입금일로 사용 (한국 시간)
+      paymentDateStr, // 다음 결제일은 개월수만큼 더한 날짜 (한국 시간)
       'completed', // 입금 완료 상태
       requestId // 신청 ID 연결
     );
