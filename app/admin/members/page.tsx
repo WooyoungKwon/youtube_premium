@@ -691,7 +691,7 @@ export default function MembersPage() {
                   type="number"
                   value={newAppleCredit}
                   onChange={(e) => setNewAppleCredit(Number(e.target.value))}
-                  placeholder="크레딧 (개월)"
+                  placeholder="크레딧 (루피)"
                   min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
                 />
@@ -770,7 +770,7 @@ export default function MembersPage() {
                               }}
                               className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded hover:bg-blue-200"
                             >
-                              크레딧: {apple.remainingCredit || 0}개월
+                              크레딧: {apple.remainingCredit || 0}루피
                             </button>
                           )}
                         </div>

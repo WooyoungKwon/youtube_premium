@@ -48,7 +48,7 @@ function AppleItem({
                 min="0"
                 className="w-16 px-1 py-0.5 text-sm border border-gray-300 rounded"
               />
-              <span className="text-sm text-gray-600">개월</span>
+              <span className="text-sm text-gray-600">루피</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -76,7 +76,7 @@ function AppleItem({
               }}
               className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200"
             >
-              잔여 크레딧: {account.remainingCredit || 0}개월
+              잔여 크레딧: {account.remainingCredit || 0}루피
             </button>
           )}
         </div>
@@ -735,7 +735,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     type="number"
                     value={newAppleCredit}
                     onChange={(e) => setNewAppleCredit(Number(e.target.value))}
-                    placeholder="크레딧 (개월)"
+                    placeholder="크레딧 (루피)"
                     min="0"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
