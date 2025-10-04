@@ -5,6 +5,11 @@ import { getTotalRevenue } from '@/lib/storage';
 // GET: 관리자 대시보드 통계 조회
 export async function GET() {
   try {
+    // 캐시 헤더 추가 (10초간 캐시)
+    const headers = {
+      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+    };
+    
     // 전체 회원 수 조회
     const { rows: memberCountRows } = await sql`
       SELECT COUNT(*) as total FROM members
@@ -24,7 +29,7 @@ export async function GET() {
       monthlyRevenue,
       cumulativeRevenue,
       pricePerMember: PRICE_PER_MEMBER,
-    });
+    }, { headers });
   } catch (error) {
     console.error('Get admin stats error:', error);
     return NextResponse.json(

@@ -138,7 +138,7 @@ export async function initDatabase() {
       )
     `;
     
-    // 인덱스 생성
+    // 인덱스 생성 (성능 최적화)
     await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
@@ -148,6 +148,14 @@ export async function initDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_revenue_member ON revenue_records(member_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_revenue_recorded_at ON revenue_records(recorded_at DESC)`;
+    
+    // 성능 최적화를 위한 추가 인덱스
+    try {
+      await sql`CREATE INDEX IF NOT EXISTS idx_members_status_date ON members(deposit_status, payment_date)`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_members_request_completed ON members(request_id, deposit_status) WHERE request_id IS NOT NULL`;
+    } catch (error) {
+      console.log('Additional indexes creation skipped:', error);
+    }
     
   } catch (error) {
     console.error('Database initialization error:', error);

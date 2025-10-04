@@ -32,10 +32,34 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchRequests();
-      fetchStats();
+      // 병렬로 데이터 로드 (속도 개선)
+      fetchAllData();
     }
   }, [isAuthenticated]);
+
+  const fetchAllData = async () => {
+    try {
+      // 두 API를 병렬로 호출하여 속도 개선
+      const [requestsRes, statsRes] = await Promise.all([
+        fetch('/api/admin/list'),
+        fetch('/api/admin/stats')
+      ]);
+
+      if (requestsRes.ok) {
+        const data = await requestsRes.json();
+        setRequests(data);
+      }
+
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        setRevenueStats(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchRequests = async () => {
     try {
@@ -46,8 +70,6 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch requests:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
