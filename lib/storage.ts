@@ -1,8 +1,8 @@
 import { MemberRequest } from '@/types';
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-// Supabase connection using Vercel Postgres (원래 방식)
-const client = createClient({
+// Supabase pooled connection using Vercel Postgres
+const client = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
