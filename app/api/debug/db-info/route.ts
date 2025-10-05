@@ -7,9 +7,7 @@ export async function GET() {
   try {
     const pool = new Pool({
       connectionString: process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL,
-      ssl: {
-        rejectUnauthorized: false
-      },
+      ssl: false,
     });
 
     // 연결 정보 확인
