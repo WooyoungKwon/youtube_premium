@@ -2,8 +2,12 @@ import { MemberRequest } from '@/types';
 import { Pool } from 'pg';
 
 // Supabase connection using native pg (로컬 + 배포 모두 호환)
+const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || '')
+  .replace('sslmode=require', '')
+  .replace('&&', '&');
+
 const pool = new Pool({
-  connectionString: process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL,
+  connectionString,
   ssl: false,
   max: 10,
   idleTimeoutMillis: 30000,

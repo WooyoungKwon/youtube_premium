@@ -7,8 +7,12 @@ import {
 import { Pool } from 'pg';
 import { createToken, setAuthCookie } from '@/lib/auth';
 
+const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || '')
+  .replace('sslmode=require', '')
+  .replace('&&', '&');
+
 const pool = new Pool({
-  connectionString: process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL,
+  connectionString,
   ssl: false,
   max: 10,
   idleTimeoutMillis: 30000,
