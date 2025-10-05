@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import { addMember, addRevenueRecord } from '@/lib/storage';
 import { toDateString, addMonthsKST } from '@/lib/dateUtils';
 
-const client = createClient({
+const client = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 

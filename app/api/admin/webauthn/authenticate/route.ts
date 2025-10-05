@@ -4,10 +4,10 @@ import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 import { createToken, setAuthCookie } from '@/lib/auth';
 
-const client = createClient({
+const client = createPool({
   connectionString: process.env.POSTGRES_URL,
 });
 
