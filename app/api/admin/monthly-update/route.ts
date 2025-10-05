@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 
-const client = createPool({
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 // 월 갱신 로직: 결제일이 지난 회원들의 결제일을 다음 달로 업데이트하고 입금 상태를 대기로 변경
 export async function POST(request: NextRequest) {

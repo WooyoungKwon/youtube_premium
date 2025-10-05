@@ -4,12 +4,27 @@ import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 import { createToken, setAuthCookie } from '@/lib/auth';
 
-const client = createPool({
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 const RP_ID = process.env.NEXT_PUBLIC_RP_ID || 'localhost';
 const ORIGIN = process.env.NEXT_PUBLIC_ORIGIN || 'http://localhost:3000';

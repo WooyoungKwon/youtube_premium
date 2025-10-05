@@ -1,11 +1,26 @@
 import { NextResponse } from 'next/server';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 import { addMember, addRevenueRecord } from '@/lib/storage';
 import { toDateString, addMonthsKST } from '@/lib/dateUtils';
 
-const client = createPool({
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 // POST: 승인된 신청을 회원으로 등록
 export async function POST(request: Request) {

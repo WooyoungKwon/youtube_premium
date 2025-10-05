@@ -648,20 +648,20 @@ export default function MembersPage() {
           
           {/* 추가/수정 모달 */}
           {(showAddApple) && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
               <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h3 className="text-xl font-bold mb-4">{editingApple ? 'Apple 계정 수정' : 'Apple 계정 추가'}</h3>
                 <input
                   type="email"
                   placeholder="Apple 이메일"
-                  className="w-full p-2 mb-2 bg-gray-700 rounded"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
                   value={newAppleEmail}
                   onChange={(e) => setNewAppleEmail(e.target.value)}
                 />
                 <input
                   type="number"
                   placeholder="크레딧"
-                  className="w-full p-2 mb-4 bg-gray-700 rounded"
+                  className="w-full p-2 mb-4 bg-gray-700 rounded text-white"
                   value={newAppleCredit}
                   onChange={(e) => setNewAppleCredit(Number(e.target.value))}
                 />
@@ -676,6 +676,98 @@ export default function MembersPage() {
                   </button>
                   <button onClick={editingApple ? handleUpdateApple : handleAddApple} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
                     {editingApple ? '수정' : '추가'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* YouTube 추가/수정 모달 */}
+          {(showAddYoutube) && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4">{editingYoutube ? 'YouTube 계정 수정' : 'YouTube 계정 추가'}</h3>
+                <input
+                  type="email"
+                  placeholder="YouTube 이메일"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newYoutubeEmail}
+                  onChange={(e) => setNewYoutubeEmail(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="닉네임 (선택사항)"
+                  className="w-full p-2 mb-4 bg-gray-700 rounded text-white"
+                  value={newYoutubeNickname}
+                  onChange={(e) => setNewYoutubeNickname(e.target.value)}
+                />
+                <div className="flex justify-end">
+                  <button onClick={handleCancelEdit} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                    취소
+                  </button>
+                  <button onClick={editingYoutube ? handleUpdateYoutube : handleAddYoutube} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    {editingYoutube ? '수정' : '추가'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 회원 추가/수정 모달 */}
+          {(showAddMember) && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4">{editingMember ? '회원 수정' : '회원 추가'}</h3>
+                <input
+                  type="text"
+                  placeholder="닉네임"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newMemberNickname}
+                  onChange={(e) => setNewMemberNickname(e.target.value)}
+                />
+                <input
+                  type="email"
+                  placeholder="이메일"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newMemberEmail}
+                  onChange={(e) => setNewMemberEmail(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="이름"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                />
+                <input
+                  type="date"
+                  placeholder="이전 결제일"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newLastPaymentDate}
+                  onChange={(e) => setNewLastPaymentDate(e.target.value)}
+                />
+                <input
+                  type="date"
+                  placeholder="다음 결제일"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded text-white"
+                  value={newPaymentDate}
+                  onChange={(e) => setNewPaymentDate(e.target.value)}
+                />
+                <select
+                  className="w-full p-2 mb-4 bg-gray-700 rounded text-white"
+                  value={newDepositStatus}
+                  onChange={(e) => setNewDepositStatus(e.target.value)}
+                >
+                  <option value="pending">대기</option>
+                  <option value="completed">완료</option>
+                  <option value="failed">실패</option>
+                </select>
+                <div className="flex justify-end">
+                  <button onClick={handleCancelEdit} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                    취소
+                  </button>
+                  <button onClick={editingMember ? handleUpdateMember : handleAddMember} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    {editingMember ? '수정' : '추가'}
                   </button>
                 </div>
               </div>
@@ -815,20 +907,20 @@ export default function MembersPage() {
                       <li key={member.id} className="p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">
                         <div className="flex justify-between items-center">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-white truncate">
                               {member.nickname}
                             </p>
-                            <p className="text-xs text-gray-600 truncate">
+                            <p className="text-xs text-gray-300 truncate">
                               {member.email}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-400">
                               {member.name}
                             </p>
                             <div className="flex gap-2 mt-1">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-400">
                                 이전 결제: {formatDateOnly(member.lastPaymentDate)}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-400">
                                 결제: {formatDateOnly(member.paymentDate)}
                               </span>
                             </div>

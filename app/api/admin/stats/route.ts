@@ -1,19 +1,38 @@
 import { NextResponse } from 'next/server';
-import { createPool } from '@vercel/postgres';
 import { getTotalRevenue } from '@/lib/storage';
+import { Pool } from 'pg';
 
-const client = createPool({
+// 캐싱 비활성화
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 // GET: 관리자 대시보드 통계 조회
 export async function GET() {
   try {
-    // 캐시 헤더 추가 (10초간 캐시)
+    // 캐시 비활성화
     const headers = {
-      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
     };
-    
+
     // 전체 회원 수 조회
     const { rows: memberCountRows } = await client.sql`
       SELECT COUNT(*) as total FROM members

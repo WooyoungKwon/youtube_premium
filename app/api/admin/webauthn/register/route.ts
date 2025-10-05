@@ -1,14 +1,29 @@
 import { NextResponse } from 'next/server';
-import { 
+import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
   type VerifiedRegistrationResponse,
 } from '@simplewebauthn/server';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 
-const client = createPool({
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 // Relying Party 설정
 const rpName = 'YouTube Premium Admin';

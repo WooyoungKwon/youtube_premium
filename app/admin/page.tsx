@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { MemberRequest } from '@/types';
 import RegisterMemberModal from './components/RegisterMemberModal';
 import WebAuthnLogin from './components/WebAuthnLogin';
@@ -42,8 +43,8 @@ export default function AdminPage() {
     try {
       // 두 API를 병렬로 호출하여 속도 개선
       const [requestsRes, statsRes] = await Promise.all([
-        fetch('/api/admin/list'),
-        fetch('/api/admin/stats')
+        fetch('/api/admin/list', { cache: 'no-store' }),
+        fetch('/api/admin/stats', { cache: 'no-store' })
       ]);
 
       if (requestsRes.ok) {
@@ -71,7 +72,7 @@ export default function AdminPage() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('/api/admin/list');
+      const response = await fetch('/api/admin/list', { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setRequests(data);
@@ -83,7 +84,7 @@ export default function AdminPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
+      const response = await fetch('/api/admin/stats', { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setRevenueStats(data);
@@ -270,7 +271,7 @@ export default function AdminPage() {
               <p className="text-gray-600 mt-1">YouTube Premium 회원 신청 관리</p>
             </div>
             <div className="flex gap-2">
-              <a
+              <Link
                 href="/admin/members"
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
               >
@@ -278,8 +279,8 @@ export default function AdminPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 회원 관리
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/admin/all-members"
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
               >
@@ -287,7 +288,7 @@ export default function AdminPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
                 전체 회원 목록
-              </a>
+              </Link>
               <a
                 href="/api/admin/export"
                 download

@@ -1,10 +1,29 @@
 import { NextResponse } from 'next/server';
 import { getMembersByYoutube, addMember, updateMemberDepositStatus, addRevenueRecord } from '@/lib/storage';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 
-const client = createPool({
+// 캐싱 비활성화
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) =>
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 export async function GET(request: Request) {
   try {

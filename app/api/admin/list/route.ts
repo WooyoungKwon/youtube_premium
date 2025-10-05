@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAllRequests } from '@/lib/storage';
 
+// 캐싱 비활성화
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // 모든 신청 조회 (관리자용)
 export async function GET() {
   try {
