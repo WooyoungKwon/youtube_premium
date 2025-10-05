@@ -281,11 +281,11 @@ export default function Home() {
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-2xl w-full animate-scaleIn">
-            {/* 닫기 버튼 - 모바일 최적화 */}
+          <div className="relative max-w-lg w-full animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            {/* 닫기 버튼 */}
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute -top-2 -right-2 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 active:scale-95 transition-all"
+              className="absolute -top-3 -right-3 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 hover:bg-gray-100 active:scale-95 transition-all sm:-top-2 sm:-right-8"
               aria-label="닫기"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +296,7 @@ export default function Home() {
             <img 
               src={selectedImage} 
               alt="설정 화면 크게 보기" 
-              className="w-full h-auto rounded-lg shadow-2xl cursor-pointer"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
               onClick={() => setSelectedImage(null)}
             />
             
