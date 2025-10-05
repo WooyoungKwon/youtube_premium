@@ -1,12 +1,9 @@
 import { MemberRequest } from '@/types';
-import { Pool } from 'pg';
+import { createClient } from '@vercel/postgres';
 
-// Supabase pooled connection using pg
-const pool = new Pool({
+// Supabase connection using Vercel Postgres (원래 방식)
+const client = createClient({
   connectionString: process.env.POSTGRES_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
 });
 
 // 데이터베이스 초기화 (첫 실행 시)
