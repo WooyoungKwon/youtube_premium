@@ -49,14 +49,21 @@ export default function AdminPage() {
       if (requestsRes.ok) {
         const data = await requestsRes.json();
         setRequests(data);
+      } else {
+        console.error('Failed to fetch requests:', requestsRes.status, requestsRes.statusText);
       }
 
       if (statsRes.ok) {
         const data = await statsRes.json();
         setRevenueStats(data);
+      } else {
+        console.error('Failed to fetch stats:', statsRes.status, statsRes.statusText);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      if (error instanceof TypeError) {
+        console.error('Network error - check if server is running on http://localhost:3000');
+      }
     } finally {
       setLoading(false);
     }

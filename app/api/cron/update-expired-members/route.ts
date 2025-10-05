@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // 한국 시간대(KST) 현재 날짜 가져오기
 function getKSTDate(): string {
@@ -30,7 +34,7 @@ async function recordMonthlyRevenue() {
 
     // 전월 마지막 날의 회원 수 조회
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    const { rows: memberCountRows } = await sql`
+    const { rows: memberCountRows } = await client.sql`
       SELECT COUNT(*) as count 
       FROM members 
       WHERE created_at <= ${lastDayOfMonth.toISOString()}
@@ -43,7 +47,7 @@ async function recordMonthlyRevenue() {
     console.log(`[Monthly Revenue] Member count: ${memberCount}, Revenue: ${revenue}`);
 
     // 월별 수익 기록 (이미 존재하면 업데이트)
-    await sql`
+    await client.sql`
       INSERT INTO monthly_revenue (year, month, member_count, revenue)
       VALUES (${year}, ${month}, ${memberCount}, ${revenue})
       ON CONFLICT (year, month) 
@@ -78,7 +82,7 @@ export async function GET(request: Request) {
     const revenueResult = await recordMonthlyRevenue();
 
     // 2. 결제일이 오늘 이전이고 상태가 완료인 회원들을 대기로 변경
-    const result = await sql`
+    const result = await client.sql`
       UPDATE members 
       SET deposit_status = 'pending' 
       WHERE payment_date <= ${kstToday}::date

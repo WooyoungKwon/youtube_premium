@@ -4,7 +4,11 @@ import {
   verifyRegistrationResponse,
   type VerifiedRegistrationResponse,
 } from '@simplewebauthn/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // Relying Party 설정
 const rpName = 'YouTube Premium Admin';
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
       }
 
       // 기존 등록된 기기가 있는지 확인
-      const { rows: existingCreds } = await sql`
+      const { rows: existingCreds } = await client.sql`
         SELECT credential_id FROM admin_credentials
       `;
 
@@ -95,7 +99,7 @@ export async function POST(request: Request) {
       const credentialIdBase64 = Buffer.from(credentialID).toString('base64');
       const publicKeyBase64 = Buffer.from(credentialPublicKey).toString('base64');
 
-      await sql`
+      await client.sql`
         INSERT INTO admin_credentials (
           id,
           credential_id,

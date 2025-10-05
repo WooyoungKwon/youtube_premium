@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 import { getTotalRevenue } from '@/lib/storage';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // GET: 관리자 대시보드 통계 조회
 export async function GET() {
@@ -11,7 +15,7 @@ export async function GET() {
     };
     
     // 전체 회원 수 조회
-    const { rows: memberCountRows } = await sql`
+    const { rows: memberCountRows } = await client.sql`
       SELECT COUNT(*) as total FROM members
     `;
     const totalMembers = parseInt(memberCountRows[0].total);

@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // 신청 정보 업데이트 (입금자명과 개월수 추가)
 export async function PATCH(
@@ -11,7 +15,7 @@ export async function PATCH(
     const body = await request.json();
     const { months, depositorName } = body;
     
-    await sql`
+    await client.sql`
       UPDATE member_requests
       SET months = ${months}, depositor_name = ${depositorName}
       WHERE id = ${id}

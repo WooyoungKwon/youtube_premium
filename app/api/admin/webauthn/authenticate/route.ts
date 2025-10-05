@@ -4,8 +4,12 @@ import {
   verifyAuthenticationResponse,
   type VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 import { createToken, setAuthCookie } from '@/lib/auth';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 const RP_ID = process.env.NEXT_PUBLIC_RP_ID || 'localhost';
 const ORIGIN = process.env.NEXT_PUBLIC_ORIGIN || 'http://localhost:3000';
@@ -18,7 +22,7 @@ export async function POST(request: Request) {
     // 1단계: 인증 시작 - Challenge 생성
     if (action === 'generate-options') {
       // 등록된 credential이 있는지만 확인
-      const { rows: credentials } = await sql`
+      const { rows: credentials } = await client.sql`
         SELECT credential_id 
         FROM admin_credentials
         LIMIT 1
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
       const { credential, challenge } = body;
 
       // 모든 등록된 credential 조회하여 매칭 시도
-      const { rows: allCredentials } = await sql`
+      const { rows: allCredentials } = await client.sql`
         SELECT * FROM admin_credentials
       `;
 
@@ -102,7 +106,7 @@ export async function POST(request: Request) {
 
       // Counter 업데이트 및 마지막 사용 시간 갱신
       const newCounter = authenticationInfo.newCounter;
-      await sql`
+      await client.sql`
         UPDATE admin_credentials
         SET counter = ${newCounter},
             last_used_at = CURRENT_TIMESTAMP

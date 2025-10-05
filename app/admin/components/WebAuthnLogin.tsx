@@ -43,12 +43,29 @@ export default function WebAuthnLogin({ onSuccess }: WebAuthnLoginProps) {
       const { options, challenge } = await optionsRes.json();
 
       // 2단계: 생체 인증 (Face ID, Touch ID)
+      console.log('🔐 Attempting authentication with options:', options);
+      
       let credential;
       try {
         credential = await startAuthentication(options);
-      } catch (authError) {
-        console.error('Biometric authentication cancelled:', authError);
-        throw new Error('생체 인증이 취소되었습니다.');
+        console.log('✅ Authentication successful');
+      } catch (authError: any) {
+        console.error('❌ Biometric authentication error:', authError);
+        console.error('Error name:', authError?.name);
+        console.error('Error message:', authError?.message);
+        
+        // 에러 타입별 메시지
+        if (authError?.name === 'NotAllowedError') {
+          throw new Error('생체 인증이 거부되었습니다. 브라우저 설정을 확인하세요.');
+        } else if (authError?.name === 'NotSupportedError') {
+          throw new Error('이 브라우저는 생체 인증을 지원하지 않습니다.');
+        } else if (authError?.name === 'SecurityError') {
+          throw new Error('보안 오류: HTTPS가 필요하거나 도메인 설정이 잘못되었습니다.');
+        } else if (authError?.name === 'AbortError') {
+          throw new Error('생체 인증 시간이 초과되었습니다.');
+        }
+        
+        throw new Error(`생체 인증 실패: ${authError?.message || '알 수 없는 오류'}`);
       }
 
       // 3단계: 서버에서 검증
@@ -103,12 +120,29 @@ export default function WebAuthnLogin({ onSuccess }: WebAuthnLoginProps) {
       const { options, challenge } = await optionsRes.json();
 
       // 2단계: 생체 정보 등록 (Face ID, Touch ID)
+      console.log('📝 Attempting registration with options:', options);
+      
       let credential;
       try {
         credential = await startRegistration(options);
-      } catch (regError) {
-        console.error('Biometric registration cancelled:', regError);
-        throw new Error('생체 인증 등록이 취소되었습니다.');
+        console.log('✅ Registration successful');
+      } catch (regError: any) {
+        console.error('❌ Biometric registration error:', regError);
+        console.error('Error name:', regError?.name);
+        console.error('Error message:', regError?.message);
+        
+        // 에러 타입별 메시지
+        if (regError?.name === 'NotAllowedError') {
+          throw new Error('생체 인증 등록이 거부되었습니다. 브라우저 설정을 확인하세요.');
+        } else if (regError?.name === 'NotSupportedError') {
+          throw new Error('이 브라우저/기기는 생체 인증 등록을 지원하지 않습니다.');
+        } else if (regError?.name === 'SecurityError') {
+          throw new Error('보안 오류: HTTPS가 필요하거나 도메인 설정이 잘못되었습니다.');
+        } else if (regError?.name === 'InvalidStateError') {
+          throw new Error('이미 등록된 기기입니다.');
+        }
+        
+        throw new Error(`생체 인증 등록 실패: ${regError?.message || '알 수 없는 오류'}`);
       }
 
       // 3단계: 서버에 등록 정보 저장

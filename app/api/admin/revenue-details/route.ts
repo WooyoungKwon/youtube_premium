@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // GET: 수익 기록 상세 조회 (디버깅용)
 export async function GET() {
   try {
     // 모든 수익 기록 조회
-    const { rows: revenueRecords } = await sql`
+    const { rows: revenueRecords } = await client.sql`
       SELECT 
         rr.id,
         rr.member_id,

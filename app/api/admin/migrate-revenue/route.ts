@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 import { addRevenueRecord } from '@/lib/storage';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // POST: 기존 회원들의 수익을 revenue_records 테이블로 마이그레이션
 export async function POST() {
@@ -8,14 +12,14 @@ export async function POST() {
     console.log('Starting revenue migration...');
 
     // 이미 수익이 기록된 회원 ID 조회
-    const { rows: existingRecords } = await sql`
+    const { rows: existingRecords } = await client.sql`
       SELECT DISTINCT member_id FROM revenue_records
     `;
     const existingMemberIds = new Set(existingRecords.map(r => r.member_id));
     console.log('Already recorded member IDs:', existingMemberIds.size);
 
     // 입금 완료된 모든 회원 조회 (수익이 아직 기록되지 않은 회원만)
-    const { rows: members } = await sql`
+    const { rows: members } = await client.sql`
       SELECT 
         m.id,
         m.name,

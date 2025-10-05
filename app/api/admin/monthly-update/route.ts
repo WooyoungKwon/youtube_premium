@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // 월 갱신 로직: 결제일이 지난 회원들의 결제일을 다음 달로 업데이트하고 입금 상태를 대기로 변경
 export async function POST(request: NextRequest) {
@@ -11,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // 현재 월의 1일을 기준으로 이전 달에 결제일이 있었던 회원들을 찾습니다
     // 예: 현재가 11월이면, 10월에 결제일이 있었던 회원들을 찾아서 11월로 업데이트
-    const { rows: membersToUpdate } = await sql`
+    const { rows: membersToUpdate } = await client.sql`
       SELECT 
         id, 
         payment_date,
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
       const newPaymentDate = new Date(nextYear, nextMonth - 1, validPaymentDay);
       
       // 회원의 결제일과 입금 상태 업데이트
-      await sql`
+      await client.sql`
         UPDATE members 
         SET 
           payment_date = ${newPaymentDate.toISOString().split('T')[0]},
@@ -94,7 +98,7 @@ export async function GET() {
     const currentMonth = today.getMonth() + 1;
     const currentDay = today.getDate();
 
-    const { rows: candidateMembers } = await sql`
+    const { rows: candidateMembers } = await client.sql`
       SELECT 
         id,
         nickname,

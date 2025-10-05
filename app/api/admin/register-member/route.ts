@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 import { addMember, addRevenueRecord } from '@/lib/storage';
 import { toDateString, addMonthsKST } from '@/lib/dateUtils';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 // POST: 승인된 신청을 회원으로 등록
 export async function POST(request: Request) {
@@ -15,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     // 신청 정보 조회
-    const { rows: requestRows } = await sql`
+    const { rows: requestRows } = await client.sql`
       SELECT * FROM member_requests WHERE id = ${requestId}
     `;
 

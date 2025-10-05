@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getMembersByYoutube, addMember, updateMemberDepositStatus, addRevenueRecord } from '@/lib/storage';
-import { sql } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
+
+const client = createClient({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 export async function GET(request: Request) {
   try {
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
       let months = 1;
       if (requestId) {
         try {
-          const { rows } = await sql`
+          const { rows } = await client.sql`
             SELECT months FROM member_requests WHERE id = ${requestId}
           `;
           if (rows.length > 0 && rows[0].months) {
@@ -95,7 +99,7 @@ export async function PATCH(request: Request) {
     // 완료 상태로 변경하면서 개월 수가 제공된 경우
     if (depositStatus === 'completed' && months) {
       // 현재 회원 정보 조회
-      const { rows: memberRows } = await sql`
+      const { rows: memberRows } = await client.sql`
         SELECT payment_date FROM members WHERE id = ${id}
       `;
       
@@ -121,7 +125,7 @@ export async function PATCH(request: Request) {
       const newPaymentDateStr = currentPaymentDate.toISOString().split('T')[0];
       
       // 상태와 결제일 동시 업데이트
-      await sql`
+      await client.sql`
         UPDATE members 
         SET 
           deposit_status = ${depositStatus},
@@ -150,7 +154,7 @@ export async function PATCH(request: Request) {
       // pending -> completed로 변경하는 경우 수익 기록 (개월수 정보 없이)
       if (depositStatus === 'completed') {
         // 회원의 request_id로 개월수 조회
-        const { rows: memberRows } = await sql`
+        const { rows: memberRows } = await client.sql`
           SELECT m.request_id, r.months
           FROM members m
           LEFT JOIN member_requests r ON m.request_id = r.id

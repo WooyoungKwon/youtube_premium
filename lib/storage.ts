@@ -1,11 +1,19 @@
 import { MemberRequest } from '@/types';
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
+
+// Supabase pooled connection using pg
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 // 데이터베이스 초기화 (첫 실행 시)
 export async function initDatabase() {
   try {
     // 회원 신청 테이블
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS member_requests (
         id VARCHAR(255) PRIMARY KEY,
         email VARCHAR(255) NOT NULL,
@@ -19,7 +27,7 @@ export async function initDatabase() {
     `;
     
     // Apple 계정 테이블
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS apple_accounts (
         id VARCHAR(255) PRIMARY KEY,
         apple_email VARCHAR(255) NOT NULL UNIQUE,
@@ -32,7 +40,7 @@ export async function initDatabase() {
 
     // 기존 테이블에 last_updated 컬럼 추가 (마이그레이션)
     try {
-      await sql`
+      await client.sql`
         ALTER TABLE apple_accounts 
         ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       `;
@@ -43,7 +51,7 @@ export async function initDatabase() {
 
     // 기존 테이블에 renewal_date 컬럼 추가 (마이그레이션)
     try {
-      await sql`
+      await client.sql`
         ALTER TABLE apple_accounts 
         ADD COLUMN IF NOT EXISTS renewal_date DATE
       `;
@@ -53,7 +61,7 @@ export async function initDatabase() {
     }
     
     // YouTube 계정 테이블
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS youtube_accounts (
         id VARCHAR(255) PRIMARY KEY,
         apple_account_id VARCHAR(255) NOT NULL,
@@ -68,7 +76,7 @@ export async function initDatabase() {
     // 가입 회원 테이블 (깔끔한 스키마)
     // last_payment_date: 이전 결제일 (마지막으로 결제한 날짜)
     // payment_date: 다음 결제 예정일 (월 구독 갱신일)
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS members (
         id VARCHAR(255) PRIMARY KEY,
         youtube_account_id VARCHAR(255) NOT NULL,
@@ -87,7 +95,7 @@ export async function initDatabase() {
     
     // 기존 테이블에 last_payment_date 컬럼 추가 (마이그레이션)
     try {
-      await sql`
+      await client.sql`
         ALTER TABLE members 
         ADD COLUMN IF NOT EXISTS last_payment_date DATE
       `;
@@ -98,7 +106,7 @@ export async function initDatabase() {
     
     // join_date를 last_payment_date로 이름 변경 (이미 데이터가 있는 경우)
     try {
-      await sql`
+      await client.sql`
         DO $$
         BEGIN
           IF EXISTS (
@@ -117,7 +125,7 @@ export async function initDatabase() {
     
     // join_date 컬럼 완전히 삭제 (더 이상 사용하지 않음)
     try {
-      await sql`
+      await client.sql`
         ALTER TABLE members 
         DROP COLUMN IF EXISTS join_date
       `;
@@ -126,7 +134,7 @@ export async function initDatabase() {
     }
     
     // 수익 기록 테이블 (누적 수익 관리)
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS revenue_records (
         id VARCHAR(255) PRIMARY KEY,
         member_id VARCHAR(255) NOT NULL,
@@ -139,7 +147,7 @@ export async function initDatabase() {
     `;
     
     // WebAuthn 인증 정보 테이블 (Face ID, Touch ID 등)
-    await sql`
+    await client.sql`
       CREATE TABLE IF NOT EXISTS admin_credentials (
         id VARCHAR(255) PRIMARY KEY,
         credential_id TEXT NOT NULL UNIQUE,
@@ -152,20 +160,20 @@ export async function initDatabase() {
     `;
     
     // 인덱스 생성 (성능 최적화)
-    await sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_apple_account ON youtube_accounts(apple_account_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_revenue_member ON revenue_records(member_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_revenue_recorded_at ON revenue_records(recorded_at DESC)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_status ON member_requests(status)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_created_at ON member_requests(created_at DESC)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_apple_account ON youtube_accounts(apple_account_id)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_revenue_member ON revenue_records(member_id)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_revenue_recorded_at ON revenue_records(recorded_at DESC)`;
     
     // 성능 최적화를 위한 추가 인덱스
     try {
-      await sql`CREATE INDEX IF NOT EXISTS idx_members_status_date ON members(deposit_status, payment_date)`;
-      await sql`CREATE INDEX IF NOT EXISTS idx_members_request_completed ON members(request_id, deposit_status) WHERE request_id IS NOT NULL`;
+      await client.sql`CREATE INDEX IF NOT EXISTS idx_members_status_date ON members(deposit_status, payment_date)`;
+      await client.sql`CREATE INDEX IF NOT EXISTS idx_members_request_completed ON members(request_id, deposit_status) WHERE request_id IS NOT NULL`;
     } catch (error) {
       console.log('Additional indexes creation skipped:', error);
     }
@@ -178,8 +186,7 @@ export async function initDatabase() {
 // 모든 신청 조회
 export async function getAllRequests(): Promise<MemberRequest[]> {
   try {
-    await initDatabase();
-    const { rows } = await sql`
+    const { rows } = await client.sql`
       SELECT 
         mr.id,
         mr.email,
@@ -210,8 +217,7 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
 
 export async function getAllAppleAccounts() {
   try {
-    await initDatabase();
-    const { rows } = await sql`
+    const { rows } = await client.sql`
       SELECT 
         id, 
         apple_email as "appleEmail", 
@@ -232,11 +238,10 @@ export async function getAllAppleAccounts() {
 export async function addAppleAccount(appleEmail: string, remainingCredit?: number, renewalDate?: string) {
   try {
     console.log('addAppleAccount called with:', { appleEmail, remainingCredit, renewalDate });
-    await initDatabase();
     const id = Date.now().toString();
     
     console.log('Inserting into database with id:', id);
-    await sql`
+    await client.sql`
       INSERT INTO apple_accounts (id, apple_email, remaining_credit, renewal_date, created_at)
       VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, ${renewalDate || null}, CURRENT_TIMESTAMP)
     `;
@@ -251,7 +256,7 @@ export async function addAppleAccount(appleEmail: string, remainingCredit?: numb
 }
 
 export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number, renewalDate?: string) {
-  await sql`
+  await client.sql`
     UPDATE apple_accounts
     SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, renewal_date = ${renewalDate || null}, last_updated = CURRENT_TIMESTAMP
     WHERE id = ${id}
@@ -259,15 +264,14 @@ export async function updateAppleAccount(id: string, appleEmail: string, remaini
 }
 
 export async function deleteAppleAccount(id: string) {
-  await sql`DELETE FROM apple_accounts WHERE id = ${id}`;
+  await client.sql`DELETE FROM apple_accounts WHERE id = ${id}`;
 }
 
 // ===== YouTube 계정 관리 =====
 
 export async function getYoutubeAccountsByApple(appleAccountId: string) {
   try {
-    await initDatabase();
-    const { rows } = await sql`
+    const { rows } = await client.sql`
       SELECT 
         id, 
         apple_account_id as "appleAccountId",
@@ -287,9 +291,8 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
 }
 
 export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
-  await initDatabase();
   const id = Date.now().toString();
-  await sql`
+  await client.sql`
     INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, created_at)
     VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, CURRENT_TIMESTAMP)
   `;
@@ -297,7 +300,7 @@ export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: st
 }
 
 export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
-  await sql`
+  await client.sql`
     UPDATE youtube_accounts
     SET 
       youtube_email = ${youtubeEmail},
@@ -308,15 +311,14 @@ export async function updateYoutubeAccount(id: string, youtubeEmail: string, nic
 }
 
 export async function deleteYoutubeAccount(id: string) {
-  await sql`DELETE FROM youtube_accounts WHERE id = ${id}`;
+  await client.sql`DELETE FROM youtube_accounts WHERE id = ${id}`;
 }
 
 // ===== 회원 관리 =====
 
 export async function getMembersByYoutube(youtubeAccountId: string) {
   try {
-    await initDatabase();
-    const { rows } = await sql`
+    const { rows } = await client.sql`
       SELECT 
         id,
         youtube_account_id as "youtubeAccountId",
@@ -349,7 +351,6 @@ export async function addMember(
   depositStatus: string,
   requestId?: string
 ) {
-  await initDatabase();
   const id = Date.now().toString();
   
   console.log('addMember called with:', {
@@ -376,7 +377,7 @@ export async function addMember(
   }
   
   try {
-    await sql`
+    await client.sql`
       INSERT INTO members (
         id, youtube_account_id, request_id, nickname, email, name,
         last_payment_date, payment_date, deposit_status, created_at
@@ -397,7 +398,7 @@ export async function addMember(
 }
 
 export async function updateMemberDepositStatus(id: string, depositStatus: string) {
-  await sql`
+  await client.sql`
     UPDATE members
     SET deposit_status = ${depositStatus}
     WHERE id = ${id}
@@ -430,7 +431,7 @@ export async function updateMember(
   const formattedLastPaymentDate = formatDate(lastPaymentDate);
   const formattedPaymentDate = formatDate(paymentDate);
 
-  await sql`
+  await client.sql`
     UPDATE members
     SET 
       nickname = ${nickname},
@@ -444,7 +445,7 @@ export async function updateMember(
 }
 
 export async function deleteMember(id: string) {
-  await sql`DELETE FROM members WHERE id = ${id}`;
+  await client.sql`DELETE FROM members WHERE id = ${id}`;
 }
 
 // 신청 추가
@@ -455,10 +456,9 @@ export async function addRequest(
   months?: number, 
   depositorName?: string
 ): Promise<MemberRequest> {
-  await initDatabase();
   
   // 이미 신청한 이메일인지 확인
-  const { rows: existing } = await sql`
+  const { rows: existing } = await client.sql`
     SELECT id FROM member_requests WHERE email = ${email}
   `;
   
@@ -469,7 +469,7 @@ export async function addRequest(
   const id = Date.now().toString();
   const createdAt = new Date().toISOString();
   
-  await sql`
+  await client.sql`
     INSERT INTO member_requests (id, email, kakao_id, phone, months, depositor_name, status, created_at)
     VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${months || null}, ${depositorName || null}, 'pending', ${createdAt})
   `;
@@ -492,9 +492,8 @@ export async function updateRequestStatus(
   id: string,
   status: 'approved' | 'rejected'
 ): Promise<MemberRequest> {
-  await initDatabase();
   
-  const { rows } = await sql`
+  const { rows } = await client.sql`
     UPDATE member_requests
     SET status = ${status}
     WHERE id = ${id}
@@ -523,9 +522,8 @@ export async function updateRequestStatus(
 
 // 신청 삭제
 export async function deleteRequest(id: string): Promise<void> {
-  await initDatabase();
   
-  await sql`
+  await client.sql`
     DELETE FROM member_requests
     WHERE id = ${id}
   `;
@@ -533,9 +531,8 @@ export async function deleteRequest(id: string): Promise<void> {
 
 // 모든 회원을 Apple, YouTube 계정 정보와 함께 조회
 export async function getAllMembersWithDetails() {
-  await initDatabase();
   
-  const { rows } = await sql`
+  const { rows } = await client.sql`
     SELECT 
       m.id,
       m.nickname,
@@ -578,10 +575,9 @@ export async function addRevenueRecord(
   months: number,
   description?: string
 ) {
-  await initDatabase();
   const id = Date.now().toString();
   
-  await sql`
+  await client.sql`
     INSERT INTO revenue_records (id, member_id, amount, months, description, recorded_at)
     VALUES (${id}, ${memberId}, ${amount}, ${months}, ${description || ''}, CURRENT_TIMESTAMP)
   `;
@@ -591,9 +587,8 @@ export async function addRevenueRecord(
 
 // 전체 누적 수익 조회
 export async function getTotalRevenue() {
-  await initDatabase();
   
-  const { rows } = await sql`
+  const { rows } = await client.sql`
     SELECT COALESCE(SUM(amount), 0) as total
     FROM revenue_records
   `;
