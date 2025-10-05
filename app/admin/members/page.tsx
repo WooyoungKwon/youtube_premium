@@ -57,7 +57,6 @@ export default function MembersPage() {
   // 폼 입력 상태
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newAppleCredit, setNewAppleCredit] = useState(0);
-  const [newAppleRenewalDate, setNewAppleRenewalDate] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newMemberNickname, setNewMemberNickname] = useState('');
@@ -213,7 +212,6 @@ export default function MembersPage() {
       console.log('Sending request with:', {
         appleEmail: newAppleEmail, 
         remainingCredit: newAppleCredit,
-        renewalDate: newAppleRenewalDate || null
       });
       
       const res = await fetch('/api/admin/apple-accounts', {
@@ -222,7 +220,6 @@ export default function MembersPage() {
         body: JSON.stringify({ 
           appleEmail: newAppleEmail, 
           remainingCredit: newAppleCredit,
-          renewalDate: newAppleRenewalDate || null
         }),
       });
       
@@ -233,7 +230,6 @@ export default function MembersPage() {
       if (res.ok) {
         setNewAppleEmail('');
         setNewAppleCredit(0);
-        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       } else {
@@ -249,7 +245,6 @@ export default function MembersPage() {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
     setNewAppleCredit(apple.remainingCredit || 0);
-    setNewAppleRenewalDate(apple.renewalDate || '');
     setShowAddApple(true);
   };
 
@@ -263,7 +258,6 @@ export default function MembersPage() {
         body: JSON.stringify({ 
           appleEmail: newAppleEmail, 
           remainingCredit: newAppleCredit,
-          renewalDate: newAppleRenewalDate || null
         }),
       });
       
@@ -271,7 +265,6 @@ export default function MembersPage() {
         setEditingApple(null);
         setNewAppleEmail('');
         setNewAppleCredit(0);
-        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -564,7 +557,6 @@ export default function MembersPage() {
       setEditingApple(null);
       setNewAppleEmail('');
       setNewAppleCredit(0);
-      setNewAppleRenewalDate('');
       setShowAddApple(false);
     }
     if (editingYoutube) {
@@ -644,212 +636,122 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <a
-                href="/admin"
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                ← 관리자 대시보드로 돌아가기
-              </a>
-              <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
+    <div className="p-4 bg-gray-900 text-white min-h-screen">
+      {isAuthenticated ? (
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">멤버 관리</h1>
+            <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
               로그아웃
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* 메인 컨텐츠 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           
-          {/* Apple 계정 폴더 */}
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-blue-900 flex items-center">
-                  🍎 Apple 계정
-                </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSortApple}
-                    className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-                  >
-                    {appleSortOrder === 'oldest' ? '오래된순' : '최신순'}
+          {/* 추가/수정 모달 */}
+          {(showAddApple) && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4">{editingApple ? 'Apple 계정 수정' : 'Apple 계정 추가'}</h3>
+                <input
+                  type="email"
+                  placeholder="Apple 이메일"
+                  className="w-full p-2 mb-2 bg-gray-700 rounded"
+                  value={newAppleEmail}
+                  onChange={(e) => setNewAppleEmail(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="크레딧"
+                  className="w-full p-2 mb-4 bg-gray-700 rounded"
+                  value={newAppleCredit}
+                  onChange={(e) => setNewAppleCredit(Number(e.target.value))}
+                />
+                <div className="flex justify-end">
+                  <button onClick={() => {
+                    setShowAddApple(false);
+                    setEditingApple(null);
+                    setNewAppleEmail('');
+                    setNewAppleCredit(0);
+                  }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                    취소
                   </button>
-                  <button
-                    onClick={() => setShowAddApple(!showAddApple)}
-                    className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                  >
-                    + 추가
+                  <button onClick={editingApple ? handleUpdateApple : handleAddApple} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    {editingApple ? '수정' : '추가'}
                   </button>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Apple 계정 추가 폼 */}
-            {(showAddApple || editingApple) && (
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
-                  {editingApple ? 'Apple 계정 수정' : 'Apple 계정 추가'}
-                </h3>
-                <input
-                  type="email"
-                  value={newAppleEmail}
-                  onChange={(e) => setNewAppleEmail(e.target.value)}
-                  placeholder="Apple 이메일*"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
-                />
-                <input
-                  type="number"
-                  value={newAppleCredit}
-                  onChange={(e) => setNewAppleCredit(Number(e.target.value))}
-                  placeholder="크레딧 (루피)"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
-                />
-                <input
-                  type="date"
-                  value={newAppleRenewalDate}
-                  onChange={(e) => setNewAppleRenewalDate(e.target.value)}
-                  placeholder="갱신일"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={editingApple ? handleUpdateApple : handleAddApple}
-                    className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                  >
-                    {editingApple ? '저장' : '추가'}
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
-                  >
-                    취소
-                  </button>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Apple 계정 목록 */}
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h2 className="text-lg font-semibold mb-4">🍎 Apple 계정</h2>
+              <div className="flex justify-between items-center mb-2">
+                <button
+                  onClick={handleSortApple}
+                  className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                >
+                  {appleSortOrder === 'oldest' ? '오래된순' : '최신순'}
+                </button>
+                <button
+                  onClick={() => setShowAddApple(!showAddApple)}
+                  className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
+                >
+                  + 추가
+                </button>
               </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-3">
-                {sortedAppleAccounts.map((apple) => (
-                  <div
-                    key={apple.id}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedApple?.id === apple.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                    }`}
-                    onClick={() => handleAppleSelect(apple)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {apple.appleEmail}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-gray-500">
-                            {new Date(apple.createdAt).toLocaleDateString()}
-                          </p>
-                          {editingCreditId === apple.id ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                value={editingCreditValue}
-                                onChange={(e) => setEditingCreditValue(Number(e.target.value))}
-                                onClick={(e) => e.stopPropagation()}
-                                min="0"
-                                className="w-16 px-1 py-0.5 text-xs border border-gray-300 rounded"
-                              />
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleUpdateCredit(apple.id);
-                                }}
-                                className="px-1 py-0.5 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCancelEditCredit();
-                                }}
-                                className="px-1 py-0.5 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
-                            <button
+              <ul className="space-y-2">
+                {sortedAppleAccounts.map(apple => (
+                  <li key={apple.id} 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedApple?.id === apple.id ? 'bg-blue-800' : 'bg-gray-700 hover:bg-gray-600'}`}
+                      onClick={() => handleAppleSelect(apple)}>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{apple.appleEmail}</span>
+                      <div className="flex items-center space-x-2">
+                        {editingCreditId === apple.id ? (
+                          <>
+                            <input 
+                              type="number"
+                              value={editingCreditValue}
+                              onChange={(e) => setEditingCreditValue(Number(e.target.value))}
+                              className="w-24 p-1 bg-gray-900 text-white rounded"
+                              autoFocus
+                              onKeyDown={(e) => e.key === 'Enter' && handleUpdateCredit(apple.id)}
+                            />
+                            <button onClick={() => handleUpdateCredit(apple.id)} className="text-green-400 hover:text-green-300">✓</button>
+                            <button onClick={handleCancelEditCredit} className="text-red-400 hover:text-red-300">✗</button>
+                          </>
+                        ) : (
+                          <>
+                            <span 
+                              className="text-yellow-400 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStartEditCredit(apple);
                               }}
-                              className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded hover:bg-blue-200"
                             >
-                              크레딧: {apple.remainingCredit || 0}루피
-                            </button>
-                          )}
-                        </div>
-                        {apple.lastUpdated && (
-                          <p className="text-xs text-gray-400">
-                            마지막 업데이트: {new Date(apple.lastUpdated).toLocaleDateString()}
-                          </p>
+                              ₹{apple.remainingCredit?.toLocaleString() || 0}
+                            </span>
+                            <button onClick={(e) => { e.stopPropagation(); handleEditApple(apple); }} className="text-sm text-blue-400 hover:text-blue-300">✏️</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteApple(apple.id); }} className="text-sm text-red-400 hover:text-red-300">🗑️</button>
+                          </>
                         )}
-                        {apple.renewalDate && (
-                          <p className="text-xs text-green-600">
-                            갱신일: {new Date(apple.renewalDate).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-1 ml-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditApple(apple);
-                          }}
-                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteApple(apple.id);
-                          }}
-                          className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                        >
-                          삭제
-                        </button>
                       </div>
                     </div>
-                  </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      <span>생성일: {formatDateOnly(apple.createdAt)}</span>
+                    </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-          </div>
 
-          {/* YouTube 계정 폴더 */}
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 bg-red-50">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-red-900 flex items-center">
-                  📺 YouTube 계정
-                </h2>
-                {selectedApple && (
-                  <div className="flex gap-2">
+            {/* YouTube 계정 목록 */}
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h2 className="text-lg font-semibold mb-4">📺 YouTube 계정</h2>
+              {selectedApple ? (
+                <>
+                  <div className="flex justify-between items-center mb-2">
                     <button
                       onClick={handleSortYoutube}
                       className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
@@ -863,124 +765,38 @@ export default function MembersPage() {
                       + 추가
                     </button>
                   </div>
-                )}
-              </div>
-              {selectedApple && (
-                <p className="text-sm text-red-700 mt-1">
-                  선택된 Apple: {selectedApple.appleEmail}
-                </p>
+                  <ul className="space-y-2">
+                    {sortedYoutubeAccounts.map(youtube => (
+                      <li key={youtube.id} 
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedYoutube?.id === youtube.id ? 'bg-red-800' : 'bg-gray-700 hover:bg-gray-600'}`}
+                          onClick={() => handleYoutubeSelect(youtube)}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">{youtube.youtubeEmail}</span>
+                          <div className="flex items-center space-x-2">
+                            <button onClick={(e) => { e.stopPropagation(); handleEditYoutube(youtube); }} className="text-sm text-blue-400 hover:text-blue-300">✏️</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteYoutube(youtube.id); }} className="text-sm text-red-400 hover:text-red-300">🗑️</button>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          <span>생성일: {formatDateOnly(youtube.createdAt)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  YouTube 계정을 보려면<br/>먼저 Apple 계정을 선택하세요
+                </div>
               )}
             </div>
 
-            {!selectedApple ? (
-              <div className="flex-1 flex items-center justify-center p-8">
-                <p className="text-gray-500 text-center">
-                  YouTube 계정을 보려면<br/>먼저 Apple 계정을 선택하세요
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* YouTube 계정 추가 폼 */}
-                {(showAddYoutube || editingYoutube) && (
-                  <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">
-                      {editingYoutube ? 'YouTube 계정 수정' : 'YouTube 계정 추가'}
-                    </h3>
-                    <input
-                      type="email"
-                      value={newYoutubeEmail}
-                      onChange={(e) => setNewYoutubeEmail(e.target.value)}
-                      placeholder="YouTube 이메일*"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
-                    />
-                    <input
-                      type="text"
-                      value={newYoutubeNickname}
-                      onChange={(e) => setNewYoutubeNickname(e.target.value)}
-                      placeholder="닉네임 (선택사항)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-sm text-gray-900"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={editingYoutube ? handleUpdateYoutube : handleAddYoutube}
-                        className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                      >
-                        {editingYoutube ? '저장' : '추가'}
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-3">
-                    {sortedYoutubeAccounts.map((youtube) => (
-                      <div
-                        key={youtube.id}
-                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          selectedYoutube?.id === youtube.id
-                            ? 'border-red-500 bg-red-50'
-                            : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
-                        }`}
-                        onClick={() => handleYoutubeSelect(youtube)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {youtube.youtubeEmail}
-                            </p>
-                            {youtube.nickname && (
-                              <p className="text-xs text-blue-600 font-medium">
-                                닉네임: {youtube.nickname}
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-500">
-                              {new Date(youtube.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="flex gap-1 ml-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditYoutube(youtube);
-                              }}
-                              className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteYoutube(youtube.id);
-                              }}
-                              className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* 회원 목록 폴더 */}
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 bg-green-50">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-green-900 flex items-center">
-                  👥 회원 목록
-                </h2>
-                {selectedYoutube && (
-                  <div className="flex gap-2">
+            {/* 회원 목록 */}
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h2 className="text-lg font-semibold mb-4">👥 회원 목록</h2>
+              {selectedYoutube ? (
+                <>
+                  <div className="flex justify-between items-center mb-2">
                     <button
                       onClick={handleSortMember}
                       className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
@@ -994,133 +810,12 @@ export default function MembersPage() {
                       + 추가
                     </button>
                   </div>
-                )}
-              </div>
-              {selectedYoutube && (
-                <p className="text-sm text-green-700 mt-1">
-                  선택된 YouTube: {selectedYoutube.youtubeEmail}
-                </p>
-              )}
-            </div>
-
-            {!selectedYoutube ? (
-              <div className="flex-1 flex items-center justify-center p-8">
-                <p className="text-gray-500 text-center">
-                  회원 목록을 보려면<br/>먼저 YouTube 계정을 선택하세요
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* 회원 추가 폼 */}
-                {(showAddMember || editingMember) && (
-                  <div className="p-4 border-b border-gray-200 bg-gray-50 max-h-80 overflow-y-auto">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">
-                      {editingMember ? '회원 정보 수정' : '회원 추가'}
-                    </h3>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={newMemberNickname}
-                        onChange={(e) => setNewMemberNickname(e.target.value)}
-                        placeholder="닉네임*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
-                      />
-                      <input
-                        type="email"
-                        value={newMemberEmail}
-                        onChange={(e) => setNewMemberEmail(e.target.value)}
-                        placeholder="이메일*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
-                      />
-                      <input
-                        type="text"
-                        value={newMemberName}
-                        onChange={(e) => setNewMemberName(e.target.value)}
-                        placeholder="이름*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="date"
-                          value={newLastPaymentDate}
-                          onChange={(e) => setNewLastPaymentDate(e.target.value)}
-                          placeholder="가입날짜"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
-                        />
-                        <input
-                          type="date"
-                          value={newPaymentDate}
-                          onChange={(e) => setNewPaymentDate(e.target.value)}
-                          placeholder="다음 결제일"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">입금 상태</label>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setNewDepositStatus('pending')}
-                            className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                              newDepositStatus === 'pending'
-                                ? 'bg-yellow-500 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            대기
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setNewDepositStatus('completed')}
-                            className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                              newDepositStatus === 'completed'
-                                ? 'bg-green-500 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            완료
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setNewDepositStatus('failed')}
-                            className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                              newDepositStatus === 'failed'
-                                ? 'bg-red-500 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            실패
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={editingMember ? handleUpdateMember : handleAddMember}
-                          className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-                        >
-                          {editingMember ? '저장' : '추가'}
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
-                        >
-                          취소
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-3">
-                    {sortedMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all"
-                      >
-                        <div className="flex justify-between items-start">
+                  <ul className="space-y-2">
+                    {sortedMembers.map(member => (
+                      <li key={member.id} className="p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">
+                        <div className="flex justify-between items-center">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-gray-900 truncate">
                               {member.nickname}
                             </p>
                             <p className="text-xs text-gray-600 truncate">
@@ -1159,15 +854,72 @@ export default function MembersPage() {
                             </button>
                           </div>
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
+                </>
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  회원 목록을 보려면<br/>먼저 YouTube 계정을 선택하세요
                 </div>
-              </>
-            )}
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="max-w-md w-full space-y-8">
+            <div>
+              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                회원 관리 - 관리자 로그인
+              </h2>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                관리자 비밀번호를 입력하세요
+              </p>
+            </div>
+            <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  비밀번호
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="관리자 비밀번호"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              {authError && (
+                <div className="text-red-600 text-sm text-center">{authError}</div>
+              )}
+
+              <div>
+                <button
+                  type="submit"
+                  className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  로그인
+                </button>
+              </div>
+
+              <div className="text-center">
+                <a
+                  href="/admin"
+                  className="text-indigo-600 hover:text-indigo-500 text-sm"
+                >
+                  ← 관리자 대시보드로 돌아가기
+                </a>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
