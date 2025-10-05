@@ -7,9 +7,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { appleEmail, remainingCredit, renewalDate } = await request.json();
+    const { appleEmail, remainingCredit } = await request.json();
     
-    await updateAppleAccount(id, appleEmail, remainingCredit, renewalDate);
+    await updateAppleAccount(id, appleEmail, remainingCredit);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update apple account error:', error);
@@ -37,7 +37,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
     
-    await updateAppleAccount(id, account.appleEmail, remainingCredit, account.renewalDate);
+    await updateAppleAccount(id, account.appleEmail, remainingCredit);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update apple account credit error:', error);
