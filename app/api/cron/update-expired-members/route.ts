@@ -66,6 +66,86 @@ async function recordMonthlyRevenue() {
   }
 }
 
+// YouTube 계정 갱신 및 Apple 계정 크레딧 차감 함수
+async function processYoutubeRenewals(kstToday: string) {
+  try {
+    console.log(`[YouTube Renewal] Checking renewals for ${kstToday}`);
+    
+    const RENEWAL_COST = 389; // 루피
+    
+    // 오늘이 갱신일인 YouTube 계정들 조회
+    const { rows: renewalAccounts } = await client.sql`
+      SELECT 
+        ya.id as youtube_id,
+        ya.youtube_email,
+        ya.apple_account_id,
+        ya.renewal_date,
+        aa.apple_email,
+        aa.remaining_credit
+      FROM youtube_accounts ya
+      JOIN apple_accounts aa ON ya.apple_account_id = aa.id
+      WHERE ya.renewal_date = ${kstToday}::date
+    `;
+    
+    console.log(`[YouTube Renewal] Found ${renewalAccounts.length} accounts to renew`);
+    
+    const results = [];
+    
+    for (const account of renewalAccounts) {
+      try {
+        const currentCredit = account.remaining_credit || 0;
+        
+        if (currentCredit < RENEWAL_COST) {
+          console.warn(`[YouTube Renewal] Insufficient credit for ${account.youtube_email}. Current: ${currentCredit}, Required: ${RENEWAL_COST}`);
+          results.push({
+            youtubeEmail: account.youtube_email,
+            appleEmail: account.apple_email,
+            status: 'insufficient_credit',
+            currentCredit,
+            requiredCredit: RENEWAL_COST
+          });
+          continue;
+        }
+        
+        // Apple 계정 크레딧 차감
+        const newCredit = currentCredit - RENEWAL_COST;
+        await client.sql`
+          UPDATE apple_accounts
+          SET remaining_credit = ${newCredit}, last_updated = CURRENT_TIMESTAMP
+          WHERE id = ${account.apple_account_id}
+        `;
+        
+        console.log(`[YouTube Renewal] Successfully renewed ${account.youtube_email}. Credit: ${currentCredit} -> ${newCredit}`);
+        
+        results.push({
+          youtubeEmail: account.youtube_email,
+          appleEmail: account.apple_email,
+          status: 'success',
+          previousCredit: currentCredit,
+          newCredit,
+          deducted: RENEWAL_COST
+        });
+      } catch (error) {
+        console.error(`[YouTube Renewal] Error processing ${account.youtube_email}:`, error);
+        results.push({
+          youtubeEmail: account.youtube_email,
+          appleEmail: account.apple_email,
+          status: 'error',
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+    
+    return {
+      totalProcessed: renewalAccounts.length,
+      results
+    };
+  } catch (error) {
+    console.error('[YouTube Renewal] Error:', error);
+    return null;
+  }
+}
+
 // 만료된 회원 상태를 대기로 변경하는 함수
 export async function GET(request: Request) {
   try {
@@ -81,7 +161,10 @@ export async function GET(request: Request) {
     // 1. 월별 수익 기록 (매월 1일에만 실행)
     const revenueResult = await recordMonthlyRevenue();
 
-    // 2. 결제일이 오늘 이전이고 상태가 완료인 회원들을 대기로 변경
+    // 2. YouTube 계정 갱신 및 Apple 계정 크레딧 차감
+    const renewalResult = await processYoutubeRenewals(kstToday);
+
+    // 3. 결제일이 오늘 이전이고 상태가 완료인 회원들을 대기로 변경
     const result = await client.sql`
       UPDATE members 
       SET deposit_status = 'pending' 
@@ -99,6 +182,7 @@ export async function GET(request: Request) {
       updatedCount: result.rowCount,
       updatedMembers: result.rows,
       monthlyRevenue: revenueResult,
+      youtubeRenewals: renewalResult,
     });
   } catch (error) {
     console.error('[Cron Job] Error updating expired members:', error);

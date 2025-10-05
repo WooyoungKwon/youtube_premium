@@ -11,6 +11,7 @@ function PaymentContent() {
   const [depositorName, setDepositorName] = useState('');
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const MONTHLY_PRICE = 4000;
   
@@ -31,6 +32,19 @@ function PaymentContent() {
   const hasDiscount = discount > 0;
 
   useEffect(() => {
+    // 오버레이 제거 (페이드 아웃 효과와 함께)
+    const overlay = document.getElementById('page-transition-overlay');
+    if (overlay) {
+      setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+      }, 100);
+    }
+    
+    // 페이지 로드 시 페이드인 효과
+    document.body.style.opacity = '1';
+    setIsVisible(true);
+    
     // URL에서 requestId 확인
     const requestId = searchParams.get('requestId');
     const userEmail = searchParams.get('email');
@@ -133,8 +147,14 @@ function PaymentContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+    <div 
+      className={`min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4 transition-opacity duration-500 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      <div className={`max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 transition-all duration-700 ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+      }`}>
         {/* 헤더 */}
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-blue-100 rounded-full mb-4">

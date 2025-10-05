@@ -1,10 +1,26 @@
 import { MemberRequest } from '@/types';
-import { createPool } from '@vercel/postgres';
+import { Pool } from 'pg';
 
-// Supabase pooled connection using Vercel Postgres
-const client = createPool({
+// Supabase connection using native pg (로컬 + 배포 모두 호환)
+const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
+  ssl: process.env.POSTGRES_URL?.includes('supabase.com') 
+    ? { rejectUnauthorized: false }
+    : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
+
+// @vercel/postgres의 client.sql 형식과 호환되도록 래퍼
+const client = {
+  sql: async (strings: TemplateStringsArray, ...values: any[]) => {
+    const text = strings.reduce((acc, str, i) => 
+      acc + str + (i < values.length ? `$${i + 1}` : ''), ''
+    );
+    return pool.query(text, values);
+  }
+};
 
 // 데이터베이스 초기화 (첫 실행 시)
 export async function initDatabase() {
@@ -29,7 +45,6 @@ export async function initDatabase() {
         id VARCHAR(255) PRIMARY KEY,
         apple_email VARCHAR(255) NOT NULL UNIQUE,
         remaining_credit INTEGER DEFAULT 0,
-        renewal_date DATE,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -46,16 +61,7 @@ export async function initDatabase() {
       console.log('last_updated column already exists or migration failed:', error);
     }
 
-    // 기존 테이블에 renewal_date 컬럼 추가 (마이그레이션)
-    try {
-      await client.sql`
-        ALTER TABLE apple_accounts 
-        ADD COLUMN IF NOT EXISTS renewal_date DATE
-      `;
-    } catch (error) {
-      // 컬럼이 이미 존재하는 경우 무시
-      console.log('renewal_date column already exists or migration failed:', error);
-    }
+
     
     // YouTube 계정 테이블
     await client.sql`
@@ -64,7 +70,7 @@ export async function initDatabase() {
         apple_account_id VARCHAR(255) NOT NULL,
         youtube_email VARCHAR(255) NOT NULL,
         nickname VARCHAR(255),
-        renewal_date DATE,
+        renewal_date DATE NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (apple_account_id) REFERENCES apple_accounts(id) ON DELETE CASCADE
       )
@@ -219,7 +225,6 @@ export async function getAllAppleAccounts() {
         id, 
         apple_email as "appleEmail", 
         remaining_credit as "remainingCredit",
-        renewal_date as "renewalDate",
         last_updated as "lastUpdated",
         created_at as "createdAt"
       FROM apple_accounts
@@ -232,18 +237,18 @@ export async function getAllAppleAccounts() {
   }
 }
 
-export async function addAppleAccount(appleEmail: string, remainingCredit?: number, renewalDate?: string) {
+export async function addAppleAccount(appleEmail: string, remainingCredit?: number) {
   try {
-    console.log('addAppleAccount called with:', { appleEmail, remainingCredit, renewalDate });
+    console.log('addAppleAccount called with:', { appleEmail, remainingCredit });
     const id = Date.now().toString();
     
     console.log('Inserting into database with id:', id);
     await client.sql`
-      INSERT INTO apple_accounts (id, apple_email, remaining_credit, renewal_date, created_at)
-      VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, ${renewalDate || null}, CURRENT_TIMESTAMP)
+      INSERT INTO apple_accounts (id, apple_email, remaining_credit, created_at)
+      VALUES (${id}, ${appleEmail}, ${remainingCredit || 0}, CURRENT_TIMESTAMP)
     `;
     
-    const result = { id, appleEmail, remainingCredit: remainingCredit || 0, renewalDate };
+    const result = { id, appleEmail, remainingCredit: remainingCredit || 0 };
     console.log('Successfully created account:', result);
     return result;
   } catch (error) {
@@ -252,10 +257,10 @@ export async function addAppleAccount(appleEmail: string, remainingCredit?: numb
   }
 }
 
-export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number, renewalDate?: string) {
+export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number) {
   await client.sql`
     UPDATE apple_accounts
-    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, renewal_date = ${renewalDate || null}, last_updated = CURRENT_TIMESTAMP
+    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, last_updated = CURRENT_TIMESTAMP
     WHERE id = ${id}
   `;
 }
@@ -289,20 +294,29 @@ export async function getYoutubeAccountsByApple(appleAccountId: string) {
 
 export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
   const id = Date.now().toString();
+  
+  if (!renewalDate) {
+    throw new Error('renewalDate is required for YouTube accounts');
+  }
+  
   await client.sql`
     INSERT INTO youtube_accounts (id, apple_account_id, youtube_email, nickname, renewal_date, created_at)
-    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate || null}, CURRENT_TIMESTAMP)
+    VALUES (${id}, ${appleAccountId}, ${youtubeEmail}, ${nickname || null}, ${renewalDate}, CURRENT_TIMESTAMP)
   `;
   return { id, appleAccountId, youtubeEmail, nickname, renewalDate };
 }
 
 export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
+  if (!renewalDate) {
+    throw new Error('renewalDate is required for YouTube accounts');
+  }
+  
   await client.sql`
     UPDATE youtube_accounts
     SET 
       youtube_email = ${youtubeEmail},
       nickname = ${nickname || null},
-      renewal_date = ${renewalDate || null}
+      renewal_date = ${renewalDate}
     WHERE id = ${id}
   `;
 }

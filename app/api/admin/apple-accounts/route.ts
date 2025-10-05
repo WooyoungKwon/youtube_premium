@@ -16,10 +16,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('POST request body:', body);
     
-    const { appleEmail, remainingCredit, renewalDate } = body;
-    console.log('Parsed values:', { appleEmail, remainingCredit, renewalDate });
+    const { appleEmail, remainingCredit } = body;
+    console.log('Parsed values:', { appleEmail, remainingCredit });
     
-    const account = await addAppleAccount(appleEmail, remainingCredit, renewalDate);
+    const account = await addAppleAccount(appleEmail, remainingCredit);
     console.log('Created account:', account);
     
     return NextResponse.json(account);
@@ -31,8 +31,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, appleEmail, remainingCredit, renewalDate } = await request.json();
-    await updateAppleAccount(id, appleEmail, remainingCredit, renewalDate);
+    const { id, appleEmail, remainingCredit } = await request.json();
+    await updateAppleAccount(id, appleEmail, remainingCredit);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update apple account error:', error);

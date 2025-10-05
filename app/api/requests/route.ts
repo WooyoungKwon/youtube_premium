@@ -4,7 +4,7 @@ import { addRequest } from '@/lib/storage';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, kakaoId, phone, months, depositorName } = body;
+    const { email, phone, months, depositorName } = body;
     
     if (!email) {
       return NextResponse.json(
@@ -22,15 +22,15 @@ export async function POST(request: Request) {
       );
     }
     
-    // 카카오톡 아이디나 전화번호 중 하나는 필수
-    if (!kakaoId && !phone) {
+    // 전화번호는 필수
+    if (!phone) {
       return NextResponse.json(
-        { error: '카카오톡 아이디 또는 전화번호 중 하나는 필수입니다.' },
+        { error: '전화번호를 입력해주세요.' },
         { status: 400 }
       );
     }
     
-    const newRequest = await addRequest(email, kakaoId, phone, months, depositorName);
+    const newRequest = await addRequest(email, undefined, phone, months, depositorName);
     
     return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {

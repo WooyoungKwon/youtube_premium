@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
@@ -94,9 +95,63 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto">
             광고 없는 동영상, 백그라운드 재생, 오프라인 저장
           </p>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-10">
             3,000원 대의 가격으로 프리미엄 혜택을 누리세요
           </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link
+              href="/apply"
+              className="group relative px-8 py-4 bg-gradient-to-r from-red-600 via-red-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
+              onClick={(e) => {
+                e.preventDefault();
+                // 흰색 오버레이 생성
+                const overlay = document.createElement('div');
+                overlay.id = 'page-transition-overlay';
+                overlay.style.cssText = `
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100vw;
+                  height: 100vh;
+                  background: white;
+                  opacity: 0;
+                  transition: opacity 0.3s ease-out;
+                  z-index: 9999;
+                  pointer-events: none;
+                `;
+                document.body.appendChild(overlay);
+                
+                // 페이드 아웃 시작
+                requestAnimationFrame(() => {
+                  overlay.style.opacity = '1';
+                });
+                
+                // 페이지 전환
+                setTimeout(() => {
+                  router.push('/apply');
+                }, 300);
+              }}
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                <span>지금 신청하기</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-red-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </Link>
+            
+            <button
+              onClick={() => {
+                const element = document.getElementById('pricing-section');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-lg border-2 border-gray-300 hover:border-red-500 hover:text-red-600 transition-all duration-300 hover:shadow-lg"
+            >
+              요금제 보기
+            </button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
@@ -129,7 +184,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-10 shadow-2xl border border-gray-200 max-w-4xl mx-auto">
+        <div id="pricing-section" className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-10 shadow-2xl border border-gray-200 max-w-4xl mx-auto scroll-mt-20">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">요금제 종류</h2>
             <p className="text-gray-600">장기 구독 시 더욱 저렴하게!</p>

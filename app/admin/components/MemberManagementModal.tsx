@@ -86,11 +86,6 @@ function AppleItem({
             마지막 업데이트: {new Date(account.lastUpdated).toLocaleDateString()}
           </p>
         )}
-        {account.renewalDate && (
-          <p className="text-xs text-green-600">
-            갱신일: {new Date(account.renewalDate).toLocaleDateString()}
-          </p>
-        )}
       </div>
       <div className="flex gap-2">
         <button
@@ -135,6 +130,9 @@ function YoutubeItem({ account, onSelect, onEdit, onDelete, isSelected }: {
         <p className="text-gray-900 font-medium">{account.youtubeEmail}</p>
         {account.nickname && <p className="text-sm text-blue-600 font-medium">닉네임: {account.nickname}</p>}
         <p className="text-sm text-gray-600">{new Date(account.createdAt).toLocaleString()}</p>
+        <p className="text-xs text-green-600 font-semibold">
+          갱신일: {new Date(account.renewalDate).toLocaleDateString()}
+        </p>
       </div>
       <div className="flex gap-2">
         <button
@@ -229,9 +227,9 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   const [showAddMember, setShowAddMember] = useState(false);
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newAppleCredit, setNewAppleCredit] = useState(0);
-  const [newAppleRenewalDate, setNewAppleRenewalDate] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
+  const [newYoutubeRenewalDate, setNewYoutubeRenewalDate] = useState('');
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
@@ -345,8 +343,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           appleEmail: newAppleEmail,
-          remainingCredit: newAppleCredit,
-          renewalDate: newAppleRenewalDate || null
+          remainingCredit: newAppleCredit
         }),
       });
       
@@ -365,7 +362,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
     setNewAppleCredit(apple.remainingCredit || 0);
-    setNewAppleRenewalDate(apple.renewalDate || '');
     setShowAddApple(true);
   };
 
@@ -378,8 +374,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           appleEmail: newAppleEmail, 
-          remainingCredit: newAppleCredit,
-          renewalDate: newAppleRenewalDate || null
+          remainingCredit: newAppleCredit
         }),
       });
       
@@ -387,7 +382,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setEditingApple(null);
         setNewAppleEmail('');
         setNewAppleCredit(0);
-        setNewAppleRenewalDate('');
         setShowAddApple(false);
         await fetchAppleAccounts();
       }
@@ -444,7 +438,10 @@ export default function MemberManagementModal({ isOpen, onClose }: {
   };
 
   const handleAddYoutube = async () => {
-    if (!selectedApple || !newYoutubeEmail.trim()) return;
+    if (!selectedApple || !newYoutubeEmail.trim() || !newYoutubeRenewalDate) {
+      alert('모든 필수 필드를 입력해주세요. (이메일, 갱신일)');
+      return;
+    }
     
     try {
       const res = await fetch('/api/admin/youtube-accounts', {
@@ -454,12 +451,14 @@ export default function MemberManagementModal({ isOpen, onClose }: {
           appleAccountId: selectedApple.id,
           youtubeEmail: newYoutubeEmail,
           nickname: newYoutubeNickname,
+          renewalDate: newYoutubeRenewalDate,
         }),
       });
       
       if (res.ok) {
         setNewYoutubeEmail('');
         setNewYoutubeNickname('');
+        setNewYoutubeRenewalDate('');
         setShowAddYoutube(false);
         await fetchYoutubeAccounts(selectedApple.id);
       }
@@ -472,11 +471,15 @@ export default function MemberManagementModal({ isOpen, onClose }: {
     setEditingYoutube(youtube);
     setNewYoutubeEmail(youtube.youtubeEmail);
     setNewYoutubeNickname(youtube.nickname || '');
+    setNewYoutubeRenewalDate(youtube.renewalDate);
     setShowAddYoutube(true);
   };
 
   const handleUpdateYoutube = async () => {
-    if (!editingYoutube || !newYoutubeEmail.trim()) return;
+    if (!editingYoutube || !newYoutubeEmail.trim() || !newYoutubeRenewalDate) {
+      alert('모든 필수 필드를 입력해주세요. (이메일, 갱신일)');
+      return;
+    }
     
     try {
       const res = await fetch(`/api/admin/youtube-accounts/${editingYoutube.id}`, {
@@ -485,6 +488,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         body: JSON.stringify({
           youtubeEmail: newYoutubeEmail,
           nickname: newYoutubeNickname,
+          renewalDate: newYoutubeRenewalDate,
         }),
       });
       
@@ -492,6 +496,7 @@ export default function MemberManagementModal({ isOpen, onClose }: {
         setEditingYoutube(null);
         setNewYoutubeEmail('');
         setNewYoutubeNickname('');
+        setNewYoutubeRenewalDate('');
         setShowAddYoutube(false);
         if (selectedApple) {
           await fetchYoutubeAccounts(selectedApple.id);
@@ -632,13 +637,13 @@ export default function MemberManagementModal({ isOpen, onClose }: {
       setEditingApple(null);
       setNewAppleEmail('');
       setNewAppleCredit(0);
-      setNewAppleRenewalDate('');
       setShowAddApple(false);
     }
     if (editingYoutube) {
       setEditingYoutube(null);
       setNewYoutubeEmail('');
       setNewYoutubeNickname('');
+      setNewYoutubeRenewalDate('');
       setShowAddYoutube(false);
     }
     if (editingMember) {
@@ -749,13 +754,6 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     min="0"
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
-                  <input
-                    type="date"
-                    value={newAppleRenewalDate}
-                    onChange={(e) => setNewAppleRenewalDate(e.target.value)}
-                    placeholder="갱신일"
-                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
-                  />
                   <div className="flex gap-2">
                     <button
                       onClick={editingApple ? handleUpdateApple : handleAddApple}
@@ -834,6 +832,14 @@ export default function MemberManagementModal({ isOpen, onClose }: {
                     value={newYoutubeNickname}
                     onChange={(e) => setNewYoutubeNickname(e.target.value)}
                     placeholder="닉네임 (선택사항)"
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
+                  />
+                  <input
+                    type="date"
+                    value={newYoutubeRenewalDate}
+                    onChange={(e) => setNewYoutubeRenewalDate(e.target.value)}
+                    placeholder="갱신일*"
+                    required
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg mb-2 bg-white text-gray-900"
                   />
                   <div className="flex gap-2">

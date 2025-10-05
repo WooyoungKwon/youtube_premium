@@ -14,6 +14,7 @@
     "@types/pg": "^8.15.5",
     "@vercel/postgres": "^0.10.0",
     "dotenv": "^17.2.3",
+    "framer-motion": "^12.23.22",
     "jsonwebtoken": "^9.0.2",
     "next": "15.5.4",
     "pg": "^8.16.3",
