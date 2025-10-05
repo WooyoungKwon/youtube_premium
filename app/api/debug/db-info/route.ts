@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const pool = new Pool({
-      connectionString: process.env.POSTGRES_URL,
+      connectionString: process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL,
       ssl: {
         rejectUnauthorized: false
       },
@@ -16,7 +16,7 @@ export async function GET() {
     const connectionInfo = {
       envVar: process.env.POSTGRES_URL ? 'POSTGRES_URL exists' : 'POSTGRES_URL missing',
       // 보안을 위해 비밀번호 부분은 마스킹
-      connectionString: process.env.POSTGRES_URL?.replace(/:[^@]+@/, ':****@'),
+      connectionString: process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL?.replace(/:[^@]+@/, ':****@'),
       allEnvVars: Object.keys(process.env)
         .filter(key => key.includes('POSTGRES') || key.includes('DATABASE'))
         .reduce((acc, key) => {
