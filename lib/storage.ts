@@ -3,12 +3,12 @@ import { Pool } from 'pg';
 
 // Supabase connection using native pg (로컬 + 배포 모두 호환)
 const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || '')
-  .replace('sslmode=require', '')
   .replace('&&', '&');
 
 const pool = new Pool({
   connectionString,
-  ssl: false,
+  // 로컬 환경(development)에서는 SSL을 사용하고, 프로덕션 환경에서는 기존처럼 Vercel 설정에 맡깁니다.
+  ssl: process.env.NODE_ENV === 'production' ? false : { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
