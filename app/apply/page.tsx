@@ -7,6 +7,7 @@ export default function Home() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [referralEmail, setReferralEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -49,7 +50,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, phone }),
+        body: JSON.stringify({ email, phone, referralEmail: referralEmail || undefined }),
       });
 
       const data = await response.json();
@@ -132,6 +133,44 @@ export default function Home() {
           </div>
 
           <div>
+            <label htmlFor="referralEmail" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              추천인 이메일 주소 <span className="text-gray-400 text-xs">(선택)</span>
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
+                10월 한정
+              </span>
+            </label>
+            <div className="relative">
+              <input
+                type="email"
+                id="referralEmail"
+                value={referralEmail}
+                onChange={(e) => setReferralEmail(e.target.value)}
+                placeholder="추천인의 유튜브 이메일 (1개월 추가 혜택 🎁)"
+                className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900 bg-purple-50/30"
+              />
+              {referralEmail && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <span className="text-purple-600 text-sm font-semibold">+1개월 🎁</span>
+                </div>
+              )}
+            </div>
+            <div className="mt-2 space-y-1">
+              <p className="text-xs text-gray-600 flex items-center gap-1">
+                <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                추천인 이메일 입력 시 1개월 추가 혜택이 제공됩니다
+              </p>
+              <p className="text-xs text-orange-600 font-semibold flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                이벤트 기간: 2025년 10월 1일 ~ 10월 31일
+              </p>
+            </div>
+          </div>
+
+          <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
               전화번호 <span className="text-red-500">*</span>
             </label>
@@ -144,7 +183,7 @@ export default function Home() {
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition text-gray-900"
             />
-            
+
             {/* 전화번호로 친구추가 허용 안내 */}
             <details className="mt-3 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
               <summary className="px-4 py-3.5 cursor-pointer hover:bg-yellow-100/50 transition-all flex items-center justify-between text-sm font-semibold text-yellow-900 list-none select-none">

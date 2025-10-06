@@ -222,6 +222,49 @@ export default function Home() {
             </div>
           </div>
           
+          {/* 추천인 혜택 섹션 */}
+          <div className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 relative overflow-hidden">
+            {/* 배경 장식 */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-30"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-200 rounded-full blur-3xl opacity-30"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <span className="text-3xl">🎁</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <h3 className="text-xl font-bold text-gray-900">추천인 혜택</h3>
+                    <span className="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-bold">+1개월 무료</span>
+                    <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse">
+                      10월 한정 🔥
+                    </span>
+                  </div>
+                  <p className="text-gray-700 mb-3">
+                    신청 시 추천인을 입력하면 <span className="font-bold text-purple-600">1개월 추가 혜택</span>을 드립니다!
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>신청 페이지에서 추천인의 유튜브 이메일 주소를 입력해주세요</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-orange-600 font-semibold">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>이벤트 기간: 2025년 10월 1일 ~ 10월 31일</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={() => router.push('/apply')}
             className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-5 rounded-2xl text-xl font-semibold hover:from-red-700 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden group animate-pulse-slow"
