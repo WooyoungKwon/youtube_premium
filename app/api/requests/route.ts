@@ -4,15 +4,15 @@ import { addRequest } from '@/lib/storage';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, phone, months, depositorName } = body;
-    
+    const { email, phone, months, depositorName, referralEmail } = body;
+
     if (!email) {
       return NextResponse.json(
         { error: '이메일을 입력해주세요.' },
         { status: 400 }
       );
     }
-    
+
     // 간단한 이메일 유효성 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     // 전화번호는 필수
     if (!phone) {
       return NextResponse.json(
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
-    const newRequest = await addRequest(email, undefined, phone, months, depositorName);
-    
+
+    const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail);
+
     return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';

@@ -35,6 +35,7 @@ export async function initDatabase() {
         email VARCHAR(255) NOT NULL,
         kakao_id VARCHAR(255),
         phone VARCHAR(50),
+        referral_email VARCHAR(255),
         months INTEGER,
         depositor_name VARCHAR(255),
         status VARCHAR(50) NOT NULL DEFAULT 'pending',
@@ -56,12 +57,23 @@ export async function initDatabase() {
     // 기존 테이블에 last_updated 컬럼 추가 (마이그레이션)
     try {
       await client.sql`
-        ALTER TABLE apple_accounts 
+        ALTER TABLE apple_accounts
         ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       `;
     } catch (error) {
       // 컬럼이 이미 존재하는 경우 무시
       console.log('last_updated column already exists or migration failed:', error);
+    }
+
+    // 기존 테이블에 referral_email 컬럼 추가 (마이그레이션)
+    try {
+      await client.sql`
+        ALTER TABLE member_requests
+        ADD COLUMN IF NOT EXISTS referral_email VARCHAR(255)
+      `;
+    } catch (error) {
+      // 컬럼이 이미 존재하는 경우 무시
+      console.log('referral_email column already exists or migration failed:', error);
     }
 
 
@@ -207,11 +219,12 @@ export async function initDatabase() {
 export async function getAllRequests(): Promise<MemberRequest[]> {
   try {
     const { rows } = await client.sql`
-      SELECT 
+      SELECT
         mr.id,
         mr.email,
         mr.kakao_id as "kakaoId",
         mr.phone,
+        mr.referral_email as "referralEmail",
         mr.months,
         mr.depositor_name as "depositorName",
         mr.status,
@@ -478,35 +491,37 @@ export async function deleteMember(id: string) {
 
 // 신청 추가
 export async function addRequest(
-  email: string, 
-  kakaoId?: string, 
-  phone?: string, 
-  months?: number, 
-  depositorName?: string
+  email: string,
+  kakaoId?: string,
+  phone?: string,
+  months?: number,
+  depositorName?: string,
+  referralEmail?: string
 ): Promise<MemberRequest> {
-  
+
   // 이미 신청한 이메일인지 확인
   const { rows: existing } = await client.sql`
     SELECT id FROM member_requests WHERE email = ${email}
   `;
-  
+
   if (existing.length > 0) {
     throw new Error('이미 신청한 이메일입니다.');
   }
-  
+
   const id = Date.now().toString();
   const createdAt = new Date().toISOString();
-  
+
   await client.sql`
-    INSERT INTO member_requests (id, email, kakao_id, phone, months, depositor_name, status, created_at)
-    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${months || null}, ${depositorName || null}, 'pending', ${createdAt})
+    INSERT INTO member_requests (id, email, kakao_id, phone, referral_email, months, depositor_name, status, created_at)
+    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${referralEmail || null}, ${months || null}, ${depositorName || null}, 'pending', ${createdAt})
   `;
-  
+
   return {
     id,
     email,
     kakaoId,
     phone,
+    referralEmail,
     months,
     depositorName,
     status: 'pending',

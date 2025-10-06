@@ -393,10 +393,10 @@ export default function AdminPage() {
                       개월수
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                      카카오톡 ID
+                      전화번호
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                      전화번호
+                      추천인
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       상태
@@ -406,9 +406,6 @@ export default function AdminPage() {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       신청일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                      업데이트
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       작업
@@ -428,10 +425,10 @@ export default function AdminPage() {
                         <div className="text-sm font-semibold text-green-400">{request.months ? `${request.months}개월` : '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-neutral-300">{request.kakaoId || '-'}</div>
+                        <div className="text-sm text-neutral-300">{request.phone || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-neutral-300">{request.phone || '-'}</div>
+                        <div className="text-sm text-purple-400">{request.referralEmail || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
@@ -449,9 +446,6 @@ export default function AdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
                         {new Date(request.createdAt).toLocaleString('ko-KR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
-                        {new Date(request.updatedAt).toLocaleString('ko-KR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">

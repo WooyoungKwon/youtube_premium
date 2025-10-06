@@ -350,7 +350,7 @@ export default function Home() {
                       <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>신청 페이지에서 추천인의 유튜브 이메일 주소를 입력해주세요</span>
+                      <span>기존 회원의 추천을 받아 신규 가입하는 경우에만 참여가 가능합니다</span>
                     </div>
                   </div>
                 </div>

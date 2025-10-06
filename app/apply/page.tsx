@@ -130,6 +130,9 @@ export default function Home() {
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition text-gray-900"
             />
+            <p className="mt-2 text-xs text-gray-600">
+              12개월 내에 가족 계정에 가입한 적이 없던 이메일이어야 합니다
+            </p>
           </div>
 
           <div>

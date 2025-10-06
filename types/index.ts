@@ -3,6 +3,7 @@ export interface MemberRequest {
   email: string;
   kakaoId?: string;
   phone?: string;
+  referralEmail?: string;
   months?: number;
   depositorName?: string;
   status: 'pending' | 'approved' | 'rejected';
