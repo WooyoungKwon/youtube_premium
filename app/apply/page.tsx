@@ -135,9 +135,6 @@ export default function Home() {
           <div>
             <label htmlFor="referralEmail" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
               추천인 이메일 주소 <span className="text-gray-400 text-xs">(선택)</span>
-              <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
-                10월 한정
-              </span>
             </label>
             <div className="relative">
               <input
@@ -160,12 +157,6 @@ export default function Home() {
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 추천인 이메일 입력 시 1개월 추가 혜택이 제공됩니다
-              </p>
-              <p className="text-xs text-orange-600 font-semibold flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                이벤트 기간: 2025년 10월 1일 ~ 10월 31일
               </p>
             </div>
           </div>
@@ -254,24 +245,6 @@ export default function Home() {
                 </div>
               </div>
             </details>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-blue-900 mb-1">연락처 안내</p>
-                <p className="text-xs text-blue-800">
-                  입력하신 <strong>이메일</strong>로 초대 메일을 보내드리고,<br />
-                  <strong>카카오톡(전화번호)</strong>으로 안내 메시지를 보내드립니다.
-                </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  ⚠️ 카카오톡 <strong>전화번호로 친구추가 허용</strong> 설정을 확인해주세요!
-                </p>
-              </div>
-            </div>
           </div>
 
           {message && (

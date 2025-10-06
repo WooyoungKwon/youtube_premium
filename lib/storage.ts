@@ -164,6 +164,18 @@ export async function initDatabase() {
         last_used_at TIMESTAMP
       )
     `;
+
+    // 후기 테이블
+    await client.sql`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id VARCHAR(255) PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
     
     // 인덱스 생성 (성능 최적화)
     await client.sql`CREATE INDEX IF NOT EXISTS idx_email ON member_requests(email)`;
@@ -180,6 +192,8 @@ export async function initDatabase() {
     try {
       await client.sql`CREATE INDEX IF NOT EXISTS idx_members_status_date ON members(deposit_status, payment_date)`;
       await client.sql`CREATE INDEX IF NOT EXISTS idx_members_request_completed ON members(request_id, deposit_status) WHERE request_id IS NOT NULL`;
+      await client.sql`CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews(created_at DESC)`;
+      await client.sql`CREATE INDEX IF NOT EXISTS idx_reviews_email ON reviews(email)`;
     } catch (error) {
       console.log('Additional indexes creation skipped:', error);
     }
@@ -601,11 +615,68 @@ export async function addRevenueRecord(
 
 // 전체 누적 수익 조회
 export async function getTotalRevenue() {
-  
+
   const { rows } = await client.sql`
     SELECT COALESCE(SUM(amount), 0) as total
     FROM revenue_records
   `;
-  
+
   return parseInt(rows[0].total);
+}
+
+// ===== 후기 관리 =====
+
+// 후기 추가
+export async function addReview(
+  email: string,
+  name: string,
+  rating: number,
+  comment: string
+) {
+  // 이메일 중복 체크 (한 사람당 하나의 후기만)
+  const { rows: existing } = await client.sql`
+    SELECT id FROM reviews WHERE email = ${email}
+  `;
+
+  if (existing.length > 0) {
+    throw new Error('이미 후기를 작성하셨습니다.');
+  }
+
+  // 별점 검증
+  if (rating < 1 || rating > 5) {
+    throw new Error('별점은 1~5 사이여야 합니다.');
+  }
+
+  const id = Date.now().toString();
+
+  await client.sql`
+    INSERT INTO reviews (id, email, name, rating, comment, created_at)
+    VALUES (${id}, ${email}, ${name}, ${rating}, ${comment}, CURRENT_TIMESTAMP)
+  `;
+
+  return { id, email, name, rating, comment, createdAt: new Date().toISOString() };
+}
+
+// 모든 후기 조회 (최신순)
+export async function getAllReviews() {
+  const { rows } = await client.sql`
+    SELECT
+      id,
+      email,
+      name,
+      rating,
+      comment,
+      created_at as "createdAt"
+    FROM reviews
+    ORDER BY created_at DESC
+  `;
+
+  return rows.map(row => ({
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    rating: row.rating,
+    comment: row.comment,
+    createdAt: row.createdAt.toISOString(),
+  }));
 }
