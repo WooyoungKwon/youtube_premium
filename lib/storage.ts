@@ -3,7 +3,8 @@ import { Pool } from 'pg';
 
 // Supabase connection using native pg (로컬 + 배포 모두 호환)
 const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || '')
-  .replace('&&', '&');
+  .replace('&&', '&')
+  .replace('sslmode=require', ''); // SSL 모드 제거하고 코드에서 처리
 
 const pool = new Pool({
   connectionString,
