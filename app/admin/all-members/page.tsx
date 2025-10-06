@@ -7,8 +7,8 @@ interface MemberWithDetails {
   nickname: string;
   email: string;
   name: string;
-  lastPaymentDate: string; // 이전 결제일
-  paymentDate: string; // 다음 결제일
+  lastPaymentDate: string;
+  paymentDate: string;
   depositStatus: string;
   createdAt: string;
   youtubeEmail: string;
@@ -18,37 +18,31 @@ interface MemberWithDetails {
 
 type SortOrder = 'oldest' | 'newest';
 
-// 날짜 포맷팅 함수
 const formatDateOnly = (dateString: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString('ko-KR');
 };
 
-// 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 문제 해결)
 const formatDateForInput = (dateString: string) => {
   if (!dateString) return '';
-  // 날짜 문자열을 그대로 반환 (이미 YYYY-MM-DD 형식이거나 ISO 형식인 경우)
   if (dateString.includes('T')) {
-    // ISO 형식인 경우 날짜 부분만 추출
     return dateString.split('T')[0];
   }
   return dateString;
 };
 
-// 상태에 따른 스타일
 const getStatusStyle = (status: string) => {
   switch (status) {
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-yellow-900 text-yellow-100 border-yellow-800';
     case 'completed':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-green-900 text-green-100 border-green-800';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-neutral-800 text-neutral-400 border-neutral-700';
   }
 };
 
-// 상태 텍스트
 const getStatusText = (status: string) => {
   switch (status) {
     case 'pending':
@@ -61,35 +55,32 @@ const getStatusText = (status: string) => {
 };
 
 export default function AllMembersPage() {
-  // 인증 상태
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  
-  // 데이터 상태
+
   const [members, setMembers] = useState<MemberWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingMember, setUpdatingMember] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('oldest');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  
-  // 개월 수 선택 모달 상태
+
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithDetails | null>(null);
   const [selectedMonths, setSelectedMonths] = useState(1);
-  
-  // 회원 정보 수정 모달 상태
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberWithDetails | null>(null);
 
-  // 정렬된 회원 목록
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+
   const sortedAndFilteredMembers = useMemo(() => {
     let filtered = members;
-    
-    // 검색 필터
+
     if (searchTerm) {
-      filtered = members.filter(member => 
+      filtered = members.filter(member =>
         member.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,30 +88,37 @@ export default function AllMembersPage() {
         member.appleEmail.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    // 상태 필터
+
     if (statusFilter !== 'all') {
       filtered = filtered.filter(member => member.depositStatus === statusFilter);
     }
-    
-    // 입금 상태별 우선순위와 결제일 기준 정렬
+
     return [...filtered].sort((a, b) => {
-    // 1. 입금 상태 우선순위 (pending > completed)
-    const statusPriority = { pending: 2, completed: 1 };
-    const statusA = statusPriority[a.depositStatus as keyof typeof statusPriority] || 0;
-    const statusB = statusPriority[b.depositStatus as keyof typeof statusPriority] || 0;      if (statusA !== statusB) {
-        return statusB - statusA; // 높은 우선순위가 먼저
+      const statusPriority = { pending: 2, completed: 1 };
+      const statusA = statusPriority[a.depositStatus as keyof typeof statusPriority] || 0;
+      const statusB = statusPriority[b.depositStatus as keyof typeof statusPriority] || 0;
+      if (statusA !== statusB) {
+        return statusB - statusA;
       }
-      
-      // 2. 같은 상태 내에서는 결제일 기준 정렬
+
       const dateA = new Date(a.paymentDate).getTime();
       const dateB = new Date(b.paymentDate).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
   }, [members, sortOrder, searchTerm, statusFilter]);
 
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(sortedAndFilteredMembers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedMembers = sortedAndFilteredMembers.slice(startIndex, endIndex);
+
+  // 필터/검색 변경 시 첫 페이지로 이동
   useEffect(() => {
-    // 세션 스토리지에서 인증 상태 확인
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortOrder]);
+
+  useEffect(() => {
     const authenticated = sessionStorage.getItem('adminAuthenticated');
     if (authenticated === 'true') {
       setIsAuthenticated(true);
@@ -148,7 +146,6 @@ export default function AllMembersPage() {
     }
   };
 
-  // 다음 상태 결정 함수 (pending ↔ completed)
   const getNextStatus = (currentStatus: string) => {
     switch (currentStatus) {
       case 'pending':
@@ -160,26 +157,19 @@ export default function AllMembersPage() {
     }
   };
 
-  // 상태 변경 함수 (완료가 아닌 경우)
   const handleUpdateMemberStatus = async (memberId: string, newStatus: string) => {
     try {
       setUpdatingMember(memberId);
-      console.log('Updating member status:', { memberId, newStatus });
-      
       const res = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: memberId, depositStatus: newStatus }),
       });
-      
-      console.log('Response status:', res.status);
-      
+
       if (res.ok) {
-        // 성공 시 목록 새로고침
         await fetchAllMembers();
       } else {
         const errorData = await res.json();
-        console.error('Failed to update member status:', errorData);
         alert(`상태 변경에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
       }
     } catch (error) {
@@ -190,27 +180,19 @@ export default function AllMembersPage() {
     }
   };
 
-  // 완료 상태로 변경 시 개월 수 선택 모달 열기
   const handleCompletePayment = (member: MemberWithDetails) => {
     setSelectedMember(member);
     setSelectedMonths(1);
     setShowMonthModal(true);
   };
 
-  // 회원 정보 수정 모달 열기
   const handleEditMember = (member: MemberWithDetails) => {
     setEditingMember(member);
     setShowEditModal(true);
   };
 
-  // 회원 정보 수정
   const handleUpdateMember = async () => {
     if (!editingMember) return;
-
-    console.log('Sending dates to API:', {
-      lastPaymentDate: editingMember.lastPaymentDate,
-      paymentDate: editingMember.paymentDate
-    });
 
     try {
       const res = await fetch(`/api/admin/members/${editingMember.id}`, {
@@ -240,7 +222,6 @@ export default function AllMembersPage() {
     }
   };
 
-  // 개월 수 선택 완료 후 결제일 업데이트
   const handleConfirmPayment = async () => {
     if (!selectedMember) return;
 
@@ -249,20 +230,18 @@ export default function AllMembersPage() {
       const res = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id: selectedMember.id, 
+        body: JSON.stringify({
+          id: selectedMember.id,
           depositStatus: 'completed',
-          months: selectedMonths 
+          months: selectedMonths
         }),
       });
-      
+
       if (res.ok) {
-        // 성공 시 목록 새로고침
         await fetchAllMembers();
         setShowMonthModal(false);
         setSelectedMember(null);
       } else {
-        console.error('Failed to update member status');
         alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
       }
     } catch (error) {
@@ -309,85 +288,72 @@ export default function AllMembersPage() {
     setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
   };
 
-  // 인증되지 않은 경우 로그인 폼 표시
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              전체 회원 목록 - 관리자 로그인
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              관리자 비밀번호를 입력하세요
-            </p>
-          </div>
-          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                비밀번호
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="관리자 비밀번호"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-8">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-white mb-2">전체 회원 목록</h2>
+              <p className="text-sm text-neutral-400">관리자 비밀번호를 입력하세요</p>
             </div>
+            <form className="space-y-4" onSubmit={handleLogin}>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-1.5">비밀번호</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+                  placeholder="관리자 비밀번호"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
 
-            {authError && (
-              <div className="text-red-600 text-sm text-center">{authError}</div>
-            )}
+              {authError && (
+                <div className="bg-red-950 border border-red-800 text-red-200 px-3 py-2 rounded text-sm">{authError}</div>
+              )}
 
-            <div>
               <button
                 type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full bg-white text-neutral-900 font-medium py-2 px-4 rounded hover:bg-neutral-100 transition"
               >
                 로그인
               </button>
-            </div>
 
-            <div className="text-center">
-              <a
-                href="/admin"
-                className="text-indigo-600 hover:text-indigo-500 text-sm"
-              >
-                ← 관리자 대시보드로 돌아가기
-              </a>
-            </div>
-          </form>
+              <div className="text-center">
+                <a href="/admin" className="text-neutral-400 hover:text-white text-sm transition">
+                  ← 관리자 대시보드로 돌아가기
+                </a>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-neutral-950">
+      {/* Header */}
+      <div className="bg-neutral-900 border-b border-neutral-800">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <a
-                href="/admin"
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                ← 관리자 대시보드로 돌아가기
+              <a href="/admin" className="px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition text-sm font-medium">
+                ← 대시보드
               </a>
-              <h1 className="text-2xl font-bold text-gray-900">전체 회원 목록</h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <h1 className="text-xl font-semibold text-white">전체 회원 목록</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-100 border border-blue-800">
                 총 {sortedAndFilteredMembers.length}명
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-3 py-2 bg-red-900 border border-red-800 text-red-100 rounded hover:bg-red-800 transition text-sm font-medium"
             >
               로그아웃
             </button>
@@ -395,51 +361,50 @@ export default function AllMembersPage() {
         </div>
       </div>
 
-      {/* 메인 컨텐츠 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 필터 및 검색 */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Filters */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">검색</label>
               <input
                 type="text"
                 placeholder="닉네임, 이메일, 이름으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500"
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">입금 상태</label>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">입금 상태</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
               >
                 <option value="all">전체</option>
                 <option value="pending">대기</option>
                 <option value="completed">완료</option>
-                <option value="failed">실패</option>
               </select>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">다음 결제일 정렬</label>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">다음 결제일 정렬</label>
               <button
                 onClick={handleSortToggle}
-                className="w-full px-3 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-blue-900 border border-blue-800 text-blue-100 rounded text-sm hover:bg-blue-800 transition"
               >
                 {sortOrder === 'newest' ? '최신순' : '오래된순'}
               </button>
             </div>
-            
+
             <div className="flex items-end">
               <button
                 onClick={fetchAllMembers}
                 disabled={loading}
-                className="w-full px-3 py-2 bg-green-500 text-white rounded-md text-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                className="w-full px-3 py-2 bg-green-900 border border-green-800 text-green-100 rounded text-sm hover:bg-green-800 transition disabled:opacity-50"
               >
                 {loading ? '새로고침 중...' : '새로고침'}
               </button>
@@ -447,78 +412,56 @@ export default function AllMembersPage() {
           </div>
         </div>
 
-        {/* 회원 목록 테이블 */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+        {/* Members Table */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500">로딩 중...</div>
+              <div className="text-neutral-500">로딩 중...</div>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-neutral-800">
+                <thead className="bg-neutral-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      번호
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      회원 정보
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      계정 정보
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      이전 결제일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      다음 결제일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      입금 상태
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      작업
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">번호</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">회원 정보</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">계정 정보</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">이전 결제일</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">다음 결제일</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">입금 상태</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">작업</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedAndFilteredMembers.map((member, index) => (
-                    <tr key={member.id} className="hover:bg-gray-50">
+                <tbody className="bg-neutral-900 divide-y divide-neutral-800">
+                  {paginatedMembers.map((member, index) => (
+                    <tr key={member.id} className="hover:bg-neutral-850">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {index + 1}
-                        </div>
+                        <div className="text-sm font-semibold text-white">{startIndex + index + 1}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <div className="text-sm font-medium text-gray-900">
-                            {member.nickname}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {member.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {member.email}
-                          </div>
+                          <div className="text-sm font-medium text-white">{member.nickname}</div>
+                          <div className="text-sm text-neutral-400">{member.name}</div>
+                          <div className="text-sm text-neutral-500">{member.email}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-1">
-                          <div className="text-sm text-gray-900">
-                            <span className="font-medium">Apple:</span> {member.appleEmail}
+                          <div className="text-sm text-neutral-300">
+                            <span className="font-medium text-neutral-400">Apple:</span> {member.appleEmail}
                           </div>
-                          <div className="text-sm text-gray-900">
-                            <span className="font-medium">YouTube:</span> {member.youtubeEmail}
+                          <div className="text-sm text-neutral-300">
+                            <span className="font-medium text-neutral-400">YouTube:</span> {member.youtubeEmail}
                             {member.youtubeNickname && (
-                              <span className="text-blue-600 ml-1">({member.youtubeNickname})</span>
+                              <span className="text-blue-400 ml-1">({member.youtubeNickname})</span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-300">
                         {formatDateOnly(member.lastPaymentDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-300">
                         {formatDateOnly(member.paymentDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -530,7 +473,7 @@ export default function AllMembersPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleEditMember(member)}
-                            className="px-3 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                            className="px-3 py-1 text-xs font-medium rounded bg-blue-900 border border-blue-800 text-blue-100 hover:bg-blue-800 transition"
                           >
                             수정
                           </button>
@@ -544,27 +487,15 @@ export default function AllMembersPage() {
                               }
                             }}
                             disabled={updatingMember === member.id}
-                            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                            className={`px-3 py-1 text-xs font-medium rounded transition ${
                               updatingMember === member.id
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700'
                                 : member.depositStatus === 'pending'
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                ? 'bg-green-900 border border-green-800 text-green-100 hover:bg-green-800'
+                                : 'bg-yellow-900 border border-yellow-800 text-yellow-100 hover:bg-yellow-800'
                             }`}
                           >
-                            {updatingMember === member.id ? (
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                처리중...
-                              </span>
-                            ) : (
-                              <>
-                                {member.depositStatus === 'pending' && '완료'}
-                                {member.depositStatus === 'completed' && '대기'}
-                              </>
-                            )}
+                            {updatingMember === member.id ? '처리중...' : (member.depositStatus === 'pending' ? '완료' : '대기')}
                           </button>
                         </div>
                       </td>
@@ -572,12 +503,12 @@ export default function AllMembersPage() {
                   ))}
                 </tbody>
               </table>
-              
+
               {sortedAndFilteredMembers.length === 0 && !loading && (
                 <div className="text-center py-12">
-                  <div className="text-gray-500">
-                    {searchTerm || statusFilter !== 'all' 
-                      ? '검색 조건에 맞는 회원이 없습니다.' 
+                  <div className="text-neutral-500">
+                    {searchTerm || statusFilter !== 'all'
+                      ? '검색 조건에 맞는 회원이 없습니다.'
                       : '등록된 회원이 없습니다.'
                     }
                   </div>
@@ -586,63 +517,114 @@ export default function AllMembersPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && sortedAndFilteredMembers.length > 0 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-neutral-400">
+              전체 {sortedAndFilteredMembers.length}개 중 {startIndex + 1}-{Math.min(endIndex, sortedAndFilteredMembers.length)}개 표시
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                이전
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 10) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 4) {
+                    pageNumber = totalPages - 9 + i;
+                  } else {
+                    pageNumber = currentPage - 4 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`px-3 py-2 rounded text-sm font-medium transition ${
+                        currentPage === pageNumber
+                          ? 'bg-white text-neutral-900'
+                          : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                다음
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 개월 수 선택 모달 */}
+      {/* Month Modal */}
       {showMonthModal && selectedMember && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">결제 완료 처리</h3>
+              <h3 className="text-lg font-semibold text-white">결제 완료 처리</h3>
               <button
                 onClick={() => setShowMonthModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-neutral-400 hover:text-white transition"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            
+
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
-                <span className="font-medium">{selectedMember.nickname}</span>님의 결제를 완료 처리합니다.
+              <p className="text-sm text-neutral-300 mb-2">
+                <span className="font-medium text-white">{selectedMember.nickname}</span>님의 결제를 완료 처리합니다.
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-neutral-500">
                 현재 다음 결제일: {formatDateOnly(selectedMember.paymentDate)}
               </p>
             </div>
-            
+
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 결제한 개월 수를 선택하세요
               </label>
               <select
                 value={selectedMonths}
                 onChange={(e) => setSelectedMonths(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(month => (
-                  <option key={month} value={month}>
-                    {month}개월
-                  </option>
+                  <option key={month} value={month}>{month}개월</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 {selectedMonths}개월 선택 시 다음 결제일이 {
                   (() => {
                     try {
-                      // YYYY-MM-DD 형식의 문자열을 로컬 시간으로 파싱
                       if (!selectedMember.paymentDate) return '날짜 없음';
                       const parts = selectedMember.paymentDate.split('-');
                       if (parts.length !== 3) return '날짜 형식 오류';
-                      
+
                       const [year, month, day] = parts.map(Number);
                       if (isNaN(year) || isNaN(month) || isNaN(day)) return '날짜 형식 오류';
-                      
+
                       const newDate = new Date(year, month - 1, day);
                       if (isNaN(newDate.getTime())) return '날짜 오류';
-                      
+
                       newDate.setMonth(newDate.getMonth() + selectedMonths);
                       const resultStr = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}-${String(newDate.getDate()).padStart(2, '0')}`;
                       return formatDateOnly(resultStr);
@@ -653,18 +635,18 @@ export default function AllMembersPage() {
                 }로 변경됩니다.
               </p>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowMonthModal(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
               >
                 취소
               </button>
               <button
                 onClick={handleConfirmPayment}
                 disabled={updatingMember === selectedMember.id}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                className="px-4 py-2 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition disabled:opacity-50"
               >
                 {updatingMember === selectedMember.id ? '처리 중...' : '완료 처리'}
               </button>
@@ -673,99 +655,99 @@ export default function AllMembersPage() {
         </div>
       )}
 
-      {/* 회원 정보 수정 모달 */}
+      {/* Edit Modal */}
       {showEditModal && editingMember && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">회원 정보 수정</h3>
+              <h3 className="text-lg font-semibold text-white">회원 정보 수정</h3>
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingMember(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-neutral-400 hover:text-white transition"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">닉네임</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">닉네임</label>
                 <input
                   type="text"
                   value={editingMember.nickname}
                   onChange={(e) => setEditingMember({...editingMember, nickname: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">이메일</label>
                 <input
                   type="email"
                   value={editingMember.email}
                   onChange={(e) => setEditingMember({...editingMember, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">이름</label>
                 <input
                   type="text"
                   value={editingMember.name}
                   onChange={(e) => setEditingMember({...editingMember, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이전 결제일</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">이전 결제일</label>
                 <input
                   type="date"
                   value={formatDateForInput(editingMember.lastPaymentDate)}
                   onChange={(e) => setEditingMember({...editingMember, lastPaymentDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">다음 결제일</label>
+                <label className="block text-sm font-medium text-neutral-300 mb-1">다음 결제일</label>
                 <input
                   type="date"
                   value={formatDateForInput(editingMember.paymentDate)}
                   onChange={(e) => setEditingMember({...editingMember, paymentDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
               </div>
-              
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-xs text-gray-600">
-                  <span className="font-medium">Apple 계정:</span> {editingMember.appleEmail}
+
+              <div className="bg-neutral-800 p-3 rounded border border-neutral-700">
+                <p className="text-xs text-neutral-400">
+                  <span className="font-medium text-neutral-300">Apple 계정:</span> {editingMember.appleEmail}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  <span className="font-medium">YouTube 계정:</span> {editingMember.youtubeEmail}
+                <p className="text-xs text-neutral-400 mt-1">
+                  <span className="font-medium text-neutral-300">YouTube 계정:</span> {editingMember.youtubeEmail}
                 </p>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingMember(null);
                 }}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
               >
                 취소
               </button>
               <button
                 onClick={handleUpdateMember}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-blue-900 border border-blue-800 text-blue-100 rounded hover:bg-blue-800 transition"
               >
                 저장
               </button>

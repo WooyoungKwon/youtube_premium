@@ -23,9 +23,10 @@ export default function AdminPage() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
   const [revenueStats, setRevenueStats] = useState<AdminStats | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    // 세션 스토리지에서 인증 상태 확인
     const authenticated = sessionStorage.getItem('adminAuthenticated');
     if (authenticated === 'true') {
       setIsAuthenticated(true);
@@ -34,14 +35,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      // 병렬로 데이터 로드 (속도 개선)
       fetchAllData();
     }
   }, [isAuthenticated]);
 
   const fetchAllData = async () => {
     try {
-      // 두 API를 병렬로 호출하여 속도 개선
       const [requestsRes, statsRes] = await Promise.all([
         fetch('/api/admin/list', { cache: 'no-store' }),
         fetch('/api/admin/stats', { cache: 'no-store' })
@@ -136,7 +135,7 @@ export default function AdminPage() {
   const handleRegisterSuccess = () => {
     alert('회원 등록이 완료되었습니다.');
     fetchRequests();
-    fetchStats(); // 수익 통계도 새로고침
+    fetchStats();
   };
 
   const handleMigrateRevenue = async () => {
@@ -152,7 +151,7 @@ export default function AdminPage() {
       if (response.ok) {
         const data = await response.json();
         alert(`마이그레이션 완료!\n\n총 회원: ${data.stats.totalMembers}명\n새로 기록: ${data.stats.migratedMembers}명\n건너뛴 회원: ${data.stats.skippedMembers}명\n추가된 수익: ${data.stats.totalAmount.toLocaleString()}원`);
-        fetchStats(); // 수익 통계 새로고침
+        fetchStats();
       } else {
         const error = await response.json();
         alert(`마이그레이션 실패: ${error.details || error.error}`);
@@ -168,11 +167,22 @@ export default function AdminPage() {
     return req.status === filter;
   });
 
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRequests = filteredRequests.slice(startIndex, endIndex);
+
+  // 필터 변경 시 첫 페이지로 이동
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      approved: 'bg-green-100 text-green-800 border-green-200',
-      rejected: 'bg-red-100 text-red-800 border-red-200',
+      pending: 'bg-yellow-900 text-yellow-100 border-yellow-800',
+      approved: 'bg-green-900 text-green-100 border-green-800',
+      rejected: 'bg-red-900 text-red-100 border-red-800',
     };
     const labels = {
       pending: '대기중',
@@ -226,34 +236,28 @@ export default function AdminPage() {
     setPassword('');
   };
 
-  // 인증되지 않은 경우 로그인 화면 표시
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <div className="inline-block p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
-              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-8">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-neutral-800 rounded-lg mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-semibold text-white mb-2">관리자 로그인</h1>
+              <p className="text-sm text-neutral-400">Face ID 또는 Touch ID로 로그인하세요</p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
-            <p className="text-gray-600">Face ID 또는 Touch ID로 로그인하세요</p>
-          </div>
 
-          {/* Face ID / Touch ID 로그인 컴포넌트 */}
-          <WebAuthnLogin onSuccess={() => setIsAuthenticated(true)} />
+            <WebAuthnLogin onSuccess={() => setIsAuthenticated(true)} />
 
-          <div className="mt-6 text-center">
-            <a
-              href="/"
-              className="text-sm text-gray-700 hover:text-gray-900 transition flex items-center justify-center gap-2 font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              메인 페이지로 돌아가기
-            </a>
+            <div className="mt-6 text-center">
+              <a href="/" className="text-sm text-neutral-400 hover:text-white transition">
+                ← 메인 페이지로 돌아가기
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -261,60 +265,29 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-950">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
-              <p className="text-gray-600 mt-1">YouTube Premium 회원 신청 관리</p>
+              <h1 className="text-2xl font-semibold text-white">관리자 대시보드</h1>
+              <p className="text-sm text-neutral-400 mt-1">YouTube Premium 회원 신청 관리</p>
             </div>
             <div className="flex gap-2">
-              <Link
-                href="/admin/members"
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+              <Link href="/admin/members" className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded hover:bg-neutral-700 transition text-sm font-medium">
                 회원 관리
               </Link>
-              <Link
-                href="/admin/all-members"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
+              <Link href="/admin/all-members" className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded hover:bg-neutral-700 transition text-sm font-medium">
                 전체 회원 목록
               </Link>
-              <a
-                href="/api/admin/export"
-                download
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              <a href="/api/admin/export" download className="px-4 py-2 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition text-sm font-medium">
                 Excel 다운로드
               </a>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
+              <button onClick={handleLogout} className="px-4 py-2 bg-red-900 border border-red-800 text-red-100 rounded hover:bg-red-800 transition text-sm font-medium">
                 로그아웃
               </button>
-              <a
-                href="/"
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-gray-700 hover:text-gray-900"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+              <a href="/" className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded hover:bg-neutral-700 transition text-sm font-medium">
                 메인 페이지로
               </a>
             </div>
@@ -322,21 +295,21 @@ export default function AdminPage() {
 
           {/* Request Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-600">전체 신청</div>
-              <div className="text-2xl font-bold text-gray-900">{requestStats.total}</div>
+            <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg">
+              <div className="text-sm text-neutral-400">전체 신청</div>
+              <div className="text-2xl font-bold text-white">{requestStats.total}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-yellow-200">
-              <div className="text-sm text-yellow-600">대기중</div>
-              <div className="text-2xl font-bold text-yellow-700">{requestStats.pending}</div>
+            <div className="bg-neutral-900 border border-yellow-800 p-4 rounded-lg">
+              <div className="text-sm text-yellow-400">대기중</div>
+              <div className="text-2xl font-bold text-yellow-300">{requestStats.pending}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-green-200">
-              <div className="text-sm text-green-600">승인됨</div>
-              <div className="text-2xl font-bold text-green-700">{requestStats.approved}</div>
+            <div className="bg-neutral-900 border border-green-800 p-4 rounded-lg">
+              <div className="text-sm text-green-400">승인됨</div>
+              <div className="text-2xl font-bold text-green-300">{requestStats.approved}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-red-200">
-              <div className="text-sm text-red-600">거부됨</div>
-              <div className="text-2xl font-bold text-red-700">{requestStats.rejected}</div>
+            <div className="bg-neutral-900 border border-red-800 p-4 rounded-lg">
+              <div className="text-sm text-red-400">거부됨</div>
+              <div className="text-2xl font-bold text-red-300">{requestStats.rejected}</div>
             </div>
           </div>
 
@@ -344,70 +317,40 @@ export default function AdminPage() {
           {revenueStats && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-800">수익 현황</h2>
+                <h2 className="text-lg font-semibold text-white">수익 현황</h2>
                 <button
                   onClick={handleMigrateRevenue}
-                  className="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
+                  className="px-3 py-1.5 bg-orange-900 border border-orange-800 text-orange-100 text-sm rounded hover:bg-orange-800 transition"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
                   기존 회원 수익 마이그레이션
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border-2 border-blue-300 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-blue-700 mb-1">총 회원 수</div>
-                      <div className="text-3xl font-bold text-blue-900">{revenueStats.totalMembers}명</div>
-                    </div>
-                    <div className="bg-blue-200 p-3 rounded-full">
-                      <svg className="w-8 h-8 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
+                <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-neutral-400 mb-1">총 회원 수</div>
+                  <div className="text-3xl font-bold text-white">{revenueStats.totalMembers}명</div>
+                </div>
+
+                <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-neutral-400 mb-1">월 수익</div>
+                  <div className="text-3xl font-bold text-white">
+                    {revenueStats.monthlyRevenue.toLocaleString()}원
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-1">
+                    {revenueStats.pricePerMember.toLocaleString()}원 × {revenueStats.totalMembers}명
                   </div>
                 </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-lg border-2 border-green-300 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-green-700 mb-1">월 수익</div>
-                    <div className="text-3xl font-bold text-green-900">
-                      {revenueStats.monthlyRevenue.toLocaleString()}원
-                    </div>
-                    <div className="text-xs text-green-600 mt-1">
-                      {revenueStats.pricePerMember.toLocaleString()}원 × {revenueStats.totalMembers}명
-                    </div>
+                <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-neutral-400 mb-1">누적 수익 (10월~)</div>
+                  <div className="text-3xl font-bold text-white">
+                    {revenueStats.cumulativeRevenue.toLocaleString()}원
                   </div>
-                  <div className="bg-green-200 p-3 rounded-full">
-                    <svg className="w-8 h-8 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="text-xs text-neutral-500 mt-1">
+                    2025년 10월부터 누적
                   </div>
                 </div>
               </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg border-2 border-purple-300 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-purple-700 mb-1">누적 수익 (10월~)</div>
-                    <div className="text-3xl font-bold text-purple-900">
-                      {revenueStats.cumulativeRevenue.toLocaleString()}원
-                    </div>
-                    <div className="text-xs text-purple-600 mt-1">
-                      2025년 10월부터 누적
-                    </div>
-                  </div>
-                  <div className="bg-purple-200 p-3 rounded-full">
-                    <svg className="w-8 h-8 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
             </div>
           )}
         </div>
@@ -418,10 +361,10 @@ export default function AdminPage() {
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
+              className={`px-4 py-2 rounded font-medium transition text-sm ${
                 filter === status
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  ? 'bg-white text-neutral-900'
+                  : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
               }`}
             >
               {status === 'all' ? '전체' : status === 'pending' ? '대기중' : status === 'approved' ? '승인됨' : '거부됨'}
@@ -430,87 +373,84 @@ export default function AdminPage() {
         </div>
 
         {/* Requests List */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">로딩 중...</div>
+            <div className="p-8 text-center text-neutral-500">로딩 중...</div>
           ) : filteredRequests.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">신청 내역이 없습니다.</div>
+            <div className="p-8 text-center text-neutral-500">신청 내역이 없습니다.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-neutral-800 border-b border-neutral-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       이메일
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       입금자명
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       개월수
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       카카오톡 ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       전화번호
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       상태
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       회원등록
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       신청일
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       업데이트
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       작업
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
+                <tbody className="bg-neutral-900 divide-y divide-neutral-800">
+                  {paginatedRequests.map((request) => (
+                    <tr key={request.id} className="hover:bg-neutral-850">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{request.email}</div>
+                        <div className="text-sm font-medium text-white">{request.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-blue-600">{request.depositorName || '-'}</div>
+                        <div className="text-sm font-semibold text-blue-400">{request.depositorName || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-green-600">{request.months ? `${request.months}개월` : '-'}</div>
+                        <div className="text-sm font-semibold text-green-400">{request.months ? `${request.months}개월` : '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.kakaoId || '-'}</div>
+                        <div className="text-sm text-neutral-300">{request.kakaoId || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.phone || '-'}</div>
+                        <div className="text-sm text-neutral-300">{request.phone || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {request.isRegistered ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-900 text-indigo-100 border border-indigo-800">
                             등록완료
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 text-neutral-400 border border-neutral-700">
                             미등록
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
                         {new Date(request.createdAt).toLocaleString('ko-KR')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
                         {new Date(request.updatedAt).toLocaleString('ko-KR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -519,13 +459,13 @@ export default function AdminPage() {
                             <>
                               <button
                                 onClick={() => handleUpdateStatus(request.id, 'approved')}
-                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                                className="px-3 py-1 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition"
                               >
                                 승인
                               </button>
                               <button
                                 onClick={() => handleUpdateStatus(request.id, 'rejected')}
-                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                className="px-3 py-1 bg-red-900 border border-red-800 text-red-100 rounded hover:bg-red-800 transition"
                               >
                                 거부
                               </button>
@@ -534,25 +474,19 @@ export default function AdminPage() {
                           {request.status === 'approved' && !request.isRegistered && (
                             <button
                               onClick={() => handleRegisterMember(request)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-1"
+                              className="px-3 py-1 bg-blue-900 border border-blue-800 text-blue-100 rounded hover:bg-blue-800 transition"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                              </svg>
                               회원 등록
                             </button>
                           )}
                           {request.status === 'approved' && request.isRegistered && (
-                            <span className="px-3 py-1 bg-gray-300 text-gray-600 rounded cursor-not-allowed flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
+                            <span className="px-3 py-1 bg-neutral-800 text-neutral-500 rounded cursor-not-allowed border border-neutral-700">
                               등록완료
                             </span>
                           )}
                           <button
                             onClick={() => handleDelete(request.id)}
-                            className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                            className="px-3 py-1 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
                           >
                             삭제
                           </button>
@@ -565,6 +499,48 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && filteredRequests.length > 0 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-neutral-400">
+              전체 {filteredRequests.length}개 중 {startIndex + 1}-{Math.min(endIndex, filteredRequests.length)}개 표시
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                이전
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded text-sm font-medium transition ${
+                      currentPage === page
+                        ? 'bg-white text-neutral-900'
+                        : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                다음
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Register Member Modal */}
