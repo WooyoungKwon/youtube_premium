@@ -7,8 +7,8 @@ const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.
 
 const pool = new Pool({
   connectionString,
-  // 로컬 환경(development)에서는 SSL을 사용하고, 프로덕션 환경에서는 기존처럼 Vercel 설정에 맡깁니다.
-  ssl: process.env.NODE_ENV === 'production' ? false : { rejectUnauthorized: false },
+  // Supabase는 SSL이 필요하지만 self-signed 인증서 문제를 피하기 위해 rejectUnauthorized: false
+  ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
