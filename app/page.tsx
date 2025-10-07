@@ -351,7 +351,11 @@ export default function Home() {
               <h3 className="text-2xl font-bold text-gray-900">👨‍👩‍👧‍👦 가족 요금제</h3>
               <span className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">인기</span>
             </div>
-            <p className="text-sm text-gray-600 mb-4">최대 5명이 함께 사용하는 가족 계정</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <span className="font-bold">💰 최저가!</span> 최대 5명이 함께 사용하는 가족 공유 계정 • 월 3,750원부터
+              </p>
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition cursor-pointer">
@@ -395,7 +399,11 @@ export default function Home() {
               <h3 className="text-2xl font-bold text-gray-900">🧑 개인 요금제</h3>
               <span className="bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full font-bold">NEW</span>
             </div>
-            <p className="text-sm text-gray-600 mb-4">혼자 사용하는 개인 전용 계정</p>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-purple-800">
+                <span className="font-bold">✨ 제약 없음!</span> 가족 계정 가입 이력이 있어도 신청 가능한 개인 전용 계정
+              </p>
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition cursor-pointer">
@@ -406,13 +414,13 @@ export default function Home() {
 
               <div className="bg-white border-2 border-green-500 rounded-2xl p-6 hover:border-green-600 transition cursor-pointer relative shadow-lg">
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-md">
-                  💰 7천원 할인
+                  💰 1천원 할인
                 </div>
                 <div className="text-sm font-semibold text-green-600 mb-2">6개월</div>
-                <div className="text-3xl font-bold text-green-600 mb-1">23,000원</div>
+                <div className="text-3xl font-bold text-green-600 mb-1">29,000원</div>
                 <div className="flex items-center gap-2">
                   <div className="text-xs text-gray-400 line-through">30,000원</div>
-                  <div className="text-xs text-green-600 font-semibold">월 3,833원</div>
+                  <div className="text-xs text-green-600 font-semibold">월 4,833원</div>
                 </div>
               </div>
 
@@ -430,6 +438,9 @@ export default function Home() {
             </div>
           </div>
           
+          {/* 구분선 */}
+          <div className="border-t-2 border-dashed border-gray-300 my-10"></div>
+
           {/* 추천인 혜택 섹션 */}
           <div className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 relative overflow-hidden">
             {/* 배경 장식 */}
@@ -447,9 +458,10 @@ export default function Home() {
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <h3 className="text-xl font-bold text-gray-900">추천인 혜택</h3>
                     <span className="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-bold">+1개월 무료</span>
+                    <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-3 py-1 rounded-full font-bold">모든 요금제 적용</span>
                   </div>
                   <p className="text-gray-700 mb-3">
-                    신청 시 추천인을 입력하면 <span className="font-bold text-purple-600">1개월 추가 혜택</span>을 드립니다!
+                    신청 시 추천인을 입력하면 <span className="font-bold text-purple-600">가족/개인 요금제 모두 1개월 추가 혜택</span>을 드립니다!
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
