@@ -25,6 +25,10 @@ export default function Home() {
   });
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showMemberEmailModal, setShowMemberEmailModal] = useState(false);
+  const [memberEmail, setMemberEmail] = useState('');
+  const [memberEmailLoading, setMemberEmailLoading] = useState(false);
+  const [memberEmailError, setMemberEmailError] = useState<string | null>(null);
 
   // 카카오톡 채널 SDK 초기화
   useEffect(() => {
@@ -143,17 +147,35 @@ export default function Home() {
     }
   };
 
+  // 회원 이메일 검증 및 페이지 이동
+  const handleMemberEmailCheck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMemberEmailLoading(true);
+    setMemberEmailError(null);
+
+    try {
+      const response = await fetch(`/api/members/check-expiry?email=${encodeURIComponent(memberEmail)}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        // 검증 성공 - 회원 페이지로 이동
+        router.push(`/member?email=${encodeURIComponent(memberEmail)}`);
+      } else {
+        setMemberEmailError(data.error || '회원 정보를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      setMemberEmailError('네트워크 오류가 발생했습니다.');
+    } finally {
+      setMemberEmailLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-600 p-2 rounded-lg">
-              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-              </svg>
-            </div>
-            <span className="text-gray-900 font-bold text-xl">YouTube Premium</span>
+          <div className="flex items-center gap-4">
+            <img src="/logo.jpg" alt="Linkuni" className="h-16 w-auto object-contain" />
           </div>
           <a href="/admin" className="text-gray-600 hover:text-gray-900 transition text-sm font-medium">
             관리자
@@ -176,52 +198,83 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto">
-            광고 없는 동영상, 백그라운드 재생, 오프라인 저장
+            광고 없는 동영상, 자유로운 유튜브 뮤직, 국내 최저가 보장
           </p>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-10">
-            3,000원 대의 가격으로 프리미엄 혜택을 누리세요
+            월 3,000원 대의 가격으로 프리미엄 혜택을 누리세요
           </p>
           
           <div className="flex flex-col gap-6 justify-center items-center">
-            {/* Primary CTA - 신청하기 */}
-            <Link
-              href="/apply"
-              className="group relative px-10 py-5 bg-gradient-to-r from-red-600 via-red-500 to-pink-500 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:scale-105 active:scale-95 overflow-hidden"
-              onClick={(e) => {
-                e.preventDefault();
-                const overlay = document.createElement('div');
-                overlay.id = 'page-transition-overlay';
-                overlay.style.cssText = `
-                  position: fixed;
-                  top: 0;
-                  left: 0;
-                  width: 100vw;
-                  height: 100vh;
-                  background: white;
-                  opacity: 0;
-                  transition: opacity 0.3s ease-out;
-                  z-index: 9999;
-                  pointer-events: none;
-                `;
-                document.body.appendChild(overlay);
+            {/* CTA - 선택형 디자인 */}
+            <div className="flex gap-3 justify-center items-center mx-4">
+              {/* 신규 회원 - 강조 */}
+              <Link
+                  href="/apply"
+                  className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const overlay = document.createElement('div');
+                    overlay.id = 'page-transition-overlay';
+                    overlay.style.cssText = `
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      width: 100vw;
+                      height: 100vh;
+                      background: white;
+                      opacity: 0;
+                      transition: opacity 0.3s ease-out;
+                      z-index: 9999;
+                      pointer-events: none;
+                    `;
+                    document.body.appendChild(overlay);
 
-                requestAnimationFrame(() => {
-                  overlay.style.opacity = '1';
-                });
+                    requestAnimationFrame(() => {
+                      overlay.style.opacity = '1';
+                    });
 
-                setTimeout(() => {
-                  router.push('/apply');
-                }, 300);
-              }}
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                <span>지금 신청하기</span>
-                <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-700 via-red-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Link>
+                    setTimeout(() => {
+                      router.push('/apply');
+                    }, 300);
+                  }}
+                >
+                  {/* 반짝이는 효과 */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+
+                  {/* 펄스 링 효과 */}
+                  <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div>
+
+                  <div className="relative flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs text-white/80 font-medium">NEW</span>
+                      <span className="text-lg font-bold text-white">신규 가입</span>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* 기존 회원 */}
+                <button
+                  onClick={() => setShowMemberEmailModal(true)}
+                  className="group relative px-6 py-4 bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-blue-400 transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs text-gray-500 font-medium">MEMBER</span>
+                      <span className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">기존 회원</span>
+                    </div>
+                  </div>
+                </button>
+            </div>
 
             {/* Secondary CTAs - 요금제/후기 */}
             <div className="flex flex-wrap gap-4 justify-center items-center">
@@ -678,6 +731,86 @@ export default function Home() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 이메일 확인 모달 */}
+      {showMemberEmailModal && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn"
+          onClick={() => {
+            if (!memberEmailLoading) {
+              setShowMemberEmailModal(false);
+              setMemberEmail('');
+              setMemberEmailError(null);
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-gray-900">기존 회원 확인</h2>
+              <button
+                onClick={() => {
+                  if (!memberEmailLoading) {
+                    setShowMemberEmailModal(false);
+                    setMemberEmail('');
+                    setMemberEmailError(null);
+                  }
+                }}
+                disabled={memberEmailLoading}
+                className="p-2 hover:bg-gray-100 rounded-full transition disabled:opacity-50"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <form onSubmit={handleMemberEmailCheck} className="space-y-6">
+                <div>
+                  <label htmlFor="member-email" className="block text-sm font-medium text-gray-700 mb-2">
+                    가입 시 사용한 이메일 주소
+                  </label>
+                  <input
+                    type="email"
+                    id="member-email"
+                    value={memberEmail}
+                    onChange={(e) => setMemberEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    required
+                    disabled={memberEmailLoading}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 disabled:bg-gray-100"
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    등록된 이메일을 입력하시면 회원 페이지로 이동합니다.
+                  </p>
+                </div>
+
+                {memberEmailError && (
+                  <div className="p-4 bg-red-50 text-red-800 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <span>{memberEmailError}</span>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={memberEmailLoading || !memberEmail}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                >
+                  {memberEmailLoading ? '확인 중...' : '회원 페이지로 이동'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
