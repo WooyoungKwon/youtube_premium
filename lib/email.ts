@@ -18,6 +18,14 @@ export interface NewRequestEmailData {
 
 export async function sendNewRequestNotification(data: NewRequestEmailData) {
   try {
+    // 환경 변수 설정 확인 로그
+    console.log('Email config check:', {
+      hasGmailUser: !!process.env.GMAIL_USER,
+      hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
+      hasAdminEmail: !!process.env.ADMIN_EMAIL,
+      gmailUser: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 3)}***` : 'undefined'
+    });
+
     const { email, phone, referralEmail, requestId } = data;
 
     const mailOptions = {
