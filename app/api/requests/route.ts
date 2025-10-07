@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { addRequest } from '@/lib/storage';
+import { sendNewRequestNotification } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -31,6 +32,16 @@ export async function POST(request: Request) {
     }
 
     const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail);
+
+    // 관리자에게 이메일 알림 전송 (비동기, 실패해도 신청은 성공 처리)
+    sendNewRequestNotification({
+      email,
+      phone,
+      referralEmail,
+      requestId: newRequest.id,
+    }).catch(error => {
+      console.error('Email notification failed:', error);
+    });
 
     return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {

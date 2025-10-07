@@ -8,9 +8,14 @@ import WebAuthnLogin from './components/WebAuthnLogin';
 
 interface AdminStats {
   totalMembers: number;
+  totalYoutubeAccounts: number;
   monthlyRevenue: number;
+  monthlyCost: number;
+  monthlyProfit: number;
   cumulativeRevenue: number;
   pricePerMember: number;
+  costPerYoutubeAccount: number;
+  rupeeToKrw: number;
 }
 
 export default function AdminPage() {
@@ -325,19 +330,46 @@ export default function AdminPage() {
                   기존 회원 수익 마이그레이션
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
                   <div className="text-sm font-medium text-neutral-400 mb-1">총 회원 수</div>
                   <div className="text-3xl font-bold text-white">{revenueStats.totalMembers}명</div>
                 </div>
 
                 <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
-                  <div className="text-sm font-medium text-neutral-400 mb-1">월 수익</div>
-                  <div className="text-3xl font-bold text-white">
+                  <div className="text-sm font-medium text-neutral-400 mb-1">YouTube 계정 수</div>
+                  <div className="text-3xl font-bold text-white">{revenueStats.totalYoutubeAccounts}개</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-neutral-900 border border-green-900/30 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-green-400 mb-1">월 매출</div>
+                  <div className="text-3xl font-bold text-green-300">
                     {revenueStats.monthlyRevenue.toLocaleString()}원
                   </div>
                   <div className="text-xs text-neutral-500 mt-1">
                     {revenueStats.pricePerMember.toLocaleString()}원 × {revenueStats.totalMembers}명
+                  </div>
+                </div>
+
+                <div className="bg-neutral-900 border border-red-900/30 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-red-400 mb-1">월 지출</div>
+                  <div className="text-3xl font-bold text-red-300">
+                    {revenueStats.monthlyCost.toLocaleString()}원
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-1">
+                    {revenueStats.costPerYoutubeAccount}₹ × {revenueStats.totalYoutubeAccounts}개 × {revenueStats.rupeeToKrw}원
+                  </div>
+                </div>
+
+                <div className="bg-neutral-900 border border-blue-900/30 p-5 rounded-lg">
+                  <div className="text-sm font-medium text-blue-400 mb-1">월 순수익</div>
+                  <div className="text-3xl font-bold text-blue-300">
+                    {revenueStats.monthlyProfit.toLocaleString()}원
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-1">
+                    매출 - 지출
                   </div>
                 </div>
 
