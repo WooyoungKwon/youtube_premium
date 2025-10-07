@@ -211,7 +211,7 @@ export default function Home() {
               <div className="relative">
                 {/* 혜택 배지 - 버튼 외부 */}
                 <div className="absolute -top-3 -left-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">
-                  🎁 +1개월
+                  💸 최저가
                 </div>
 
                 <Link
@@ -350,41 +350,6 @@ export default function Home() {
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">요금제 종류</h2>
             <p className="text-gray-600">장기 구독 시 더욱 저렴하게!</p>
-          </div>
-
-          {/* 추천인 혜택 섹션 - 최상단 */}
-          <div className="mb-10 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-2xl p-6 relative overflow-hidden">
-            {/* 배경 장식 */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-30"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-pink-200 rounded-full blur-3xl opacity-30"></div>
-
-            <div className="relative z-10">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-3xl">🎁</span>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <h3 className="text-xl font-bold text-gray-900">추천인 혜택</h3>
-                    <span className="bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-bold">+1개월 무료</span>
-                    <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-3 py-1 rounded-full font-bold">모든 요금제 적용</span>
-                  </div>
-                  <p className="text-gray-700 mb-3">
-                    신청 시 추천인을 입력하면 <span className="font-bold text-purple-600">가족/개인 요금제 모두 1개월 추가 혜택</span>을 드립니다!
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>기존 회원의 추천을 받아 신규 가입하는 경우에만 참여가 가능합니다</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* 가족 요금제 */}

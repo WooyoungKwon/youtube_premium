@@ -128,11 +128,38 @@ function PaymentContent() {
           <p className="text-gray-600 mb-6">
             입력하신 연락처로 안내드리겠습니다.
           </p>
-          
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800">
               입금 후 24시간 이내에 프리미엄 초대가 완료됩니다.
             </p>
+          </div>
+
+          {/* 추천인 혜택 안내 */}
+          <div className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-xl p-5 relative overflow-hidden">
+            {/* 배경 장식 */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-200 rounded-full blur-2xl opacity-30"></div>
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-pink-200 rounded-full blur-2xl opacity-30"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-start gap-3 text-left">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
+                    <span className="text-2xl">🎁</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">추천인 혜택 받으세요!</h3>
+                  <p className="text-sm text-gray-700 mb-2">
+                    다음 가입 시 <span className="font-bold text-purple-600">기존 회원의 이메일을 추천인으로 입력</span>하면
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold">
+                    <span>🎉</span>
+                    <span>+1개월 무료 혜택</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
