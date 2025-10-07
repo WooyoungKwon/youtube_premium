@@ -32,29 +32,18 @@ function PaymentContent() {
   const hasDiscount = discount > 0;
 
   useEffect(() => {
-    // 오버레이 제거 (페이드 아웃 효과와 함께)
-    const overlay = document.getElementById('page-transition-overlay');
-    if (overlay) {
-      setTimeout(() => {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 300);
-      }, 100);
-    }
-    
-    // 페이지 로드 시 페이드인 효과
-    document.body.style.opacity = '1';
     setIsVisible(true);
-    
+
     // URL에서 requestId 확인
     const requestId = searchParams.get('requestId');
     const userEmail = searchParams.get('email');
-    
+
     if (!requestId || !userEmail) {
       // requestId나 email이 없으면 메인 페이지로 리다이렉트
       router.push('/');
       return;
     }
-    
+
     setEmail(userEmail);
     setLoading(false);
   }, [searchParams, router]);

@@ -223,32 +223,6 @@ export default function Home() {
                 <Link
                     href="/apply"
                     className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden block"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const overlay = document.createElement('div');
-                      overlay.id = 'page-transition-overlay';
-                      overlay.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100vw;
-                        height: 100vh;
-                        background: white;
-                        opacity: 0;
-                        transition: opacity 0.3s ease-out;
-                        z-index: 9999;
-                        pointer-events: none;
-                      `;
-                      document.body.appendChild(overlay);
-
-                      requestAnimationFrame(() => {
-                        overlay.style.opacity = '1';
-                      });
-
-                      setTimeout(() => {
-                        router.push('/apply');
-                      }, 300);
-                    }}
                   >
                     {/* 반짝이는 효과 */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>

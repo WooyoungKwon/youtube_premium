@@ -15,17 +15,6 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 오버레이 제거 (페이드 아웃 효과와 함께)
-    const overlay = document.getElementById('page-transition-overlay');
-    if (overlay) {
-      setTimeout(() => {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 300);
-      }, 100);
-    }
-    
-    // 페이지 로드 시 페이드인 효과
-    document.body.style.opacity = '1';
     setIsVisible(true);
   }, []);
 
@@ -62,30 +51,7 @@ export default function Home() {
       const data = await response.json();
 
       if (response.ok) {
-        // 신청 성공 시 부드럽게 페이지 전환
-        const overlay = document.createElement('div');
-        overlay.id = 'page-transition-overlay';
-        overlay.style.cssText = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: white;
-          opacity: 0;
-          transition: opacity 0.3s ease-out;
-          z-index: 9999;
-          pointer-events: none;
-        `;
-        document.body.appendChild(overlay);
-        
-        requestAnimationFrame(() => {
-          overlay.style.opacity = '1';
-        });
-        
-        setTimeout(() => {
-          router.push(`/payment?requestId=${data.id}&email=${encodeURIComponent(email)}`);
-        }, 300);
+        router.push(`/payment?requestId=${data.id}&email=${encodeURIComponent(email)}`);
       } else {
         setMessage({ 
           type: 'error', 
