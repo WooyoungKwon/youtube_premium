@@ -210,7 +210,7 @@ export default function Home() {
               {/* 신규 회원 - 강조 */}
               <div className="relative">
                 {/* 혜택 배지 - 버튼 외부 */}
-                <div className="absolute -top-3 -right-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">
+                <div className="absolute -top-3 -left-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">
                   🎁 +1개월
                 </div>
 
