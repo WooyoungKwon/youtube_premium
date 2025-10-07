@@ -326,23 +326,14 @@ export default function Home() {
           </div>
         </div>
 
-        <div id="pricing-section" className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-10 shadow-2xl border border-gray-200 max-w-6xl mx-auto scroll-mt-20">
+        <div id="pricing-section" className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-10 shadow-2xl border border-gray-200 max-w-4xl mx-auto scroll-mt-20">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">요금제 종류</h2>
-            <p className="text-gray-600">장기 구독 시 더욱 저렴하게!</p>
+            <p className="text-gray-600">비쌀 이유가 없습니다. 장기 구독 시 더욱 저렴하게!</p>
           </div>
 
           {/* 가족 요금제 */}
           <div className="mb-10">
-            <div className="flex items-center gap-3 mb-4">
-              <h3 className="text-2xl font-bold text-gray-900">👨‍👩‍👧‍👦 가족 요금제</h3>
-              <span className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">인기</span>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-800">
-                <span className="font-bold">💰 업계 최저가 보장!</span> 최대 5명이 함께 사용하는 가족 공유 계정 • 월 3,750원부터
-              </p>
-            </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition cursor-pointer">
@@ -377,53 +368,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 구분선 */}
-          <div className="border-t-2 border-gray-200 my-8"></div>
-
-          {/* 개인 요금제 */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <h3 className="text-2xl font-bold text-gray-900">🧑 개인 요금제</h3>
-              <span className="bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full font-bold">NEW</span>
-            </div>
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-purple-800">
-                <span className="font-bold">✨ 제약 없음!</span> 가족 계정 가입 이력이 있어도 신청 가능한 개인 전용 계정
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition cursor-pointer">
-                <div className="text-sm font-semibold text-gray-600 mb-2">1개월</div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">5,000원</div>
-                <div className="text-xs text-gray-500">월 5,000원</div>
-              </div>
-
-              <div className="bg-white border-2 border-green-500 rounded-2xl p-6 hover:border-green-600 transition cursor-pointer relative shadow-lg">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-md">
-                  💰 1천원 할인
-                </div>
-                <div className="text-sm font-semibold text-green-600 mb-2">6개월</div>
-                <div className="text-3xl font-bold text-green-600 mb-1">29,000원</div>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-gray-400 line-through">30,000원</div>
-                  <div className="text-xs text-green-600 font-semibold">월 4,833원</div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-500 rounded-2xl p-6 hover:border-purple-600 transition cursor-pointer relative shadow-lg">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white text-xs px-4 py-1.5 rounded-full font-bold shadow-md">
-                  🔥 3천원 할인
-                </div>
-                <div className="text-sm font-semibold text-purple-600 mb-2">12개월</div>
-                <div className="text-3xl font-bold text-purple-600 mb-1">57,000원</div>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-gray-400 line-through">60,000원</div>
-                  <div className="text-xs text-purple-600 font-semibold">월 4,750원</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <button
             onClick={() => router.push('/apply')}

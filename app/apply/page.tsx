@@ -8,14 +8,22 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [referralEmail, setReferralEmail] = useState('');
-  const [planType, setPlanType] = useState<'family' | 'individual'>('family');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsVisible(true);
+    // 페이지 로딩 완료 표시
+    setIsPageReady(true);
+    
+    // 페이지 로딩 후 약간의 지연을 두고 애니메이션 시작
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // ESC 키로 이미지 모달 닫기
@@ -44,7 +52,7 @@ export default function Home() {
           email,
           phone,
           referralEmail: referralEmail || undefined,
-          planType
+          planType: 'family'
         }),
       });
 
@@ -68,12 +76,34 @@ export default function Home() {
     }
   };
 
+  // 페이지가 준비되지 않았을 때 로딩 화면 표시
+  if (!isPageReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-red-300 border-t-red-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600 font-medium">페이지를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
-      className={`min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4 transition-opacity duration-500 ${
+      className={`min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4 transition-opacity duration-500 relative ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-sm mx-4">
+            <div className="inline-block w-12 h-12 border-4 border-red-300 border-t-red-600 rounded-full animate-spin mb-4"></div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">신청 처리 중...</h3>
+            <p className="text-sm text-gray-600">잠시만 기다려주세요</p>
+          </div>
+        </div>
+      )}
       <div className={`max-w-md w-full bg-white rounded-2xl shadow-xl p-8 transition-all duration-700 ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
       }`}>
@@ -89,40 +119,6 @@ export default function Home() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              요금제 선택 <span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setPlanType('family')}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  planType === 'family'
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="text-2xl mb-2">👨‍👩‍👧‍👦</div>
-                <div className="font-bold text-gray-900">가족 요금제</div>
-                <div className="text-xs text-gray-500 mt-1">최대 5명 공유</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPlanType('individual')}
-                className={`p-4 rounded-xl border-2 transition-all relative ${
-                  planType === 'individual'
-                    ? 'border-purple-500 bg-purple-50 shadow-md'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <span className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">NEW</span>
-                <div className="text-2xl mb-2">🧑</div>
-                <div className="font-bold text-gray-900">개인 요금제</div>
-                <div className="text-xs text-gray-500 mt-1">개인 전용 계정</div>
-              </button>
-            </div>
-          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -137,16 +133,9 @@ export default function Home() {
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition text-gray-900"
             />
-            {planType === 'family' && (
-              <p className="mt-2 text-xs text-gray-600">
-                12개월 내에 가족 계정에 가입한 적이 없던 이메일이어야 합니다
-              </p>
-            )}
-            {planType === 'individual' && (
-              <p className="mt-2 text-xs text-purple-600 font-medium">
-                ✨ 개인 요금제는 가족 계정 가입 이력이 있어도 신청 가능합니다
-              </p>
-            )}
+            <p className="mt-2 text-xs text-gray-600">
+              12개월 내에 가족 계정에 가입한 적이 없던 이메일이어야 합니다
+            </p>
           </div>
 
           <div>
@@ -279,8 +268,11 @@ export default function Home() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
+            {loading && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
             {loading ? '처리 중...' : '신청하기'}
           </button>
         </form>
