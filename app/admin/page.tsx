@@ -143,30 +143,6 @@ export default function AdminPage() {
     fetchStats();
   };
 
-  const handleMigrateRevenue = async () => {
-    if (!confirm('기존 회원들의 수익을 마이그레이션하시겠습니까?\n이미 기록된 회원은 건너뛰고, 새로운 회원만 추가됩니다.')) {
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/admin/migrate-revenue', {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        alert(`마이그레이션 완료!\n\n총 회원: ${data.stats.totalMembers}명\n새로 기록: ${data.stats.migratedMembers}명\n건너뛴 회원: ${data.stats.skippedMembers}명\n추가된 수익: ${data.stats.totalAmount.toLocaleString()}원`);
-        fetchStats();
-      } else {
-        const error = await response.json();
-        alert(`마이그레이션 실패: ${error.details || error.error}`);
-      }
-    } catch (error) {
-      console.error('Migration error:', error);
-      alert('마이그레이션 중 오류가 발생했습니다.');
-    }
-  };
-
   const filteredRequests = requests.filter(req => {
     if (filter === 'all') return true;
     return req.status === filter;
@@ -321,15 +297,7 @@ export default function AdminPage() {
           {/* Revenue Stats */}
           {revenueStats && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-white">수익 현황</h2>
-                <button
-                  onClick={handleMigrateRevenue}
-                  className="px-3 py-1.5 bg-orange-900 border border-orange-800 text-orange-100 text-sm rounded hover:bg-orange-800 transition"
-                >
-                  기존 회원 수익 마이그레이션
-                </button>
-              </div>
+              <h2 className="text-lg font-semibold text-white mb-3">수익 현황</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-lg">
                   <div className="text-sm font-medium text-neutral-400 mb-1">총 회원 수</div>

@@ -395,7 +395,7 @@ export default function Home() {
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-blue-800">
-                <span className="font-bold">💰 최저가!</span> 최대 5명이 함께 사용하는 가족 공유 계정 • 월 3,750원부터
+                <span className="font-bold">💰 업계 최저가 보장!</span> 최대 5명이 함께 사용하는 가족 공유 계정 • 월 3,750원부터
               </p>
             </div>
 
