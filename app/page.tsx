@@ -208,59 +208,61 @@ export default function Home() {
             {/* CTA - 선택형 디자인 */}
             <div className="flex gap-3 justify-center items-center mx-4">
               {/* 신규 회원 - 강조 */}
-              <Link
-                  href="/apply"
-                  className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const overlay = document.createElement('div');
-                    overlay.id = 'page-transition-overlay';
-                    overlay.style.cssText = `
-                      position: fixed;
-                      top: 0;
-                      left: 0;
-                      width: 100vw;
-                      height: 100vh;
-                      background: white;
-                      opacity: 0;
-                      transition: opacity 0.3s ease-out;
-                      z-index: 9999;
-                      pointer-events: none;
-                    `;
-                    document.body.appendChild(overlay);
+              <div className="relative">
+                {/* 혜택 배지 - 버튼 외부 */}
+                <div className="absolute -top-3 -right-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">
+                  🎁 +1개월
+                </div>
 
-                    requestAnimationFrame(() => {
-                      overlay.style.opacity = '1';
-                    });
+                <Link
+                    href="/apply"
+                    className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden block"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const overlay = document.createElement('div');
+                      overlay.id = 'page-transition-overlay';
+                      overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background: white;
+                        opacity: 0;
+                        transition: opacity 0.3s ease-out;
+                        z-index: 9999;
+                        pointer-events: none;
+                      `;
+                      document.body.appendChild(overlay);
 
-                    setTimeout(() => {
-                      router.push('/apply');
-                    }, 300);
-                  }}
-                >
-                  {/* 혜택 배지 */}
-                  <div className="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-10 animate-bounce">
-                    🎁 +1개월
-                  </div>
+                      requestAnimationFrame(() => {
+                        overlay.style.opacity = '1';
+                      });
 
-                  {/* 반짝이는 효과 */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                      setTimeout(() => {
+                        router.push('/apply');
+                      }, 300);
+                    }}
+                  >
+                    {/* 반짝이는 효과 */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
 
-                  {/* 펄스 링 효과 */}
-                  <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div>
+                    {/* 펄스 링 효과 */}
+                    <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div>
 
-                  <div className="relative flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                      </svg>
+                    <div className="relative flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-xs text-white/80 font-medium">NEW</span>
+                        <span className="text-lg font-bold text-white">신규 가입</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs text-white/80 font-medium">NEW</span>
-                      <span className="text-lg font-bold text-white">신규 가입</span>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+              </div>
 
                 {/* 기존 회원 */}
                 <button
