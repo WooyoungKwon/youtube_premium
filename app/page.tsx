@@ -200,9 +200,15 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto">
             광고 없는 동영상, 자유로운 유튜브 뮤직, 국내 최저가 보장
           </p>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-3">
             월 3,000원 대의 가격으로 프리미엄 혜택을 누리세요
           </p>
+          <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-2 mb-10">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-semibold text-green-700">문제 발생 시 차액 100% 환불 보장</span>
+          </div>
           
           <div className="flex flex-col gap-6 justify-center items-center">
             {/* CTA - 선택형 디자인 */}
@@ -211,7 +217,7 @@ export default function Home() {
               <div className="relative">
                 {/* 혜택 배지 - 버튼 외부 */}
                 <div className="absolute -top-3 -left-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">
-                  💸 최저가
+                  💸 최저가 보장
                 </div>
 
                 <Link
