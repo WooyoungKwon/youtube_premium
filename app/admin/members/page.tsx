@@ -157,11 +157,25 @@ export default function MembersPage() {
     setSelectedYoutube(null);
     setMembers([]);
     await fetchYoutubeAccounts(apple.id);
+
+    // 모바일에서 YouTube 섹션으로 스크롤
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        document.getElementById('youtube-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
 
   const handleYoutubeSelect = async (youtube: YoutubeAccount) => {
     setSelectedYoutube(youtube);
     await fetchMembers(youtube.id);
+
+    // 모바일에서 회원 목록 섹션으로 스크롤
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        document.getElementById('members-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
 
   const handleAddApple = async () => {
@@ -733,7 +747,7 @@ export default function MembersPage() {
           </div>
 
           {/* YouTube Accounts Column */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
+          <div id="youtube-section" className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden scroll-mt-4">
             <div className="px-4 py-3 border-b border-neutral-800 flex justify-between items-center">
               <h2 className="text-sm font-semibold text-white">YouTube 계정</h2>
               {selectedApple && (
@@ -791,7 +805,7 @@ export default function MembersPage() {
           </div>
 
           {/* Members Column */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
+          <div id="members-section" className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden scroll-mt-4">
             <div className="px-4 py-3 border-b border-neutral-800 flex justify-between items-center">
               <h2 className="text-sm font-semibold text-white">회원 목록</h2>
               {selectedYoutube && (
