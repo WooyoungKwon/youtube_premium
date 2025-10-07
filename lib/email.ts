@@ -18,15 +18,6 @@ export interface NewRequestEmailData {
 
 export async function sendNewRequestNotification(data: NewRequestEmailData) {
   try {
-    // 환경 변수 설정 확인 로그
-    console.log('Email config check:', {
-      hasGmailUser: !!process.env.GMAIL_USER,
-      hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
-      hasAdminEmail: !!process.env.ADMIN_EMAIL,
-      gmailUser: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 3)}***` : 'undefined',
-      adminEmail: process.env.ADMIN_EMAIL
-    });
-
     const { email, phone, referralEmail, requestId } = data;
 
     const mailOptions = {
@@ -59,11 +50,9 @@ export async function sendNewRequestNotification(data: NewRequestEmailData) {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('New request notification email sent successfully');
     return true;
   } catch (error) {
     console.error('Failed to send notification email:', error);
-    // 이메일 발송 실패해도 신청은 정상 처리되도록 에러를 던지지 않음
     return false;
   }
 }

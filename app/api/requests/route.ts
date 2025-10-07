@@ -34,7 +34,6 @@ export async function POST(request: Request) {
     const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail);
 
     // 관리자에게 이메일 알림 전송
-    console.log('Attempting to send email notification...');
     try {
       await sendNewRequestNotification({
         email,
@@ -42,7 +41,6 @@ export async function POST(request: Request) {
         referralEmail,
         requestId: newRequest.id,
       });
-      console.log('Email notification sent successfully');
     } catch (error) {
       console.error('Email notification failed:', error);
     }
