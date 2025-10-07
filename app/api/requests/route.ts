@@ -33,15 +33,19 @@ export async function POST(request: Request) {
 
     const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail);
 
-    // 관리자에게 이메일 알림 전송 (비동기, 실패해도 신청은 성공 처리)
-    sendNewRequestNotification({
-      email,
-      phone,
-      referralEmail,
-      requestId: newRequest.id,
-    }).catch(error => {
+    // 관리자에게 이메일 알림 전송
+    console.log('Attempting to send email notification...');
+    try {
+      await sendNewRequestNotification({
+        email,
+        phone,
+        referralEmail,
+        requestId: newRequest.id,
+      });
+      console.log('Email notification sent successfully');
+    } catch (error) {
       console.error('Email notification failed:', error);
-    });
+    }
 
     return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {
