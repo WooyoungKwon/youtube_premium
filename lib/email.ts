@@ -23,7 +23,8 @@ export async function sendNewRequestNotification(data: NewRequestEmailData) {
       hasGmailUser: !!process.env.GMAIL_USER,
       hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
       hasAdminEmail: !!process.env.ADMIN_EMAIL,
-      gmailUser: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 3)}***` : 'undefined'
+      gmailUser: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 3)}***` : 'undefined',
+      adminEmail: process.env.ADMIN_EMAIL
     });
 
     const { email, phone, referralEmail, requestId } = data;
