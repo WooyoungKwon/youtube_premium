@@ -76,6 +76,17 @@ export async function initDatabase() {
       console.log('referral_email column already exists or migration failed:', error);
     }
 
+    // 기존 테이블에 plan_type 컬럼 추가 (마이그레이션)
+    try {
+      await client.sql`
+        ALTER TABLE member_requests
+        ADD COLUMN IF NOT EXISTS plan_type VARCHAR(50) DEFAULT 'family'
+      `;
+    } catch (error) {
+      // 컬럼이 이미 존재하는 경우 무시
+      console.log('plan_type column already exists or migration failed:', error);
+    }
+
 
     
     // YouTube 계정 테이블
@@ -227,6 +238,7 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
         mr.referral_email as "referralEmail",
         mr.months,
         mr.depositor_name as "depositorName",
+        mr.plan_type as "planType",
         mr.status,
         mr.created_at as "createdAt",
         CASE WHEN m.id IS NOT NULL THEN true ELSE false END as "isRegistered"
@@ -234,7 +246,7 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
       LEFT JOIN members m ON mr.id = m.request_id
       ORDER BY mr.created_at DESC
     `;
-    
+
     return rows.map(row => ({
       ...row,
       createdAt: row.createdAt.toISOString(),
@@ -496,7 +508,8 @@ export async function addRequest(
   phone?: string,
   months?: number,
   depositorName?: string,
-  referralEmail?: string
+  referralEmail?: string,
+  planType?: 'family' | 'individual'
 ): Promise<MemberRequest> {
 
   // 이미 신청한 이메일인지 확인
@@ -512,8 +525,8 @@ export async function addRequest(
   const createdAt = new Date().toISOString();
 
   await client.sql`
-    INSERT INTO member_requests (id, email, kakao_id, phone, referral_email, months, depositor_name, status, created_at)
-    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${referralEmail || null}, ${months || null}, ${depositorName || null}, 'pending', ${createdAt})
+    INSERT INTO member_requests (id, email, kakao_id, phone, referral_email, months, depositor_name, plan_type, status, created_at)
+    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${referralEmail || null}, ${months || null}, ${depositorName || null}, ${planType || 'family'}, 'pending', ${createdAt})
   `;
 
   return {
@@ -524,6 +537,7 @@ export async function addRequest(
     referralEmail,
     months,
     depositorName,
+    planType: planType || 'family',
     status: 'pending',
     createdAt,
     updatedAt: createdAt,

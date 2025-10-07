@@ -5,7 +5,7 @@ import { sendNewRequestNotification } from '@/lib/email';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, phone, months, depositorName, referralEmail } = body;
+    const { email, phone, months, depositorName, referralEmail, planType } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail);
+    const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail, planType);
 
     // 관리자에게 이메일 알림 전송
     try {

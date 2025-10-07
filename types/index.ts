@@ -6,6 +6,7 @@ export interface MemberRequest {
   referralEmail?: string;
   months?: number;
   depositorName?: string;
+  planType?: 'family' | 'individual'; // 요금제 타입
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
@@ -18,6 +19,7 @@ export interface CreateRequestDTO {
   phone?: string;
   months?: number;
   depositorName?: string;
+  planType?: 'family' | 'individual';
 }
 
 export interface UpdateRequestDTO {

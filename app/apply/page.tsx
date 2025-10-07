@@ -8,6 +8,7 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [referralEmail, setReferralEmail] = useState('');
+  const [planType, setPlanType] = useState<'family' | 'individual'>('family');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -50,7 +51,12 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, phone, referralEmail: referralEmail || undefined }),
+        body: JSON.stringify({
+          email,
+          phone,
+          referralEmail: referralEmail || undefined,
+          planType
+        }),
       });
 
       const data = await response.json();
@@ -117,6 +123,41 @@ export default function Home() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              요금제 선택 <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setPlanType('family')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  planType === 'family'
+                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">👨‍👩‍👧‍👦</div>
+                <div className="font-bold text-gray-900">가족 요금제</div>
+                <div className="text-xs text-gray-500 mt-1">최대 5명 공유</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlanType('individual')}
+                className={`p-4 rounded-xl border-2 transition-all relative ${
+                  planType === 'individual'
+                    ? 'border-purple-500 bg-purple-50 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <span className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">NEW</span>
+                <div className="text-2xl mb-2">🧑</div>
+                <div className="font-bold text-gray-900">개인 요금제</div>
+                <div className="text-xs text-gray-500 mt-1">개인 전용 계정</div>
+              </button>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               유튜브 이메일 주소 <span className="text-red-500">*</span>
