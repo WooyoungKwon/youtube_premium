@@ -12,6 +12,8 @@ function PaymentContent() {
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [showAccountCopyToast, setShowAccountCopyToast] = useState(false);
 
   const MONTHLY_PRICE = 4000;
   
@@ -50,7 +52,20 @@ function PaymentContent() {
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText('110574383789');
-    alert('계좌번호가 복사되었습니다!');
+    setShowAccountCopyToast(true);
+    setTimeout(() => {
+      setShowAccountCopyToast(false);
+    }, 2000);
+  };
+
+  const handleCopyDomain = () => {
+    navigator.clipboard.writeText(
+      '최저가 유튜브 프리미엄 가입은 Linkuni에서 !\n'
+      + '신청하기: https://youtube-premium-pv6f.vercel.app');
+    setShowCopyToast(true);
+    setTimeout(() => {
+      setShowCopyToast(false);
+    }, 2000);
   };
 
   const handleComplete = async () => {
@@ -125,26 +140,71 @@ function PaymentContent() {
           </div>
 
           {/* 추천인 혜택 안내 */}
-          <div className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-xl p-5 relative overflow-hidden">
+          <div className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-2 border-purple-300 rounded-xl p-5 relative overflow-visible">
             {/* 배경 장식 */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-200 rounded-full blur-2xl opacity-30"></div>
             <div className="absolute bottom-0 left-0 w-20 h-20 bg-pink-200 rounded-full blur-2xl opacity-30"></div>
 
             <div className="relative z-10">
-              <div className="flex items-start gap-3 text-left">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
-                    <span className="text-2xl">🎁</span>
+              <div className="space-y-4">
+                {/* 상단 아이콘과 제목 */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
+                      <span className="text-2xl">🎁</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 text-left">Linkuni를 널리 알려주세요 !</h3>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">추천인 혜택 받으세요!</h3>
-                  <p className="text-sm text-gray-700 mb-2">
-                    다음 가입 시 <span className="font-bold text-purple-600">기존 회원의 이메일을 추천인으로 입력</span>하면
-                  </p>
-                  <div className="inline-flex items-center gap-2 bg-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold">
-                    <span>🎉</span>
-                    <span>+1개월 무료 혜택</span>
+
+                {/* 설명 텍스트 */}
+                <div className="space-y-3">
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span className="text-sm">🎁</span>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-bold text-green-800 text-left">추천인 혜택 이벤트</p>
+                        <p className="text-xs text-gray-700 leading-relaxed text-left">
+                          새로운 회원이 <span className="font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded text-xs">{email}</span>을<br/>
+                          추천인으로 입력하면 <span className="font-bold text-green-600">둘 다 +1개월 무료!</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 공유 링크 섹션 */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      <p className="text-xs font-semibold text-gray-900">링크를 복사해서 친구들에게 공유하세요</p>
+                    </div>
+                    
+                    <div className="relative group">
+                      <div className="flex items-center bg-white border-2 border-purple-300 rounded-lg p-3 shadow-md hover:shadow-lg transition-all duration-200 group-hover:border-purple-400">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="text-xs text-gray-500 mb-1 font-medium">공유할 링크</div>
+                          <div className="text-sm text-gray-900 font-mono truncate">
+                            https://youtube-premium-pv6f.vercel.app
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleCopyDomain}
+                          className="ml-3 flex-shrink-0 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center gap-1.5 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span>복사</span>
+                        </button>
+                      </div>
+                      
+                    </div>
                   </div>
                 </div>
               </div>
@@ -158,11 +218,35 @@ function PaymentContent() {
             메인으로 돌아가기
           </button>
         </div>
+
+        {/* 복사 완료 토스트 메시지 - 화면 하단 고정 */}
+        {showCopyToast && (
+          <div className="fixed bottom-8 left-1/2 z-50 animate-slide-up">
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-2 border border-gray-700">
+              <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-medium">링크가 복사되었습니다</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
+    <>
+      {/* 계좌번호 복사 토스트 메시지 */}
+      {showAccountCopyToast && (
+        <div className="fixed bottom-8 left-1/2 z-50 animate-slide-up">
+          <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-2 border border-gray-700">
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">계좌번호가 복사되었습니다</span>
+          </div>
+        </div>
+      )}
     <div 
       className={`min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4 transition-opacity duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0'
@@ -393,6 +477,7 @@ function PaymentContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
