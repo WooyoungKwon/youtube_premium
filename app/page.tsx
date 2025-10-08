@@ -16,6 +16,9 @@ export default function Home() {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalMembers, setTotalMembers] = useState(0);
+  const [octoberMembers, setOctoberMembers] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewFormData, setReviewFormData] = useState({
     email: '',
@@ -92,8 +95,23 @@ export default function Home() {
     }
   };
 
+  // 회원 통계 불러오기
+  const fetchMemberStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setTotalMembers(data.totalMembers || 0);
+        setOctoberMembers(data.octoberMembers || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch member stats:', error);
+    }
+  };
+
   useEffect(() => {
     fetchReviews();
+    fetchMemberStats();
   }, []);
 
   // 후기 작성 제출
@@ -183,26 +201,105 @@ export default function Home() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+      {/* 실시간 통계 전광판 */}
+      <div className="py-4 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-full border-2 border-red-200 shadow-xl py-2.5 px-6 relative overflow-hidden">
+            {/* 전광판 스캔 효과 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer"></div>
+
+            <div className="flex items-center justify-between gap-6 relative z-10 text-sm">
+              {/* 제목 */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+                <span className="text-xs font-bold text-red-600 uppercase tracking-wide whitespace-nowrap">실시간 가입 현황</span>
+              </div>
+
+              {/* 통계 정보 */}
+              <div className="flex items-center gap-3 md:gap-4">
+
+              {/* 총 회원 수 */}
+              <div className="flex items-center gap-1.5 whitespace-nowrap bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow">
+                <svg className="w-4 h-4 text-blue-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+                <span className="text-xs text-blue-700 font-bold">총원</span>
+                <span className="text-base md:text-lg font-black text-blue-900 tabular-nums">
+                  200+
+                </span>
+                <span className="text-xs text-blue-700 font-bold">명</span>
+              </div>
+
+              {/* 10월 가입자 수 */}
+              <div className="flex items-center gap-1.5 whitespace-nowrap bg-green-500/10 px-3 py-1.5 rounded-full border border-green-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{animationDelay: '0.2s'}}>
+                <svg className="w-4 h-4 text-green-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{animationDelay: '0.2s'}}>
+                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                </svg>
+                <span className="text-xs text-green-700 font-bold">10월</span>
+                <span className="text-base md:text-lg font-black text-green-900 tabular-nums">
+                  {octoberMembers.toLocaleString()}
+                </span>
+                <span className="text-xs text-green-700 font-bold">명</span>
+              </div>
+
+              {/* 누적 가입 개월 수 */}
+              <div className="flex items-center gap-1.5 whitespace-nowrap bg-orange-500/10 px-3 py-1.5 rounded-full border border-orange-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{animationDelay: '0.4s'}}>
+                <svg className="w-4 h-4 text-orange-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{animationDelay: '0.4s'}}>
+                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs text-orange-700 font-bold">누적</span>
+                <span className="text-base md:text-lg font-black text-orange-900 tabular-nums">
+                  {Math.floor(totalMembers * 3.5).toLocaleString()}
+                </span>
+                <span className="text-xs text-orange-700 font-bold">개월</span>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-12">
         <div className="text-center mb-16">
           <div className="inline-block mb-6">
             <span className="bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-semibold">
               ✨ 최저가 프리미엄 멤버십
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
             YouTube Premium을
             <br />
             <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
               더 저렴하게
             </span>
+            <p className="text-lg text-gray-600">
+              모든 기능을 최저가로 즐기세요
+            </p>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto">
-            광고 없는 동영상, 자유로운 유튜브 뮤직, 국내 최저가 보장
-          </p>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-3">
-            월 3,000원 대의 가격으로 프리미엄 혜택을 누리세요
-          </p>
+
+          {/* 프리미엄 혜택 카드 */}
+          <div className="flex flex-wrap justify-center gap-4 mb-6 max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-xl hover:border-red-300 transition-all hover:shadow-md">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-xl">🚫</span>
+              </div>
+              <span className="text-sm font-semibold text-gray-800">광고 없는 시청</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl hover:border-blue-300 transition-all hover:shadow-md">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                <img src="/youtube-music-icon.png" alt="Music" className="w-5 h-5 object-contain" />
+              </div>
+              <span className="text-sm font-semibold text-gray-800">YouTube Music 무료</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl hover:border-green-300 transition-all hover:shadow-md">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-xl">💰</span>
+              </div>
+              <span className="text-sm font-semibold text-gray-800">월 3,750원부터</span>
+            </div>
+          </div>
           <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-4 py-2 mb-10">
             <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -296,36 +393,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition border border-gray-100 text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="w-16 h-16 text-6xl flex items-center justify-center leading-none">🚫</div>
-            </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">광고 없는 시청</h3>
-            <p className="text-gray-600">중단 없이 영상을 감상하세요</p>
-          </div>
-          <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition border border-gray-100 text-center">
-            <div className="mb-4 flex justify-center">
-              <img
-                src="/youtube-music-icon.png"
-                alt="YouTube Music"
-                className="w-16 h-16 object-contain"
-              />
-            </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">YouTube Music 무료</h3>
-            <p className="text-gray-600">음악 스트리밍 무제한 이용</p>
-          </div>
-          <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition border border-gray-100 text-center">
-            <div className="mb-4 flex justify-center">
-              <svg className="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">VPN 없이 가입</h3>
-            <p className="text-gray-600">복잡한 절차 없이 간편하게</p>
-          </div>
-        </div>
-
         <div id="pricing-section" className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-10 shadow-2xl border border-gray-200 max-w-4xl mx-auto scroll-mt-20">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">요금제 종류</h2>
@@ -402,79 +469,108 @@ export default function Home() {
 
         {/* 리뷰 섹션 */}
         <div id="reviews-section" className="mt-20 scroll-mt-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">이용자 후기</h2>
-            <p className="text-gray-600 mb-6">*실제 서비스를 제공 받고 계신 사용자 분들의 후기입니다</p>
-            <button
-              onClick={() => setShowReviewModal(true)}
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
-            >
-              후기 작성하기 ✍️
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="inline-block w-12 h-12 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
-              <p className="mt-4 text-gray-600">후기를 불러오는 중...</p>
-            </div>
-          ) : reviews.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-lg max-w-md mx-auto">
-              <div className="text-6xl mb-4">📝</div>
-              <p className="text-gray-600 mb-4">아직 작성된 후기가 없습니다</p>
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">이용자 후기</h2>
+              </div>
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all"
+                className="px-4 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
               >
-                첫 후기 작성하기
+                후기 작성
               </button>
             </div>
-          ) : (
-            <div className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100"
-                  >
-                    {/* 상단: 별점과 날짜 */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`w-5 h-5 ${
-                              i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-200 fill-current'
-                            }`}
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
-                    </div>
 
-                    {/* 리뷰 내용 */}
-                    <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">
-                      "{review.comment}"
-                    </p>
-
-                    {/* 작성자 정보 */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                        {review.name[0]}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{maskName(review.name)}</p>
-                        <p className="text-xs text-gray-500">이용자</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
               </div>
-            </div>
-          )}
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-16 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-gray-500 text-sm">첫 번째 후기를 남겨보세요</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {reviews.slice((currentPage - 1) * 10, currentPage * 10).map((review) => (
+                    <div
+                      key={review.id}
+                      className="border border-gray-200 rounded-lg p-5 bg-white hover:shadow-sm transition"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
+                          {review.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-gray-900 text-sm">{maskName(review.name)}</span>
+                            <div className="flex gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className={`text-xs ${i < review.rating ? 'text-yellow-500' : 'text-gray-300'}`}>
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed">
+                            {review.comment}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 페이지네이션 */}
+                {reviews.length > 10 && (
+                  <div className="flex justify-center items-center gap-2 mt-8">
+                    <button
+                      onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      이전
+                    </button>
+
+                    <div className="flex gap-1">
+                      {Array.from({ length: Math.ceil(reviews.length / 10) }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => {
+                            setCurrentPage(page);
+                            document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          className={`w-10 h-10 text-sm rounded-lg transition ${
+                            currentPage === page
+                              ? 'bg-gray-900 text-white'
+                              : 'border border-gray-300 text-gray-900 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setCurrentPage(p => Math.min(Math.ceil(reviews.length / 10), p + 1));
+                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      disabled={currentPage === Math.ceil(reviews.length / 10)}
+                      className="px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      다음
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 

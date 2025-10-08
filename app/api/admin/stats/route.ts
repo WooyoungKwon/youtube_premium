@@ -41,6 +41,16 @@ export async function GET() {
     `;
     const totalMembers = parseInt(memberCountRows[0].total);
 
+    // 10월 한 달 결제 인원 (이전 결제일 기준 - last_payment_date)
+    const { rows: octoberMembersRows } = await client.sql`
+      SELECT COUNT(*) as total
+      FROM members
+      WHERE EXTRACT(YEAR FROM last_payment_date) = 2025
+      AND EXTRACT(MONTH FROM last_payment_date) = 10
+      AND deposit_status = 'completed'
+    `;
+    const octoberMembers = parseInt(octoberMembersRows[0].total);
+
     // YouTube 계정 수 조회
     const { rows: youtubeCountRows } = await client.sql`
       SELECT COUNT(*) as total FROM youtube_accounts
@@ -65,6 +75,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalMembers,
+      octoberMembers,
       totalYoutubeAccounts,
       monthlyRevenue,
       monthlyCost,

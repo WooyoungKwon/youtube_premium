@@ -118,3 +118,17 @@ body {
   animation: slide-up 0.3s ease-out forwards;
 }
 
+/* 전광판 통계 항목 바운스 애니메이션 (느리게) */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
