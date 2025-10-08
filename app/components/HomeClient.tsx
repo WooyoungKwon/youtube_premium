@@ -12,7 +12,20 @@ interface Review {
   createdAt: string;
 }
 
-export default function HomeClient({ initialStats }) {
+interface Stats {
+  totalMembers: number;
+  octoberMembers: number;
+  totalYoutubeAccounts: number;
+  monthlyRevenue: number;
+  monthlyCost: number;
+  monthlyProfit: number;
+  cumulativeRevenue: number;
+  pricePerMember: number;
+  costPerYoutubeAccount: number;
+  rupeeToKrw: number;
+}
+
+export default function HomeClient({ initialStats }: { initialStats: Stats }) {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
