@@ -204,55 +204,58 @@ export default function Home() {
       {/* 실시간 통계 전광판 */}
       <div className="py-4 px-4">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-full border-2 border-red-200 shadow-xl py-2.5 px-4 md:px-6 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl md:rounded-full border-2 border-red-200 shadow-xl py-4 px-4 md:px-6 relative overflow-hidden">
             {/* 전광판 스캔 효과 */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer"></div>
 
-            <div className="flex items-center justify-between gap-2 md:gap-6 relative z-10 text-sm">
+            {/* 수정된 부분: flex-col md:flex-row 추가, justify-between 등 반응형으로 변경 */}
+            <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-6 relative z-10 text-sm">
+
               {/* 제목 */}
               <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-                <span className="text-[10px] md:text-sm font-bold text-red-600 uppercase tracking-wide whitespace-nowrap">실시간 가입 현황</span>
+                <span className="text-sm md:text-base font-bold text-red-600 uppercase tracking-wide whitespace-nowrap">실시간 가입 현황</span>
               </div>
 
               {/* 통계 정보 */}
-              <div className="flex items-center gap-1.5 md:gap-4">
+              {/* 수정된 부분: flex-wrap과 justify-center 추가 */}
+              <div className="flex items-center justify-center flex-wrap gap-2 md:gap-4">
 
-              {/* 총 회원 수 */}
-              <div className="flex items-center gap-1.5 whitespace-nowrap bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow">
-                <svg className="w-4 h-4 text-blue-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                </svg>
-                <span className="text-xs text-blue-700 font-bold">총 가입자</span>
-                <span className="text-base md:text-lg font-black text-blue-900 tabular-nums">
-                  200+
-                </span>
-                <span className="text-xs text-blue-700 font-bold">명</span>
-              </div>
+                {/* 총 회원 수 */}
+                <div className="flex items-center gap-1.5 whitespace-nowrap bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow">
+                  <svg className="w-4 h-4 text-blue-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                  </svg>
+                  <span className="text-xs text-blue-700 font-bold">총 가입자</span>
+                  <span className="text-base md:text-lg font-black text-blue-900 tabular-nums">
+                    200+
+                  </span>
+                  <span className="text-xs text-blue-700 font-bold">명</span>
+                </div>
 
-              {/* 10월 가입자 수 */}
-              <div className="flex items-center gap-1.5 whitespace-nowrap bg-green-500/10 px-3 py-1.5 rounded-full border border-green-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{animationDelay: '0.2s'}}>
-                <svg className="w-4 h-4 text-green-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{animationDelay: '0.2s'}}>
-                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                </svg>
-                <span className="text-xs text-green-700 font-bold">10월 가입자</span>
-                <span className="text-base md:text-lg font-black text-green-900 tabular-nums">
-                  {octoberMembers.toLocaleString()}
-                </span>
-                <span className="text-xs text-green-700 font-bold">명</span>
-              </div>
+                {/* 10월 가입자 수 */}
+                <div className="flex items-center gap-1.5 whitespace-nowrap bg-green-500/10 px-3 py-1.5 rounded-full border border-green-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{ animationDelay: '0.2s' }}>
+                  <svg className="w-4 h-4 text-green-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{ animationDelay: '0.2s' }}>
+                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                  </svg>
+                  <span className="text-xs text-green-700 font-bold">10월 가입자</span>
+                  <span className="text-base md:text-lg font-black text-green-900 tabular-nums">
+                    {octoberMembers.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-green-700 font-bold">명</span>
+                </div>
 
-              {/* 누적 가입 개월 수 */}
-              <div className="flex items-center gap-1.5 whitespace-nowrap bg-orange-500/10 px-3 py-1.5 rounded-full border border-orange-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{animationDelay: '0.4s'}}>
-                <svg className="w-4 h-4 text-orange-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{animationDelay: '0.4s'}}>
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                <span className="text-xs text-orange-700 font-bold">누적</span>
-                <span className="text-base md:text-lg font-black text-orange-900 tabular-nums">
-                  {Math.floor(totalMembers * 3.5).toLocaleString()}
-                </span>
-                <span className="text-xs text-orange-700 font-bold">개월</span>
-              </div>
+                {/* 누적 가입 개월 수 */}
+                <div className="flex items-center gap-1.5 whitespace-nowrap bg-orange-500/10 px-3 py-1.5 rounded-full border border-orange-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow" style={{ animationDelay: '0.4s' }}>
+                  <svg className="w-4 h-4 text-orange-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{ animationDelay: '0.4s' }}>
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs text-orange-700 font-bold">누적</span>
+                  <span className="text-base md:text-lg font-black text-orange-900 tabular-nums">
+                    {Math.floor(totalMembers * 3.5).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-orange-700 font-bold">개월</span>
+                </div>
               </div>
             </div>
           </div>
@@ -306,7 +309,7 @@ export default function Home() {
             </svg>
             <span className="text-sm font-semibold text-green-700">문제 발생 시 차액 100% 환불 보장</span>
           </div>
-          
+
           <div className="flex flex-col gap-6 justify-center items-center">
             {/* CTA - 선택형 디자인 */}
             <div className="flex gap-3 justify-center items-center mx-4">
@@ -318,46 +321,46 @@ export default function Home() {
                 </div>
 
                 <Link
-                    href="/apply"
-                    className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden block"
-                  >
-                    {/* 반짝이는 효과 */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
-
-                    {/* 펄스 링 효과 */}
-                    <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div>
-
-                    <div className="relative flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                      </div>
-                      <div className="flex flex-col items-start">
-                        <span className="text-xs text-white/80 font-medium">NEW</span>
-                        <span className="text-lg font-bold text-white">신규 가입</span>
-                      </div>
-                    </div>
-                  </Link>
-              </div>
-
-                {/* 기존 회원 */}
-                <button
-                  onClick={() => setShowMemberEmailModal(true)}
-                  className="group relative px-6 py-4 bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-blue-400 transition-all duration-200 hover:-translate-y-0.5"
+                  href="/apply"
+                  className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden block"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  {/* 반짝이는 효과 */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+
+                  {/* 펄스 링 효과 */}
+                  <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div>
+
+                  <div className="relative flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                       </svg>
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-xs text-gray-500 font-medium">MEMBER</span>
-                      <span className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">기존 회원</span>
+                      <span className="text-xs text-white/80 font-medium">NEW</span>
+                      <span className="text-lg font-bold text-white">신규 가입</span>
                     </div>
                   </div>
-                </button>
+                </Link>
+              </div>
+
+              {/* 기존 회원 */}
+              <button
+                onClick={() => setShowMemberEmailModal(true)}
+                className="group relative px-6 py-4 bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-blue-400 transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-500 font-medium">MEMBER</span>
+                    <span className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">기존 회원</span>
+                  </div>
+                </div>
+              </button>
             </div>
 
             {/* Secondary CTAs - 요금제/후기 */}
@@ -450,7 +453,7 @@ export default function Home() {
             {/* 반짝이는 효과 */}
             <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </button>
-          
+
           <div className="mt-6 flex items-center justify-center gap-8 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <span className="text-green-500">✓</span>
@@ -545,11 +548,10 @@ export default function Home() {
                             setCurrentPage(page);
                             document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                           }}
-                          className={`w-10 h-10 text-sm rounded-lg transition ${
-                            currentPage === page
-                              ? 'bg-gray-900 text-white'
-                              : 'border border-gray-300 text-gray-900 hover:bg-gray-50'
-                          }`}
+                          className={`w-10 h-10 text-sm rounded-lg transition ${currentPage === page
+                            ? 'bg-gray-900 text-white'
+                            : 'border border-gray-300 text-gray-900 hover:bg-gray-50'
+                            }`}
                         >
                           {page}
                         </button>
@@ -589,7 +591,7 @@ export default function Home() {
         aria-label="카카오톡 문의하기"
       >
         <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z"/>
+          <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
         </svg>
         <span className="text-gray-900 font-bold text-sm whitespace-nowrap">문의하기</span>
       </button>
@@ -683,11 +685,10 @@ export default function Home() {
                       className="transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
                     >
                       <svg
-                        className={`w-10 h-10 ${
-                          star <= reviewFormData.rating
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        } transition-colors`}
+                        className={`w-10 h-10 ${star <= reviewFormData.rating
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-gray-300'
+                          } transition-colors`}
                         viewBox="0 0 24 24"
                       >
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -723,11 +724,10 @@ export default function Home() {
               {/* 메시지 */}
               {reviewMessage && (
                 <div
-                  className={`p-4 rounded-lg ${
-                    reviewMessage.type === 'success'
-                      ? 'bg-green-50 text-green-800 border border-green-200'
-                      : 'bg-red-50 text-red-800 border border-red-200'
-                  }`}
+                  className={`p-4 rounded-lg ${reviewMessage.type === 'success'
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     {reviewMessage.type === 'success' ? (
