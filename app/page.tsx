@@ -204,26 +204,26 @@ export default function Home() {
       {/* 실시간 통계 전광판 */}
       <div className="py-4 px-4">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-full border-2 border-red-200 shadow-xl py-2.5 px-6 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-full border-2 border-red-200 shadow-xl py-2.5 px-4 md:px-6 relative overflow-hidden">
             {/* 전광판 스캔 효과 */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer"></div>
 
-            <div className="flex items-center justify-between gap-6 relative z-10 text-sm">
+            <div className="flex items-center justify-between gap-2 md:gap-6 relative z-10 text-sm">
               {/* 제목 */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-                <span className="text-xs font-bold text-red-600 uppercase tracking-wide whitespace-nowrap">실시간 가입 현황</span>
+                <span className="text-[10px] md:text-sm font-bold text-red-600 uppercase tracking-wide whitespace-nowrap">실시간 가입 현황</span>
               </div>
 
               {/* 통계 정보 */}
-              <div className="flex items-center gap-3 md:gap-4">
+              <div className="flex items-center gap-1.5 md:gap-4">
 
               {/* 총 회원 수 */}
               <div className="flex items-center gap-1.5 whitespace-nowrap bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-300 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 animate-bounce-slow">
                 <svg className="w-4 h-4 text-blue-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
-                <span className="text-xs text-blue-700 font-bold">총원</span>
+                <span className="text-xs text-blue-700 font-bold">총 가입자</span>
                 <span className="text-base md:text-lg font-black text-blue-900 tabular-nums">
                   200+
                 </span>
@@ -235,7 +235,7 @@ export default function Home() {
                 <svg className="w-4 h-4 text-green-600 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20" style={{animationDelay: '0.2s'}}>
                   <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                 </svg>
-                <span className="text-xs text-green-700 font-bold">10월</span>
+                <span className="text-xs text-green-700 font-bold">10월 가입자</span>
                 <span className="text-base md:text-lg font-black text-green-900 tabular-nums">
                   {octoberMembers.toLocaleString()}
                 </span>

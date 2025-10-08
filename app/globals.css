@@ -130,5 +130,11 @@ body {
 
 .animate-bounce-slow {
   animation: bounce-slow 3s ease-in-out infinite;
+  /* 애니메이션 시 텍스트가 흐릿해지는 현상 방지 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
