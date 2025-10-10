@@ -25,20 +25,9 @@ interface Stats {
   rupeeToKrw: number;
 }
 
-const initialStats: Stats = {
-  totalMembers: 0,
-  octoberMembers: 0,
-  totalYoutubeAccounts: 0,
-  monthlyRevenue: 0,
-  monthlyCost: 0,
-  monthlyProfit: 0,
-  cumulativeRevenue: 0,
-  pricePerMember: 4000,
-  costPerYoutubeAccount: 389,
-  rupeeToKrw: 16,
-};
 
-export default function HomeClient() {
+
+export default function HomeClient({ initialStats }: { initialStats: Stats }) {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<Stats>(initialStats);
@@ -108,21 +97,8 @@ export default function HomeClient() {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
-
   useEffect(() => {
     fetchReviews();
-    fetchStats();
   }, []);
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -193,21 +169,21 @@ export default function HomeClient() {
               <div className="flex items-center justify-center gap-[clamp(0.5rem,2vw,1rem)]">
                 <div className="flex animate-bounce-slow items-center whitespace-nowrap rounded-full border border-blue-300 bg-blue-500/10 p-[clamp(0.25rem,1vh,0.375rem)_clamp(0.5rem,2vw,0.75rem)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
                   <svg className="h-[clamp(0.75rem,3vw,1rem)] w-[clamp(0.75rem,3vw,1rem)] flex-shrink-0 animate-pulse text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-blue-700">총 가입자</span>
-                  <span className="tabular-nums text-[clamp(0.75rem,2.5vw,1rem)] font-black text-blue-900">200+</span>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-blue-700">명</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-blue-700 mr-1">총 가입자</span>
+                  <span className="tabular-nums text-[clamp(0.75rem,2.5vw,1rem)] font-black text-blue-900">{(stats.octoberMembers + 231).toLocaleString() }</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-blue-700 ml-1">명</span>
                 </div>
                 <div className="flex animate-bounce-slow items-center whitespace-nowrap rounded-full border border-green-300 bg-green-500/10 p-[clamp(0.25rem,1vh,0.375rem)_clamp(0.5rem,2vw,0.75rem)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md" style={{ animationDelay: '0.2s' }}>
                   <svg className="h-[clamp(0.75rem,3vw,1rem)] w-[clamp(0.75rem,3vw,1rem)] flex-shrink-0 animate-pulse text-green-600" fill="currentColor" viewBox="0 0 20 20" style={{ animationDelay: '0.2s' }}><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" /></svg>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-green-700">10월 가입자</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-green-700 mr-1">10월 가입자</span>
                   <span className="tabular-nums text-[clamp(0.75rem,2.5vw,1rem)] font-black text-green-900">{stats.octoberMembers.toLocaleString()}</span>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-green-700">명</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-green-700 ml-1">명</span>
                 </div>
                 <div className="flex animate-bounce-slow items-center whitespace-nowrap rounded-full border border-orange-300 bg-orange-500/10 p-[clamp(0.25rem,1vh,0.375rem)_clamp(0.5rem,2vw,0.75rem)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md" style={{ animationDelay: '0.4s' }}>
                   <svg className="h-[clamp(0.75rem,3vw,1rem)] w-[clamp(0.75rem,3vw,1rem)] flex-shrink-0 animate-pulse text-orange-600" fill="currentColor" viewBox="0 0 20 20" style={{ animationDelay: '0.4s' }}><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-orange-700">누적</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-orange-700 mr-1">누적</span>
                   <span className="tabular-nums text-[clamp(0.75rem,2.5vw,1rem)] font-black text-orange-900">{Math.floor(stats.totalMembers * 3.5).toLocaleString()}</span>
-                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-orange-700">개월</span>
+                  <span className="text-[clamp(0.65rem,2vw,0.75rem)] font-bold text-orange-700 ml-1">개월</span>
                 </div>
               </div>
             </div>
