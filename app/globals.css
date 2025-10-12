@@ -138,3 +138,95 @@ body {
   will-change: transform;
 }
 
+/* 혜택 적용 플래시 애니메이션 */
+@keyframes fill-from-corner {
+  from {
+    clip-path: circle(0% at calc(100% - 2rem) calc(100% - 2rem));
+  }
+  to {
+    clip-path: circle(200% at calc(100% - 2rem) calc(100% - 2rem));
+  }
+}
+
+.animate-fill {
+  animation: fill-from-corner 0.5s ease-in-out forwards;
+}
+
+/* 깜짝 이벤트 반짝임 효과 */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* 깜짝 이벤트 흔들림 효과 */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+/* 깜짝 이벤트 그라데이션 애니메이션 */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* 깜짝 이벤트 번쩍임 효과 */
+@keyframes flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-flash {
+  animation: flash 1.5s ease-in-out infinite;
+}
+
+/* 깜짝 이벤트 슬라이드 인 효과 */
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  opacity: 0;
+  animation: slide-in-right 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+}
