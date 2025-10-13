@@ -20,22 +20,30 @@ function PaymentContent() {
 
   // 할인 적용된 가격 계산
   const calculatePrice = (selectedMonths: number) => {
-    let price = selectedMonths * MONTHLY_PRICE;
-
-    // 기본 기간별 할인
-    if (selectedMonths === 6) {
-      price = 23000; // 24000 -> 23000 (1000원 할인)
-    } else if (selectedMonths === 12) {
-      price = 45000; // 48000 -> 45000 (3000원 할인)
-    }
-
-    // 관리자 계정 추가 할인 (13% 할인)
+    // 관리자 계정일 때 고정 할인가
     if (accountType === 'admin') {
-      const adminDiscount = Math.round(price * 0.13);
-      price = price - adminDiscount;
+      if (selectedMonths === 1) {
+        return 3500; // 4000 -> 3500 (500원 할인)
+      } else if (selectedMonths === 3) {
+        return 10500; // 12000 -> 10500 (1500원 할인)
+      } else if (selectedMonths === 6) {
+        return 20000; // 24000 -> 20000 (4000원 할인)
+      } else if (selectedMonths === 12) {
+        return 42000; // 48000 -> 42000 (6000원 할인)
+      } else {
+        // 기타 개월수는 12.5% 할인
+        return Math.round(selectedMonths * MONTHLY_PRICE * 0.875);
+      }
     }
 
-    return price;
+    // 일반 사용자 계정 (기존 할인)
+    if (selectedMonths === 6) {
+      return 23000; // 24000 -> 23000 (1000원 할인)
+    } else if (selectedMonths === 12) {
+      return 45000; // 48000 -> 45000 (3000원 할인)
+    } else {
+      return selectedMonths * MONTHLY_PRICE;
+    }
   };
 
   const totalPrice = calculatePrice(months);
@@ -293,7 +301,7 @@ function PaymentContent() {
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-bold text-green-900 mb-1">관리자 제공 계정 할인 적용됨!</h3>
-                <p className="text-xs text-green-700">모든 금액에서 약 13% 추가 할인이 적용됩니다 🎉</p>
+                <p className="text-xs text-green-700">모든 금액에서 약 12.5% 할인이 적용됩니다 🎉</p>
               </div>
             </div>
           </div>
@@ -390,7 +398,7 @@ function PaymentContent() {
                 </div>
                 {accountType === 'admin' && (
                   <div className="text-xs text-green-700 pl-4">
-                    • 관리자 계정 할인 약 13% 포함
+                    • 관리자 계정 할인 약 12.5% 포함
                   </div>
                 )}
               </>
