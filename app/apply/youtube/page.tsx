@@ -196,12 +196,9 @@ export default function Home() {
                       }`}
                   >
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-3 mb-3">
+                      <h4 className="text-sm font-bold text-blue-900 mb-2">💡 관리자 제공 계정이란?</h4>
                       <p className="text-xs text-gray-700 leading-relaxed">
-                        관리자가 생성한 주인 없는 유튜브 프리미엄 계정입니다. <br />
-                        이미 계정에 프리미엄이 활성화 되어 바로 사용하실 수 있으므로, 별도로 계정을 준비할 필요가 없어 편리합니다. <br />
-                        관리자는 회원 관리 목적을 제외한 그 어떤 용도로도 계정에 접근하지 않으니 안심하셔도 됩니다.
-
-
+                        관리자가 생성한 주인 없는 유튜브 프리미엄 계정입니다. 이미 계정에 프리미엄이 활성화 되어 바로 사용하실 수 있습니다.
                       </p>
 
                       <div className="p-2 bg-blue-100 border-l-4 border-blue-400 rounded">
