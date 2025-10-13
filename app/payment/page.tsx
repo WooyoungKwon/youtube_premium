@@ -14,18 +14,28 @@ function PaymentContent() {
   const [isVisible, setIsVisible] = useState(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showAccountCopyToast, setShowAccountCopyToast] = useState(false);
+  const [accountType, setAccountType] = useState('user');
 
   const MONTHLY_PRICE = 4000;
-  
+
   // 할인 적용된 가격 계산
   const calculatePrice = (selectedMonths: number) => {
+    let price = selectedMonths * MONTHLY_PRICE;
+
+    // 기본 기간별 할인
     if (selectedMonths === 6) {
-      return 23000; // 24000 -> 23000 (1000원 할인)
+      price = 23000; // 24000 -> 23000 (1000원 할인)
     } else if (selectedMonths === 12) {
-      return 45000; // 48000 -> 45000 (3000원 할인)
-    } else {
-      return selectedMonths * MONTHLY_PRICE;
+      price = 45000; // 48000 -> 45000 (3000원 할인)
     }
+
+    // 관리자 계정 추가 할인 (13% 할인)
+    if (accountType === 'admin') {
+      const adminDiscount = Math.round(price * 0.13);
+      price = price - adminDiscount;
+    }
+
+    return price;
   };
 
   const totalPrice = calculatePrice(months);
@@ -39,6 +49,7 @@ function PaymentContent() {
     // URL에서 requestId 확인
     const requestId = searchParams.get('requestId');
     const userEmail = searchParams.get('email');
+    const accountTypeParam = searchParams.get('accountType');
 
     if (!requestId || !userEmail) {
       // requestId나 email이 없으면 메인 페이지로 리다이렉트
@@ -47,6 +58,9 @@ function PaymentContent() {
     }
 
     setEmail(userEmail);
+    if (accountTypeParam) {
+      setAccountType(accountTypeParam);
+    }
     setLoading(false);
   }, [searchParams, router]);
 
@@ -270,6 +284,21 @@ function PaymentContent() {
           </p>
         </div>
 
+        {/* 관리자 계정 할인 배너 */}
+        {accountType === 'admin' && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-xl">✓</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-green-900 mb-1">관리자 제공 계정 할인 적용됨!</h3>
+                <p className="text-xs text-green-700">모든 금액에서 약 13% 추가 할인이 적용됩니다 🎉</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 신청 정보 */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
@@ -277,7 +306,7 @@ function PaymentContent() {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
             <div>
-              <p className="text-sm font-semibold text-blue-900 mb-1">신청하신 이메일</p>
+              <p className="text-sm font-semibold text-blue-900 mb-1">신청하신 {accountType === 'admin' ? '계정 타입' : '이메일'}</p>
               <p className="text-sm text-blue-800 font-medium">{email}</p>
             </div>
           </div>
@@ -356,9 +385,14 @@ function PaymentContent() {
                   <span className="line-through">{originalPrice.toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between items-center text-red-600">
-                  <span className="font-bold">할인</span>
+                  <span className="font-bold">총 할인</span>
                   <span className="font-bold">-{discount.toLocaleString()}원</span>
                 </div>
+                {accountType === 'admin' && (
+                  <div className="text-xs text-green-700 pl-4">
+                    • 관리자 계정 할인 약 13% 포함
+                  </div>
+                )}
               </>
             )}
             <div className="border-t border-green-300 pt-3 mt-3">
