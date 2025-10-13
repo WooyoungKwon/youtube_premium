@@ -330,7 +330,18 @@ function PaymentContent() {
               const price = calculatePrice(m);
               const originalPrice = m * MONTHLY_PRICE;
               const hasDiscount = price < originalPrice;
-              
+              const discountAmount = originalPrice - price;
+
+              // 할인액 표시 문자열 생성
+              const getDiscountLabel = () => {
+                if (discountAmount >= 1000) {
+                  const thousands = Math.floor(discountAmount / 1000);
+                  return `${thousands}천원↓`;
+                } else {
+                  return `${discountAmount}원↓`;
+                }
+              };
+
               return (
                 <button
                   key={m}
@@ -343,7 +354,7 @@ function PaymentContent() {
                 >
                   {hasDiscount && (
                     <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      {m === 6 ? '1천원↓' : '3천원↓'}
+                      {getDiscountLabel()}
                     </div>
                   )}
                   <div className="text-2xl font-bold text-gray-800">{m}</div>
