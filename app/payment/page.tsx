@@ -29,10 +29,10 @@ function PaymentContent() {
       } else if (selectedMonths === 6) {
         return 20000; // 24000 -> 20000 (4000원 할인)
       } else if (selectedMonths === 12) {
-        return 42000; // 48000 -> 42000 (6000원 할인)
+        return 39000; // 48000 -> 39000 (9000원 할인)
       } else {
-        // 기타 개월수는 12.5% 할인
-        return Math.round(selectedMonths * MONTHLY_PRICE * 0.875);
+        // 기타 개월수는 약 18.75% 할인
+        return Math.round(selectedMonths * MONTHLY_PRICE * 0.8125);
       }
     }
 
@@ -301,7 +301,7 @@ function PaymentContent() {
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-bold text-green-900 mb-1">관리자 제공 계정 할인 적용됨!</h3>
-                <p className="text-xs text-green-700">모든 금액에서 약 12.5% 할인이 적용됩니다 🎉</p>
+                <p className="text-xs text-green-700">모든 금액에서 최대 18.75% 할인이 적용됩니다 🎉</p>
               </div>
             </div>
           </div>
@@ -398,7 +398,7 @@ function PaymentContent() {
                 </div>
                 {accountType === 'admin' && (
                   <div className="text-xs text-green-700 pl-4">
-                    • 관리자 계정 할인 약 12.5% 포함
+                    • 관리자 계정 할인 (최대 18.75%) 포함
                   </div>
                 )}
               </>

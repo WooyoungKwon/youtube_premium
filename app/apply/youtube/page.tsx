@@ -185,7 +185,7 @@ export default function Home() {
                   <div>
                     <h3 className="font-bold text-sm text-blue-900 flex items-center gap-2">
                       <span className="text-lg">🎁</span>
-                      관리자 제공 계정 사용하면 최대 6,000원 할인 !
+                      관리자 제공 계정 사용하면 최대 9,000원 할인 !
                     </h3>
                     <p className="text-xs text-blue-700 mt-1">지금 바로 혜택을 받아보세요</p>
                   </div>
