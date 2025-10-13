@@ -5,22 +5,25 @@ import { sendNewRequestNotification } from '@/lib/email';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, phone, months, depositorName, referralEmail, planType } = body;
+    const { email, phone, months, depositorName, referralEmail, planType, accountType } = body;
 
-    if (!email) {
-      return NextResponse.json(
-        { error: '이메일을 입력해주세요.' },
-        { status: 400 }
-      );
-    }
+    // accountType이 user인 경우에만 이메일 필수
+    if (accountType === 'user') {
+      if (!email) {
+        return NextResponse.json(
+          { error: '이메일을 입력해주세요.' },
+          { status: 400 }
+        );
+      }
 
-    // 간단한 이메일 유효성 검사
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: '올바른 이메일 형식이 아닙니다.' },
-        { status: 400 }
-      );
+      // 간단한 이메일 유효성 검사
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return NextResponse.json(
+          { error: '올바른 이메일 형식이 아닙니다.' },
+          { status: 400 }
+        );
+      }
     }
 
     // 전화번호는 필수
@@ -31,11 +34,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail, planType);
+    const newRequest = await addRequest(email, undefined, phone, months, depositorName, referralEmail, planType, accountType);
 
     // 관리자에게 이메일 알림 전송 (비동기 - 결과를 기다리지 않음)
     sendNewRequestNotification({
-      email,
+      email: email || '관리자 제공 계정',
       phone,
       referralEmail,
       requestId: newRequest.id,

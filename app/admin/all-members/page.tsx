@@ -76,6 +76,10 @@ export default function AllMembersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
   const sortedAndFilteredMembers = useMemo(() => {
     let filtered = members;
 
@@ -168,13 +172,14 @@ export default function AllMembersPage() {
 
       if (res.ok) {
         await fetchAllMembers();
+        showToastMessage('상태가 변경되었습니다.');
       } else {
         const errorData = await res.json();
-        alert(`상태 변경에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
+        showToastMessage(`상태 변경에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`, 'error');
       }
     } catch (error) {
       console.error('Error updating member status:', error);
-      alert('오류가 발생했습니다. 다시 시도해주세요.');
+      showToastMessage('오류가 발생했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setUpdatingMember(null);
     }
@@ -212,13 +217,13 @@ export default function AllMembersPage() {
         await fetchAllMembers();
         setShowEditModal(false);
         setEditingMember(null);
-        alert('회원 정보가 수정되었습니다.');
+        showToastMessage('회원 정보가 수정되었습니다.');
       } else {
-        alert('회원 정보 수정에 실패했습니다.');
+        showToastMessage('회원 정보 수정에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('Error updating member:', error);
-      alert('오류가 발생했습니다.');
+      showToastMessage('오류가 발생했습니다.', 'error');
     }
   };
 
@@ -241,15 +246,23 @@ export default function AllMembersPage() {
         await fetchAllMembers();
         setShowMonthModal(false);
         setSelectedMember(null);
+        showToastMessage('결제가 완료되었습니다.');
       } else {
-        alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+        showToastMessage('상태 변경에 실패했습니다. 다시 시도해주세요.', 'error');
       }
     } catch (error) {
       console.error('Error updating member status:', error);
-      alert('오류가 발생했습니다. 다시 시도해주세요.');
+      showToastMessage('오류가 발생했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setUpdatingMember(null);
     }
+  };
+
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -752,6 +765,24 @@ export default function AllMembersPage() {
                 저장
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <div className={`${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3`}>
+            {toastType === 'success' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toastMessage}</span>
           </div>
         </div>
       )}

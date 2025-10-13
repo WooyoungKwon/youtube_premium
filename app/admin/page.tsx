@@ -30,6 +30,10 @@ export default function AdminPage() {
   const [revenueStats, setRevenueStats] = useState<AdminStats | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [confirmAction, setConfirmAction] = useState<{ type: string; id: string } | null>(null);
 
   useEffect(() => {
     const authenticated = sessionStorage.getItem('adminAuthenticated');
@@ -117,8 +121,10 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    setConfirmAction({ type: 'delete', id });
+  };
 
+  const executeDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/admin/${id}`, {
         method: 'DELETE',
@@ -126,9 +132,13 @@ export default function AdminPage() {
 
       if (response.ok) {
         await fetchRequests();
+        showToastMessage('삭제되었습니다.');
+      } else {
+        showToastMessage('삭제에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('Failed to delete request:', error);
+      showToastMessage('삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -138,7 +148,7 @@ export default function AdminPage() {
   };
 
   const handleRegisterSuccess = () => {
-    alert('회원 등록이 완료되었습니다.');
+    showToastMessage('회원 등록이 완료되었습니다.');
     fetchRequests();
     fetchStats();
   };
@@ -217,6 +227,23 @@ export default function AdminPage() {
     setPassword('');
   };
 
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToastMessage(`${label}이(가) 복사되었습니다.`);
+    } catch (err) {
+      console.error('복사 실패:', err);
+      showToastMessage('복사에 실패했습니다.', 'error');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -261,6 +288,9 @@ export default function AdminPage() {
               </Link>
               <Link href="/admin/all-members" className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded hover:bg-neutral-700 transition text-sm font-medium">
                 전체 회원 목록
+              </Link>
+              <Link href="/admin/vendors" className="px-4 py-2 bg-purple-900 border border-purple-800 text-purple-100 rounded hover:bg-purple-800 transition text-sm font-medium">
+                판매자 관리
               </Link>
               <a href="/api/admin/export" download className="px-4 py-2 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition text-sm font-medium">
                 Excel 다운로드
@@ -384,7 +414,13 @@ export default function AdminPage() {
                 <thead className="bg-neutral-800 border-b border-neutral-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                      작업
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       이메일
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                      계정타입
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       입금자명
@@ -407,46 +443,11 @@ export default function AdminPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
                       신청일
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
-                      작업
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-neutral-900 divide-y divide-neutral-800">
                   {paginatedRequests.map((request) => (
                     <tr key={request.id} className="hover:bg-neutral-850">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-white">{request.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-blue-400">{request.depositorName || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-green-400">{request.months ? `${request.months}개월` : '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-neutral-300">{request.phone || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-purple-400">{request.referralEmail || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(request.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {request.isRegistered ? (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-900 text-indigo-100 border border-indigo-800">
-                            등록완료
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 text-neutral-400 border border-neutral-700">
-                            미등록
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
-                        {new Date(request.createdAt).toLocaleString('ko-KR')}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
                           {request.status === 'pending' && (
@@ -485,6 +486,69 @@ export default function AdminPage() {
                             삭제
                           </button>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.accountType === 'admin' ? (
+                          <div className="text-sm font-medium text-white">관리자 제공 계정</div>
+                        ) : (
+                          <div
+                            onClick={() => copyToClipboard(request.email, '이메일')}
+                            className="text-sm font-medium text-white cursor-pointer hover:text-blue-400 transition"
+                            title="클릭하여 복사"
+                          >
+                            {request.email}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.accountType === 'admin' ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-900 text-blue-100 border border-blue-800">
+                            관리자
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-neutral-800 text-neutral-400 border border-neutral-700">
+                            일반
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-blue-400">{request.depositorName || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-green-400">{request.months ? `${request.months}개월` : '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.phone ? (
+                          <div
+                            onClick={() => copyToClipboard(request.phone!, '전화번호')}
+                            className="text-sm text-neutral-300 cursor-pointer hover:text-blue-400 transition"
+                            title="클릭하여 복사"
+                          >
+                            {request.phone}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-neutral-300">-</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-purple-400">{request.referralEmail || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(request.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.isRegistered ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-900 text-indigo-100 border border-indigo-800">
+                            등록완료
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-neutral-800 text-neutral-400 border border-neutral-700">
+                            미등록
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-400">
+                        {new Date(request.createdAt).toLocaleString('ko-KR')}
                       </td>
                     </tr>
                   ))}
@@ -549,6 +613,53 @@ export default function AdminPage() {
           requestEmail={selectedRequest.email}
           onSuccess={handleRegisterSuccess}
         />
+      )}
+
+      {/* Confirm Dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-white mb-4">삭제 확인</h3>
+            <p className="text-neutral-300 mb-6">정말 삭제하시겠습니까?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmAction.type === 'delete') {
+                    executeDelete(confirmAction.id);
+                  }
+                  setConfirmAction(null);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <div className={`${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3`}>
+            {toastType === 'success' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toastMessage}</span>
+          </div>
+        </div>
       )}
     </div>
   );

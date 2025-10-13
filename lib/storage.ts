@@ -87,6 +87,17 @@ export async function initDatabase() {
       console.log('plan_type column already exists or migration failed:', error);
     }
 
+    // 기존 테이블에 account_type 컬럼 추가 (마이그레이션)
+    try {
+      await client.sql`
+        ALTER TABLE member_requests
+        ADD COLUMN IF NOT EXISTS account_type VARCHAR(50) DEFAULT 'user'
+      `;
+    } catch (error) {
+      // 컬럼이 이미 존재하는 경우 무시
+      console.log('account_type column already exists or migration failed:', error);
+    }
+
 
     
     // YouTube 계정 테이블
@@ -239,6 +250,7 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
         mr.months,
         mr.depositor_name as "depositorName",
         mr.plan_type as "planType",
+        mr.account_type as "accountType",
         mr.status,
         mr.created_at as "createdAt",
         CASE WHEN m.id IS NOT NULL THEN true ELSE false END as "isRegistered"
@@ -503,41 +515,48 @@ export async function deleteMember(id: string) {
 
 // 신청 추가
 export async function addRequest(
-  email: string,
+  email: string | null,
   kakaoId?: string,
   phone?: string,
   months?: number,
   depositorName?: string,
   referralEmail?: string,
-  planType?: 'family' | 'individual'
+  planType?: 'family' | 'individual',
+  accountType?: 'user' | 'admin'
 ): Promise<MemberRequest> {
 
-  // 이미 신청한 이메일인지 확인
-  const { rows: existing } = await client.sql`
-    SELECT id FROM member_requests WHERE email = ${email}
-  `;
+  // 이메일이 있는 경우에만 중복 체크
+  if (email) {
+    const { rows: existing } = await client.sql`
+      SELECT id FROM member_requests WHERE email = ${email}
+    `;
 
-  if (existing.length > 0) {
-    throw new Error('이미 신청한 이메일입니다.');
+    if (existing.length > 0) {
+      throw new Error('이미 신청한 이메일입니다.');
+    }
   }
 
   const id = Date.now().toString();
   const createdAt = new Date().toISOString();
 
+  // accountType이 admin인 경우 이메일을 고유한 임시값으로 설정
+  const finalEmail = email || `admin_account_${id}@temp.com`;
+
   await client.sql`
-    INSERT INTO member_requests (id, email, kakao_id, phone, referral_email, months, depositor_name, plan_type, status, created_at)
-    VALUES (${id}, ${email}, ${kakaoId || null}, ${phone || null}, ${referralEmail || null}, ${months || null}, ${depositorName || null}, ${planType || 'family'}, 'pending', ${createdAt})
+    INSERT INTO member_requests (id, email, kakao_id, phone, referral_email, months, depositor_name, plan_type, account_type, status, created_at)
+    VALUES (${id}, ${finalEmail}, ${kakaoId || null}, ${phone || null}, ${referralEmail || null}, ${months || null}, ${depositorName || null}, ${planType || 'family'}, ${accountType || 'user'}, 'pending', ${createdAt})
   `;
 
   return {
     id,
-    email,
+    email: finalEmail,
     kakaoId,
     phone,
     referralEmail,
     months,
     depositorName,
     planType: planType || 'family',
+    accountType: accountType || 'user',
     status: 'pending',
     createdAt,
     updatedAt: createdAt,

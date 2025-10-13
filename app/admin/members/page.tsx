@@ -56,6 +56,11 @@ export default function MembersPage() {
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
   const [editingCreditValue, setEditingCreditValue] = useState(0);
 
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [confirmAction, setConfirmAction] = useState<{ type: string; id: string; appleId?: string } | null>(null);
+
   const sortedAppleAccounts = useMemo(() => {
     return [...appleAccounts].sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
@@ -189,11 +194,14 @@ export default function MembersPage() {
       if (res.ok) {
         handleCancelEdit();
         fetchAppleAccounts();
+        showToastMessage('Apple 계정이 추가되었습니다.');
       } else {
-        alert('Apple 계정 추가 실패: ' + (await res.json()).error);
+        const errorData = await res.json();
+        showToastMessage('Apple 계정 추가 실패: ' + errorData.error, 'error');
       }
     } catch (error) {
       console.error('Apple 계정 추가 실패:', error);
+      showToastMessage('Apple 계정 추가 실패', 'error');
     }
   };
 
@@ -244,22 +252,29 @@ export default function MembersPage() {
 
   const handleCancelEditCredit = () => setEditingCreditId(null);
 
-  const handleDeleteApple = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+  const handleDeleteApple = (id: string) => {
+    setConfirmAction({ type: 'deleteApple', id });
+  };
+
+  const executeDeleteApple = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/apple-accounts/${id}`, { method: 'DELETE' });
       if (res.ok) {
         fetchAppleAccounts();
         if (selectedApple?.id === id) setSelectedApple(null);
+        showToastMessage('Apple 계정이 삭제되었습니다.');
+      } else {
+        showToastMessage('삭제에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('Apple 계정 삭제 실패:', error);
+      showToastMessage('삭제에 실패했습니다.', 'error');
     }
   };
 
   const handleAddYoutube = async () => {
     if (!selectedApple || !newYoutubeEmail.trim() || !newYoutubeRenewalDate) {
-      alert('이메일과 갱신일을 모두 입력해주세요.');
+      showToastMessage('이메일과 갱신일을 모두 입력해주세요.', 'error');
       return;
     }
     try {
@@ -276,9 +291,13 @@ export default function MembersPage() {
       if (res.ok) {
         handleCancelEdit();
         fetchYoutubeAccounts(selectedApple.id);
+        showToastMessage('YouTube 계정이 추가되었습니다.');
+      } else {
+        showToastMessage('YouTube 계정 추가 실패', 'error');
       }
     } catch (error) {
       console.error('YouTube 계정 추가 실패:', error);
+      showToastMessage('YouTube 계정 추가 실패', 'error');
     }
   };
 
@@ -292,7 +311,7 @@ export default function MembersPage() {
 
   const handleUpdateYoutube = async () => {
     if (!editingYoutube || !newYoutubeEmail.trim() || !newYoutubeRenewalDate) {
-      alert('이메일과 갱신일을 모두 입력해주세요.');
+      showToastMessage('이메일과 갱신일을 모두 입력해주세요.', 'error');
       return;
     }
     try {
@@ -308,22 +327,33 @@ export default function MembersPage() {
       if (res.ok) {
         handleCancelEdit();
         if (selectedApple) fetchYoutubeAccounts(selectedApple.id);
+        showToastMessage('YouTube 계정이 수정되었습니다.');
+      } else {
+        showToastMessage('YouTube 계정 수정 실패', 'error');
       }
     } catch (error) {
       console.error('YouTube 계정 수정 실패:', error);
+      showToastMessage('YouTube 계정 수정 실패', 'error');
     }
   };
 
-  const handleDeleteYoutube = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+  const handleDeleteYoutube = (id: string) => {
+    setConfirmAction({ type: 'deleteYoutube', id, appleId: selectedApple?.id });
+  };
+
+  const executeDeleteYoutube = async (id: string, appleId?: string) => {
     try {
       const res = await fetch(`/api/admin/youtube-accounts/${id}`, { method: 'DELETE' });
-      if (res.ok && selectedApple) {
-        fetchYoutubeAccounts(selectedApple.id);
+      if (res.ok && appleId) {
+        fetchYoutubeAccounts(appleId);
         if (selectedYoutube?.id === id) setSelectedYoutube(null);
+        showToastMessage('YouTube 계정이 삭제되었습니다.');
+      } else {
+        showToastMessage('삭제에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('YouTube 계정 삭제 실패:', error);
+      showToastMessage('삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -372,13 +402,22 @@ export default function MembersPage() {
     }
   };
 
-  const handleDeleteMember = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+  const handleDeleteMember = (id: string) => {
+    setConfirmAction({ type: 'deleteMember', id, appleId: selectedYoutube?.id });
+  };
+
+  const executeDeleteMember = async (id: string, youtubeId?: string) => {
     try {
       const res = await fetch(`/api/admin/members/${id}`, { method: 'DELETE' });
-      if (res.ok && selectedYoutube) fetchMembers(selectedYoutube.id);
+      if (res.ok && youtubeId) {
+        fetchMembers(youtubeId);
+        showToastMessage('회원이 삭제되었습니다.');
+      } else {
+        showToastMessage('삭제에 실패했습니다.', 'error');
+      }
     } catch (error) {
       console.error('회원 삭제 실패:', error);
+      showToastMessage('삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -396,6 +435,13 @@ export default function MembersPage() {
   };
 
   const cycleStatus = (currentStatus: string) => currentStatus === 'pending' ? 'completed' : 'pending';
+
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
 
   const handleCancelEdit = () => {
     setShowAddApple(false);
@@ -870,6 +916,57 @@ export default function MembersPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-white mb-4">삭제 확인</h3>
+            <p className="text-neutral-300 mb-6">정말 삭제하시겠습니까?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  if (confirmAction.type === 'deleteApple') {
+                    executeDeleteApple(confirmAction.id);
+                  } else if (confirmAction.type === 'deleteYoutube') {
+                    executeDeleteYoutube(confirmAction.id, confirmAction.appleId);
+                  } else if (confirmAction.type === 'deleteMember') {
+                    executeDeleteMember(confirmAction.id, confirmAction.appleId);
+                  }
+                  setConfirmAction(null);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <div className={`${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3`}>
+            {toastType === 'success' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toastMessage}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
