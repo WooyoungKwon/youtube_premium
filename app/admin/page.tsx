@@ -41,16 +41,29 @@ export default function AdminPage() {
     }
   }, []);
 
-  // React Query로 요청 목록 조회
-  const { data: requests = [], isLoading: requestsLoading } = useQuery<MemberRequest[]>({
-    queryKey: ['adminRequests'],
+  // React Query로 요청 목록 조회 (서버 측 페이지네이션)
+  const { data: requestsData, isLoading: requestsLoading } = useQuery({
+    queryKey: ['adminRequests', currentPage, filter],
     queryFn: async () => {
-      const response = await fetch('/api/admin/list', { cache: 'no-store' });
+      const response = await fetch(
+        `/api/admin/list?page=${currentPage}&limit=${itemsPerPage}&status=${filter}`,
+        { cache: 'no-store' }
+      );
       if (!response.ok) throw new Error('Failed to fetch requests');
-      return response.json();
+      return response.json() as Promise<{
+        requests: MemberRequest[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>;
     },
     enabled: isAuthenticated,
   });
+
+  const requests = requestsData?.requests || [];
+  const totalItems = requestsData?.total || 0;
+  const totalPages = requestsData?.totalPages || 1;
 
   // React Query로 통계 조회
   const { data: revenueStats = null, isLoading: statsLoading } = useQuery<AdminStats | null>({
@@ -59,6 +72,22 @@ export default function AdminPage() {
       const response = await fetch('/api/admin/stats', { cache: 'no-store' });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  // React Query로 신청 통계 조회
+  const { data: requestStats } = useQuery({
+    queryKey: ['requestStats'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/request-stats', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Failed to fetch request stats');
+      return response.json() as Promise<{
+        total: string;
+        pending: string;
+        approved: string;
+        rejected: string;
+      }>;
     },
     enabled: isAuthenticated,
   });
@@ -124,17 +153,6 @@ export default function AdminPage() {
     fetchStats();
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (filter === 'all') return true;
-    return req.status === filter;
-  });
-
-  // 페이지네이션 계산
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedRequests = filteredRequests.slice(startIndex, endIndex);
-
   // 필터 변경 시 첫 페이지로 이동
   useEffect(() => {
     setCurrentPage(1);
@@ -156,13 +174,6 @@ export default function AdminPage() {
         {labels[status as keyof typeof labels]}
       </span>
     );
-  };
-
-  const requestStats = {
-    total: requests.length,
-    pending: requests.filter(r => r.status === 'pending').length,
-    approved: requests.filter(r => r.status === 'approved').length,
-    rejected: requests.filter(r => r.status === 'rejected').length,
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -276,24 +287,26 @@ export default function AdminPage() {
           </div>
 
           {/* Request Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg">
-              <div className="text-sm text-neutral-400">전체 신청</div>
-              <div className="text-2xl font-bold text-white">{requestStats.total}</div>
+          {requestStats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-lg">
+                <div className="text-sm text-neutral-400">전체 신청</div>
+                <div className="text-2xl font-bold text-white">{requestStats.total}</div>
+              </div>
+              <div className="bg-neutral-900 border border-yellow-800 p-4 rounded-lg">
+                <div className="text-sm text-yellow-400">대기중</div>
+                <div className="text-2xl font-bold text-yellow-300">{requestStats.pending}</div>
+              </div>
+              <div className="bg-neutral-900 border border-green-800 p-4 rounded-lg">
+                <div className="text-sm text-green-400">승인됨</div>
+                <div className="text-2xl font-bold text-green-300">{requestStats.approved}</div>
+              </div>
+              <div className="bg-neutral-900 border border-red-800 p-4 rounded-lg">
+                <div className="text-sm text-red-400">거부됨</div>
+                <div className="text-2xl font-bold text-red-300">{requestStats.rejected}</div>
+              </div>
             </div>
-            <div className="bg-neutral-900 border border-yellow-800 p-4 rounded-lg">
-              <div className="text-sm text-yellow-400">대기중</div>
-              <div className="text-2xl font-bold text-yellow-300">{requestStats.pending}</div>
-            </div>
-            <div className="bg-neutral-900 border border-green-800 p-4 rounded-lg">
-              <div className="text-sm text-green-400">승인됨</div>
-              <div className="text-2xl font-bold text-green-300">{requestStats.approved}</div>
-            </div>
-            <div className="bg-neutral-900 border border-red-800 p-4 rounded-lg">
-              <div className="text-sm text-red-400">거부됨</div>
-              <div className="text-2xl font-bold text-red-300">{requestStats.rejected}</div>
-            </div>
-          </div>
+          )}
 
           {/* Revenue Stats */}
           {revenueStats && (
@@ -377,7 +390,7 @@ export default function AdminPage() {
         <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-neutral-500">로딩 중...</div>
-          ) : filteredRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="p-8 text-center text-neutral-500">신청 내역이 없습니다.</div>
           ) : (
             <div className="overflow-x-auto">
@@ -417,7 +430,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-neutral-900 divide-y divide-neutral-800">
-                  {paginatedRequests.map((request) => (
+                  {requests.map((request) => (
                     <tr key={request.id} className="hover:bg-neutral-850">
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
@@ -530,10 +543,10 @@ export default function AdminPage() {
         </div>
 
         {/* Pagination */}
-        {!loading && filteredRequests.length > 0 && (
+        {!loading && totalItems > 0 && (
           <div className="mt-6 flex items-center justify-between">
             <div className="text-sm text-neutral-400">
-              전체 {filteredRequests.length}개 중 {startIndex + 1}-{Math.min(endIndex, filteredRequests.length)}개 표시
+              전체 {totalItems}개 중 {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)}개 표시
             </div>
             <div className="flex gap-2">
               <button
@@ -545,19 +558,25 @@ export default function AdminPage() {
               </button>
 
               <div className="flex gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded text-sm font-medium transition ${
-                      currentPage === page
-                        ? 'bg-white text-neutral-900'
-                        : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                  // 최대 10개 페이지만 표시
+                  const startPage = Math.max(1, currentPage - 5);
+                  const page = startPage + i;
+                  if (page > totalPages) return null;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded text-sm font-medium transition ${
+                        currentPage === page
+                          ? 'bg-white text-neutral-900'
+                          : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
               </div>
 
               <button

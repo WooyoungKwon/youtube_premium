@@ -6,7 +6,7 @@ const connectionString = (process.env.YOUTUBE_DB_POSTGRES_PRISMA_URL || process.
   .replace('&&', '&')
   .replace('sslmode=require', ''); // SSL 모드 제거하고 코드에서 처리
 
-const pool = new Pool({
+export const pool = new Pool({
   connectionString,
   // Supabase는 SSL이 필요하지만 self-signed 인증서 문제를 피하기 위해 rejectUnauthorized: false
   ssl: { rejectUnauthorized: false },
@@ -238,10 +238,32 @@ export async function initDatabase() {
   }
 }
 
-// 모든 신청 조회
-export async function getAllRequests(): Promise<MemberRequest[]> {
+// 모든 신청 조회 (페이지네이션 지원)
+export async function getAllRequests(options?: {
+  page?: number;
+  limit?: number;
+  status?: 'all' | 'pending' | 'approved' | 'rejected';
+}): Promise<{ requests: MemberRequest[]; total: number }> {
   try {
-    const { rows } = await client.sql`
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const offset = (page - 1) * limit;
+    const status = options?.status || 'all';
+
+    // WHERE 조건 구성
+    const whereClause = status !== 'all' ? `WHERE mr.status = '${status}'` : '';
+
+    // 전체 개수 조회
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM member_requests mr
+      ${whereClause}
+    `;
+    const { rows: countRows } = await pool.query(countQuery);
+    const total = parseInt(countRows[0].total);
+
+    // 페이지네이션된 데이터 조회
+    const dataQuery = `
       SELECT
         mr.id,
         mr.email,
@@ -256,17 +278,22 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
         mr.created_at as "createdAt",
         EXISTS(SELECT 1 FROM members m WHERE m.request_id = mr.id) as "isRegistered"
       FROM member_requests mr
+      ${whereClause}
       ORDER BY mr.created_at DESC
+      LIMIT $1 OFFSET $2
     `;
+    const { rows } = await pool.query(dataQuery, [limit, offset]);
 
-    return rows.map(row => ({
+    const requests = rows.map(row => ({
       ...row,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.createdAt.toISOString(),
     })) as MemberRequest[];
+
+    return { requests, total };
   } catch (error) {
     console.error('Get all requests error:', error);
-    return [];
+    return { requests: [], total: 0 };
   }
 }
 
