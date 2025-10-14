@@ -245,24 +245,23 @@ export async function getAllRequests(options?: {
   status?: 'all' | 'pending' | 'approved' | 'rejected';
 }): Promise<{ requests: MemberRequest[]; total: number }> {
   try {
+    const startTime = Date.now();
     const page = options?.page || 1;
     const limit = options?.limit || 10;
     const offset = (page - 1) * limit;
     const status = options?.status || 'all';
 
     // WHERE 조건 구성
-    const whereClause = status !== 'all' ? `WHERE mr.status = '${status}'` : '';
+    const whereClause = status !== 'all' ? `WHERE mr.status = $3` : '';
+    const params = status !== 'all' ? [limit, offset, status] : [limit, offset];
 
-    // 전체 개수 조회
+    // 전체 개수와 데이터를 동시에 조회 (병렬 처리)
     const countQuery = `
       SELECT COUNT(*) as total
       FROM member_requests mr
       ${whereClause}
     `;
-    const { rows: countRows } = await pool.query(countQuery);
-    const total = parseInt(countRows[0].total);
 
-    // 페이지네이션된 데이터 조회
     const dataQuery = `
       SELECT
         mr.id,
@@ -276,19 +275,29 @@ export async function getAllRequests(options?: {
         mr.account_type as "accountType",
         mr.status,
         mr.created_at as "createdAt",
-        EXISTS(SELECT 1 FROM members m WHERE m.request_id = mr.id) as "isRegistered"
+        (m.id IS NOT NULL) as "isRegistered"
       FROM member_requests mr
+      LEFT JOIN members m ON mr.id = m.request_id
       ${whereClause}
       ORDER BY mr.created_at DESC
       LIMIT $1 OFFSET $2
     `;
-    const { rows } = await pool.query(dataQuery, [limit, offset]);
 
-    const requests = rows.map(row => ({
+    // 병렬 실행으로 성능 향상
+    const [countResult, dataResult] = await Promise.all([
+      pool.query(countQuery, status !== 'all' ? [status] : []),
+      pool.query(dataQuery, params)
+    ]);
+
+    const total = parseInt(countResult.rows[0].total);
+    const requests = dataResult.rows.map(row => ({
       ...row,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.createdAt.toISOString(),
     })) as MemberRequest[];
+
+    const endTime = Date.now();
+    console.log(`[Performance] getAllRequests took ${endTime - startTime}ms (page: ${page}, status: ${status})`);
 
     return { requests, total };
   } catch (error) {

@@ -389,7 +389,40 @@ export default function AdminPage() {
         {/* Requests List */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-neutral-500">로딩 중...</div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-neutral-800 border-b border-neutral-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">작업</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">이메일</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">계정타입</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">입금자명</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">개월수</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">전화번호</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">추천인</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">상태</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">회원등록</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">신청일</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-neutral-900 divide-y divide-neutral-800">
+                  {Array.from({ length: itemsPerPage }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4"><div className="h-8 bg-neutral-800 rounded w-32"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-40"></div></td>
+                      <td className="px-6 py-4"><div className="h-6 bg-neutral-800 rounded w-16"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-20"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-16"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-24"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-32"></div></td>
+                      <td className="px-6 py-4"><div className="h-6 bg-neutral-800 rounded-full w-20"></div></td>
+                      <td className="px-6 py-4"><div className="h-6 bg-neutral-800 rounded-full w-20"></div></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-neutral-800 rounded w-32"></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : requests.length === 0 ? (
             <div className="p-8 text-center text-neutral-500">신청 내역이 없습니다.</div>
           ) : (
