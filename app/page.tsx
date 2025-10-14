@@ -98,7 +98,7 @@ export default function Home() {
               </div>
 
               <h2 className="text-3xl font-bold text-gray-900 mb-3">영화 티켓 대리 예매</h2>
-              <p className="text-gray-600 mb-6 leading-relaxed">번거로운 예매 과정 없이<br />편리하게 영화 티켓을 예매해드립니다</p>
+              <p className="text-gray-600 mb-6 leading-relaxed">정가에 비해 30% 할인된 가격으로<br />편리하게 영화 티켓을 예매해드립니다</p>
 
               <div className="flex flex-wrap gap-2 justify-center mb-6">
                 <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">🎬 CGV/메가박스/롯데</span>
