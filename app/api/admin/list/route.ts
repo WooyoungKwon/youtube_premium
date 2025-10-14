@@ -9,7 +9,13 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const requests = await getAllRequests();
-    return NextResponse.json(requests);
+
+    const response = NextResponse.json(requests);
+
+    // 브라우저 캐싱 허용 (30초)
+    response.headers.set('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       { error: '데이터를 불러오는데 실패했습니다.' },

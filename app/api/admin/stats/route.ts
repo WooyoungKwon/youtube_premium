@@ -8,14 +8,14 @@ export const revalidate = 0;
 // GET: 관리자 대시보드 통계 조회
 export async function GET() {
   try {
-    // 캐시 비활성화 헤더
-    const headers = {
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-    };
-
     const stats = await getStats();
 
-    return NextResponse.json(stats, { headers });
+    const response = NextResponse.json(stats);
+
+    // 브라우저 캐싱 허용 (30초)
+    response.headers.set('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
+
+    return response;
 
   } catch (error) {
     console.error('Get admin stats error:', error);

@@ -218,6 +218,7 @@ export async function initDatabase() {
     await client.sql`CREATE INDEX IF NOT EXISTS idx_apple_account ON youtube_accounts(apple_account_id)`;
     await client.sql`CREATE INDEX IF NOT EXISTS idx_youtube_account ON members(youtube_account_id)`;
     await client.sql`CREATE INDEX IF NOT EXISTS idx_request ON members(request_id)`;
+    await client.sql`CREATE INDEX IF NOT EXISTS idx_request_not_null ON members(request_id) WHERE request_id IS NOT NULL`;
     await client.sql`CREATE INDEX IF NOT EXISTS idx_member_deposit ON members(deposit_status)`;
     await client.sql`CREATE INDEX IF NOT EXISTS idx_revenue_member ON revenue_records(member_id)`;
     await client.sql`CREATE INDEX IF NOT EXISTS idx_revenue_recorded_at ON revenue_records(recorded_at DESC)`;
@@ -253,9 +254,8 @@ export async function getAllRequests(): Promise<MemberRequest[]> {
         mr.account_type as "accountType",
         mr.status,
         mr.created_at as "createdAt",
-        CASE WHEN m.id IS NOT NULL THEN true ELSE false END as "isRegistered"
+        EXISTS(SELECT 1 FROM members m WHERE m.request_id = mr.id) as "isRegistered"
       FROM member_requests mr
-      LEFT JOIN members m ON mr.id = m.request_id
       ORDER BY mr.created_at DESC
     `;
 

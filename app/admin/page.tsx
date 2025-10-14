@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MemberRequest } from '@/types';
 import RegisterMemberModal from './components/RegisterMemberModal';
 import WebAuthnLogin from './components/WebAuthnLogin';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface AdminStats {
   totalMembers: number;
@@ -19,15 +20,13 @@ interface AdminStats {
 }
 
 export default function AdminPage() {
+  const queryClient = useQueryClient();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  const [requests, setRequests] = useState<MemberRequest[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
-  const [revenueStats, setRevenueStats] = useState<AdminStats | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [toastMessage, setToastMessage] = useState('');
@@ -42,64 +41,36 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchAllData();
-    }
-  }, [isAuthenticated]);
+  // React Query로 요청 목록 조회
+  const { data: requests = [], isLoading: requestsLoading } = useQuery<MemberRequest[]>({
+    queryKey: ['adminRequests'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/list', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Failed to fetch requests');
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
 
-  const fetchAllData = async () => {
-    try {
-      const [requestsRes, statsRes] = await Promise.all([
-        fetch('/api/admin/list', { cache: 'no-store' }),
-        fetch('/api/admin/stats', { cache: 'no-store' })
-      ]);
+  // React Query로 통계 조회
+  const { data: revenueStats = null, isLoading: statsLoading } = useQuery<AdminStats | null>({
+    queryKey: ['adminStats'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/stats', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
 
-      if (requestsRes.ok) {
-        const data = await requestsRes.json();
-        setRequests(data);
-      } else {
-        console.error('Failed to fetch requests:', requestsRes.status, requestsRes.statusText);
-      }
-
-      if (statsRes.ok) {
-        const data = await statsRes.json();
-        setRevenueStats(data);
-      } else {
-        console.error('Failed to fetch stats:', statsRes.status, statsRes.statusText);
-      }
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-      if (error instanceof TypeError) {
-        console.error('Network error - check if server is running on http://localhost:3000');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = requestsLoading || statsLoading;
 
   const fetchRequests = async () => {
-    try {
-      const response = await fetch('/api/admin/list', { cache: 'no-store' });
-      if (response.ok) {
-        const data = await response.json();
-        setRequests(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch requests:', error);
-    }
+    queryClient.invalidateQueries({ queryKey: ['adminRequests'] });
   };
 
   const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/admin/stats', { cache: 'no-store' });
-      if (response.ok) {
-        const data = await response.json();
-        setRevenueStats(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
+    queryClient.invalidateQueries({ queryKey: ['adminStats'] });
   };
 
   const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
