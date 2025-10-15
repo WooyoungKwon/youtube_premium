@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { captureReferralFromURL } from '@/lib/referral';
 
-export default function Home() {
+function HomeContent() {
   const [isVisible, setIsVisible] = useState(false);
   const searchParams = useSearchParams();
 
@@ -138,5 +138,18 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600">로딩 중...</p>
+      </div>
+    </div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -129,7 +129,7 @@ export default function VendorDashboard() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => fetchBookingRequests()}
+                onClick={() => vendor && fetchBookingRequests(vendor)}
                 className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition font-medium"
               >
                 🔄 새로고침
