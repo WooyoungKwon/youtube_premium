@@ -5,8 +5,8 @@ import * as XLSX from 'xlsx';
 
 export async function GET() {
   try {
-    const requests = await getAllRequests();
-    
+    const { requests } = await getAllRequests();
+
     // Excel 데이터 형식으로 변환
     const excelData = requests.map((req: MemberRequest) => ({
       'ID': req.id,
