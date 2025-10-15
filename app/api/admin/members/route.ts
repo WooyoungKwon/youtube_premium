@@ -70,9 +70,7 @@ export async function POST(request: Request) {
       lastPaymentDate,
       paymentDate,
       depositStatus,
-      requestId,
-      willRenew,
-      renewMonths
+      requestId
     );
 
     console.log('Member added successfully:', member);
