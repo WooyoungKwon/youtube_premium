@@ -37,7 +37,7 @@ async function ensureVendorsTable() {
   }
 }
 
-// GET: 업자 목록 조회
+// GET: 판매자 목록 조회
 export async function GET() {
   try {
     await ensureVendorsTable();
@@ -65,13 +65,13 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch vendors:', error);
     return NextResponse.json(
-      { error: '업자 목록을 불러오는데 실패했습니다.' },
+      { error: '판매자 목록을 불러오는데 실패했습니다.' },
       { status: 500 }
     );
   }
 }
 
-// POST: 업자 등록
+// POST: 판매자 등록
 export async function POST(request: Request) {
   try {
     await ensureVendorsTable();
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 업자 등록
+    // 판매자 등록
     const id = `vendor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = new Date().toISOString();
 
@@ -129,13 +129,13 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Failed to create vendor:', error);
     return NextResponse.json(
-      { error: '업자 등록에 실패했습니다.' },
+      { error: '판매자 등록에 실패했습니다.' },
       { status: 500 }
     );
   }
 }
 
-// PATCH: 업자 정보 수정 (활성화/비활성화 등)
+// PATCH: 판매자 정보 수정 (활성화/비활성화 등)
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
@@ -143,7 +143,7 @@ export async function PATCH(request: Request) {
 
     if (!id) {
       return NextResponse.json(
-        { error: '업자 ID가 필요합니다.' },
+        { error: '판매자 ID가 필요합니다.' },
         { status: 400 }
       );
     }
@@ -187,13 +187,13 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error('Failed to update vendor:', error);
     return NextResponse.json(
-      { error: '업자 정보 수정에 실패했습니다.' },
+      { error: '판매자 정보 수정에 실패했습니다.' },
       { status: 500 }
     );
   }
 }
 
-// DELETE: 업자 삭제
+// DELETE: 판매자 삭제
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -201,7 +201,7 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json(
-        { error: '업자 ID가 필요합니다.' },
+        { error: '판매자 ID가 필요합니다.' },
         { status: 400 }
       );
     }
@@ -212,7 +212,7 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error('Failed to delete vendor:', error);
     return NextResponse.json(
-      { error: '업자 삭제에 실패했습니다.' },
+      { error: '판매자 삭제에 실패했습니다.' },
       { status: 500 }
     );
   }

@@ -52,6 +52,8 @@ export default function MembersPage() {
   const [newLastPaymentDate, setNewLastPaymentDate] = useState(formatDateForInput(new Date().toISOString()));
   const [newPaymentDate, setNewPaymentDate] = useState(formatDateForInput(new Date().toISOString()));
   const [newDepositStatus, setNewDepositStatus] = useState('pending');
+  const [newWillRenew, setNewWillRenew] = useState<boolean>(false);
+  const [newRenewMonths, setNewRenewMonths] = useState<number>(1);
 
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
   const [editingCreditValue, setEditingCreditValue] = useState(0);
@@ -363,7 +365,17 @@ export default function MembersPage() {
       const res = await fetch('/api/admin/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtubeAccountId: selectedYoutube.id, nickname: newMemberNickname, email: newMemberEmail, name: newMemberName, lastPaymentDate: newLastPaymentDate, paymentDate: newPaymentDate, depositStatus: newDepositStatus }),
+        body: JSON.stringify({
+          youtubeAccountId: selectedYoutube.id,
+          nickname: newMemberNickname,
+          email: newMemberEmail,
+          name: newMemberName,
+          lastPaymentDate: newLastPaymentDate,
+          paymentDate: newPaymentDate,
+          depositStatus: newDepositStatus,
+          willRenew: newWillRenew,
+          renewMonths: newWillRenew ? newRenewMonths : undefined
+        }),
       });
       if (res.ok) {
         handleCancelEdit();
@@ -382,6 +394,8 @@ export default function MembersPage() {
     setNewLastPaymentDate(formatDateForInput(member.lastPaymentDate));
     setNewPaymentDate(formatDateForInput(member.paymentDate));
     setNewDepositStatus(member.depositStatus);
+    setNewWillRenew(member.willRenew ?? false);
+    setNewRenewMonths(member.renewMonths ?? 1);
     setShowAddMember(true);
   };
 
@@ -391,7 +405,16 @@ export default function MembersPage() {
       const res = await fetch(`/api/admin/members/${editingMember.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: newMemberNickname, email: newMemberEmail, name: newMemberName, lastPaymentDate: newLastPaymentDate, paymentDate: newPaymentDate, depositStatus: newDepositStatus }),
+        body: JSON.stringify({
+          nickname: newMemberNickname,
+          email: newMemberEmail,
+          name: newMemberName,
+          lastPaymentDate: newLastPaymentDate,
+          paymentDate: newPaymentDate,
+          depositStatus: newDepositStatus,
+          willRenew: newWillRenew,
+          renewMonths: newWillRenew ? newRenewMonths : undefined
+        }),
       });
       if (res.ok) {
         handleCancelEdit();
@@ -464,6 +487,8 @@ export default function MembersPage() {
     setNewLastPaymentDate(today);
     setNewPaymentDate(today);
     setNewDepositStatus('pending');
+    setNewWillRenew(false);
+    setNewRenewMonths(1);
   };
 
   if (!isAuthenticated) {
@@ -699,6 +724,36 @@ export default function MembersPage() {
                     <option value="completed">완료</option>
                   </select>
                 </div>
+                <div className="border-t border-neutral-700 pt-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      type="checkbox"
+                      id="willRenew"
+                      checked={newWillRenew}
+                      onChange={(e) => setNewWillRenew(e.target.checked)}
+                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-2 focus:ring-white"
+                    />
+                    <label htmlFor="willRenew" className="text-sm font-medium text-neutral-300">
+                      갱신 예정
+                    </label>
+                  </div>
+                  {newWillRenew && (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-1.5">갱신 기간 (개월)</label>
+                      <select
+                        value={newRenewMonths}
+                        onChange={(e) => setNewRenewMonths(Number(e.target.value))}
+                        className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white focus:outline-none focus:border-neutral-500 transition"
+                      >
+                        <option value={1}>1개월</option>
+                        <option value={2}>2개월</option>
+                        <option value={3}>3개월</option>
+                        <option value={6}>6개월</option>
+                        <option value={12}>12개월</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2 pt-2">
                   <button onClick={handleCancelEdit} className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition">
                     취소
@@ -882,6 +937,11 @@ export default function MembersPage() {
                         <div className="mt-2 space-y-0.5 text-xs text-neutral-500">
                           <p>이전 결제일: {formatDateOnly(member.lastPaymentDate)}</p>
                           <p>다음 결제일: {formatDateOnly(member.paymentDate)}</p>
+                          {member.willRenew && (
+                            <p className="text-blue-400 font-medium">
+                              갱신 예정: {member.renewMonths}개월
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">

@@ -46,9 +46,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log('POST /api/admin/members - Request body:', body);
-    
-    const { youtubeAccountId, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, requestId } = body;
-    
+
+    const { youtubeAccountId, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, requestId, willRenew, renewMonths } = body;
+
     console.log('Calling addMember with:', {
       youtubeAccountId,
       nickname,
@@ -57,9 +57,11 @@ export async function POST(request: Request) {
       lastPaymentDate,
       paymentDate,
       depositStatus,
-      requestId
+      requestId,
+      willRenew,
+      renewMonths
     });
-    
+
     const member = await addMember(
       youtubeAccountId,
       nickname,
@@ -68,9 +70,11 @@ export async function POST(request: Request) {
       lastPaymentDate,
       paymentDate,
       depositStatus,
-      requestId
+      requestId,
+      willRenew,
+      renewMonths
     );
-    
+
     console.log('Member added successfully:', member);
     
     // 입금 완료 상태로 회원을 추가하는 경우 수익 기록

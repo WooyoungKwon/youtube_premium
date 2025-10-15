@@ -13,7 +13,7 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000,
 });
 
-// POST: 업자 로그인 (이메일로 확인)
+// POST: 판매자 로그인 (이메일로 확인)
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 업자 확인
+    // 판매자 확인
     const result = await pool.query(
       'SELECT * FROM vendors WHERE email = $1',
       [email]

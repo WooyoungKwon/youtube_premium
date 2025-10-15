@@ -32,21 +32,64 @@ export default function VendorDashboard() {
 
     const vendorData = JSON.parse(vendorDataStr);
     setVendor(vendorData);
-    fetchBookingRequests();
   }, [router]);
 
-  const fetchBookingRequests = async () => {
+  const fetchBookingRequests = async (vendorData: VendorData) => {
     try {
-      // TODO: 실제 API 연결 필요
-      // 임시로 빈 배열 반환
-      setRequests([]);
-      setMyBookings([]);
+      setLoading(true);
+
+      // 모든 예매 요청 가져오기
+      const response = await fetch('/api/movie/bookings?status=all');
+      if (response.ok) {
+        const allBookings: BookingRequest[] = await response.json();
+
+        console.log('All bookings:', allBookings);
+        console.log('Vendor ID:', vendorData.id);
+
+        // 대기 중인 예매 요청 (내 전용 링크 + 공개 요청)
+        const pendingRequests = allBookings.filter(booking => {
+          if (booking.status !== 'pending') return false;
+
+          // 내 전용 링크로 들어온 요청
+          if (booking.referralCode === vendorData.id && booking.referralType === 'vendor') {
+            console.log('Found my exclusive booking:', booking.id);
+            return true;
+          }
+
+          // 공개 요청 (admin 링크 또는 링크 없음)
+          if (booking.referralType === 'admin' || !booking.referralType) {
+            console.log('Found public booking:', booking.id);
+            return true;
+          }
+
+          return false;
+        });
+
+        // 내가 수락한 예매
+        const myAcceptedBookings = allBookings.filter(
+          booking => booking.claimedBy === vendorData.id
+        );
+
+        console.log('Pending requests:', pendingRequests.length);
+        console.log('My accepted bookings:', myAcceptedBookings.length);
+
+        setRequests(pendingRequests);
+        setMyBookings(myAcceptedBookings);
+      }
     } catch (error) {
       console.error('Failed to fetch booking requests:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // vendor가 설정되면 데이터 불러오기
+  useEffect(() => {
+    if (vendor) {
+      fetchBookingRequests(vendor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendor?.id]); // vendor.id가 변경될 때만 다시 불러오기
 
   const handleLogout = () => {
     sessionStorage.removeItem('vendorData');
@@ -81,7 +124,7 @@ export default function VendorDashboard() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">업자 대시보드</h1>
+              <h1 className="text-2xl font-bold text-gray-900">판매자 대시보드</h1>
               <p className="text-sm text-gray-600 mt-1">{vendor.name}님, 환영합니다!</p>
             </div>
             <div className="flex gap-3">

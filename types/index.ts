@@ -16,6 +16,7 @@ export interface MemberRequest {
     showTime?: string;
     seats?: number;
     additionalInfo?: string;
+    referralCode?: string; // 추천인 코드 (admin 또는 vendor_xxx)
   };
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
@@ -63,6 +64,8 @@ export interface Member {
   lastPaymentDate: string; // 이전 결제일 (마지막으로 결제한 날짜)
   paymentDate: string; // 다음 결제 예정일 (월 구독 갱신일)
   depositStatus: 'completed' | 'pending';
+  willRenew?: boolean; // 갱신 여부
+  renewMonths?: number; // 갱신 기간 (개월 수)
   createdAt: string;
 }
 
@@ -91,9 +94,11 @@ export interface BookingRequest {
   seats: number;
   additionalInfo?: string;
   status: 'pending' | 'claimed' | 'confirmed' | 'completed' | 'cancelled';
-  claimedBy?: string; // 예매를 수락한 업자 ID
+  claimedBy?: string; // 예매를 수락한 판매자 ID
   claimedAt?: string;
   commission: number;
+  referralCode?: string; // 추천인 코드 (admin 또는 vendor_xxx)
+  referralType?: 'admin' | 'vendor'; // 추천인 타입
   createdAt: string;
   updatedAt: string;
 }

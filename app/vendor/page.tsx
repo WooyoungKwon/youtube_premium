@@ -32,7 +32,7 @@ export default function VendorLoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // 세션에 업자 정보 저장
+        // 세션에 판매자 정보 저장
         sessionStorage.setItem('vendorData', JSON.stringify(data));
         router.push('/vendor/dashboard');
       } else {
@@ -55,7 +55,7 @@ export default function VendorLoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">업자 로그인</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">판매자 로그인</h1>
             <p className="text-gray-600">등록된 이메일로 로그인하세요</p>
           </div>
 
@@ -91,7 +91,7 @@ export default function VendorLoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500 mb-2">업자로 등록하시려면?</p>
+            <p className="text-sm text-gray-500 mb-2">판매자로 등록하시려면?</p>
             <a href="/" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
               관리자에게 문의하기 →
             </a>

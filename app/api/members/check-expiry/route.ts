@@ -13,8 +13,27 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000,
 });
 
+// 갱신 컬럼 추가 마이그레이션
+async function ensureRenewalColumns() {
+  try {
+    await pool.query(`
+      ALTER TABLE members
+      ADD COLUMN IF NOT EXISTS will_renew BOOLEAN DEFAULT FALSE
+    `);
+    await pool.query(`
+      ALTER TABLE members
+      ADD COLUMN IF NOT EXISTS renew_months INTEGER DEFAULT 1
+    `);
+  } catch (error) {
+    console.log('Renewal columns migration:', error);
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    // 갱신 컬럼 확인 및 추가
+    await ensureRenewalColumns();
+
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
 
@@ -27,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // 이메일로 멤버 찾기
     const result = await pool.query(
-      'SELECT email, payment_date FROM members WHERE email = $1',
+      'SELECT id, email, payment_date, will_renew, renew_months FROM members WHERE email = $1',
       [email]
     );
 
@@ -48,8 +67,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
+      id: member.id,
       email: member.email,
       expiryDate: member.payment_date,
+      willRenew: member.will_renew || false,
+      renewMonths: member.renew_months || 1,
     });
   } catch (error) {
     console.error('Error checking expiry date:', error);

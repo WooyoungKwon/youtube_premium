@@ -16,6 +16,7 @@ export default function VendorsPage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string } | null>(null);
+  const [newVendorLink, setNewVendorLink] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVendors();
@@ -50,9 +51,14 @@ export default function VendorsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: 'success', text: '판매자가 성공적으로 등록되었습니다.' });
+        const vendorLink = getVendorLink(data.id);
+        setNewVendorLink(vendorLink);
+        setMessage({
+          type: 'success',
+          text: `${formData.name}님이 등록되었습니다. 전용 링크를 복사해서 전달해주세요.`
+        });
+        // 모달은 유지하고 폼만 리셋
         setFormData({ name: '', email: '', phone: '' });
-        setShowAddModal(false);
         fetchVendors();
       } else {
         setMessage({ type: 'error', text: data.error || '판매자 등록에 실패했습니다.' });
@@ -113,6 +119,18 @@ export default function VendorsPage() {
     });
   };
 
+  const copyToClipboard = (text: string, vendorName: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setMessage({ type: 'success', text: `${vendorName}님의 링크가 복사되었습니다!` });
+      setTimeout(() => setMessage(null), 3000);
+    });
+  };
+
+  const getVendorLink = (vendorId: string) => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${baseUrl}/?ref=${vendorId}`;
+  };
+
   return (
     <div className="min-h-screen bg-neutral-950">
       <div className="max-w-7xl mx-auto p-6">
@@ -166,6 +184,17 @@ export default function VendorsPage() {
           </div>
         </div>
 
+        {/* Message */}
+        {message && (
+          <div className={`mb-4 p-4 rounded-lg border ${
+            message.type === 'success'
+              ? 'bg-green-900/30 text-green-300 border-green-800'
+              : 'bg-red-900/30 text-red-300 border-red-800'
+          }`}>
+            {message.text}
+          </div>
+        )}
+
         {/* Vendors Table */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
           {loading ? (
@@ -189,13 +218,12 @@ export default function VendorsPage() {
                 <thead className="bg-neutral-800 border-b border-neutral-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">이름</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">전용 링크</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">이메일</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">전화번호</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">상태</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">평점</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">완료 예매</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">총 수익</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">등록일</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-neutral-400 uppercase">작업</th>
                   </tr>
                 </thead>
@@ -203,6 +231,22 @@ export default function VendorsPage() {
                   {vendors.map((vendor) => (
                     <tr key={vendor.id} className="hover:bg-neutral-800/50">
                       <td className="px-4 py-3 text-sm text-white font-medium">{vendor.name}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 max-w-md">
+                          <code className="flex-1 px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-xs text-purple-300 font-mono truncate">
+                            {getVendorLink(vendor.id)}
+                          </code>
+                          <button
+                            onClick={() => copyToClipboard(getVendorLink(vendor.id), vendor.name)}
+                            className="flex-shrink-0 p-2 bg-purple-900/30 border border-purple-800 text-purple-300 rounded hover:bg-purple-900/50 transition group"
+                            title="링크 복사"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-sm text-neutral-300">{vendor.email}</td>
                       <td className="px-4 py-3 text-sm text-neutral-300">{vendor.phone}</td>
                       <td className="px-4 py-3">
@@ -214,12 +258,8 @@ export default function VendorsPage() {
                           {vendor.isActive ? '활성' : '비활성'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-neutral-300">
-                        ⭐ {vendor.rating.toFixed(1)}
-                      </td>
                       <td className="px-4 py-3 text-sm text-neutral-300">{vendor.completedBookings}건</td>
                       <td className="px-4 py-3 text-sm text-neutral-300">{vendor.totalEarnings.toLocaleString()}원</td>
-                      <td className="px-4 py-3 text-sm text-neutral-400">{formatDate(vendor.createdAt)}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
                           <button
@@ -259,6 +299,7 @@ export default function VendorsPage() {
                 onClick={() => {
                   setShowAddModal(false);
                   setMessage(null);
+                  setNewVendorLink(null);
                 }}
                 className="p-2 hover:bg-neutral-800 rounded-full transition"
               >
@@ -269,6 +310,33 @@ export default function VendorsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {newVendorLink && (
+                <div className="p-4 bg-green-900/30 border border-green-800 rounded-lg">
+                  <h3 className="text-sm font-semibold text-green-300 mb-3">✅ 판매자 전용 링크</h3>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newVendorLink}
+                      readOnly
+                      className="flex-1 px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-neutral-300 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        copyToClipboard(newVendorLink, '판매자');
+                        setNewVendorLink(null);
+                        setShowAddModal(false);
+                      }}
+                      className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600 transition text-sm font-medium whitespace-nowrap"
+                    >
+                      복사하고 닫기
+                    </button>
+                  </div>
+                  <p className="text-xs text-green-300 mt-2">
+                    이 링크를 판매자에게 전달하세요. 이 링크로 신청된 예매는 해당 판매자에게만 알림이 갑니다.
+                  </p>
+                </div>
+              )}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-neutral-300 mb-2">
                   이름 <span className="text-red-500">*</span>
@@ -330,6 +398,7 @@ export default function VendorsPage() {
                   onClick={() => {
                     setShowAddModal(false);
                     setMessage(null);
+                    setNewVendorLink(null);
                   }}
                   className="flex-1 px-4 py-2 bg-neutral-800 text-neutral-300 rounded-lg hover:bg-neutral-700 transition"
                 >

@@ -10,6 +10,8 @@ interface MemberWithDetails {
   lastPaymentDate: string;
   paymentDate: string;
   depositStatus: string;
+  willRenew?: boolean;
+  renewMonths?: number;
   createdAt: string;
   youtubeEmail: string;
   youtubeNickname?: string;
@@ -210,6 +212,8 @@ export default function AllMembersPage() {
           lastPaymentDate: editingMember.lastPaymentDate,
           paymentDate: editingMember.paymentDate,
           depositStatus: editingMember.depositStatus,
+          willRenew: editingMember.willRenew || false,
+          renewMonths: editingMember.willRenew ? (editingMember.renewMonths || 1) : null,
         }),
       });
 
@@ -474,8 +478,15 @@ export default function AllMembersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-300">
                         {formatDateOnly(member.lastPaymentDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-300">
-                        {formatDateOnly(member.paymentDate)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <div className="text-sm text-neutral-300">{formatDateOnly(member.paymentDate)}</div>
+                          {member.willRenew && (
+                            <div className="text-xs text-blue-400 font-medium mt-1">
+                              갱신 예정: {member.renewMonths}개월
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusStyle(member.depositStatus)}`}>
@@ -736,6 +747,38 @@ export default function AllMembersPage() {
                   onChange={(e) => setEditingMember({...editingMember, paymentDate: e.target.value})}
                   className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
                 />
+              </div>
+
+              {/* 갱신 설정 */}
+              <div className="bg-neutral-800 p-4 rounded border border-neutral-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <input
+                    type="checkbox"
+                    id="editWillRenew"
+                    checked={editingMember.willRenew || false}
+                    onChange={(e) => setEditingMember({...editingMember, willRenew: e.target.checked})}
+                    className="w-4 h-4 rounded border-neutral-600 bg-neutral-700 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <label htmlFor="editWillRenew" className="text-sm font-medium text-neutral-300">
+                    갱신 예정
+                  </label>
+                </div>
+                {editingMember.willRenew && (
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-400 mb-2">갱신 기간 (개월)</label>
+                    <select
+                      value={editingMember.renewMonths || 1}
+                      onChange={(e) => setEditingMember({...editingMember, renewMonths: Number(e.target.value)})}
+                      className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded text-sm text-white focus:outline-none focus:border-neutral-500"
+                    >
+                      <option value={1}>1개월</option>
+                      <option value={2}>2개월</option>
+                      <option value={3}>3개월</option>
+                      <option value={6}>6개월</option>
+                      <option value={12}>12개월</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="bg-neutral-800 p-3 rounded border border-neutral-700">

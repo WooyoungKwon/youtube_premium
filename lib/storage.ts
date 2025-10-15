@@ -166,11 +166,30 @@ export async function initDatabase() {
     // join_date 컬럼 완전히 삭제 (더 이상 사용하지 않음)
     try {
       await client.sql`
-        ALTER TABLE members 
+        ALTER TABLE members
         DROP COLUMN IF EXISTS join_date
       `;
     } catch (error) {
       console.log('Drop join_date column failed:', error);
+    }
+
+    // 갱신 관련 컬럼 추가 (마이그레이션)
+    try {
+      await client.sql`
+        ALTER TABLE members
+        ADD COLUMN IF NOT EXISTS will_renew BOOLEAN DEFAULT FALSE
+      `;
+    } catch (error) {
+      console.log('will_renew column already exists or migration failed:', error);
+    }
+
+    try {
+      await client.sql`
+        ALTER TABLE members
+        ADD COLUMN IF NOT EXISTS renew_months INTEGER DEFAULT 1
+      `;
+    } catch (error) {
+      console.log('renew_months column already exists or migration failed:', error);
     }
     
     // 수익 기록 테이블 (누적 수익 관리)
@@ -420,7 +439,7 @@ export async function deleteYoutubeAccount(id: string) {
 export async function getMembersByYoutube(youtubeAccountId: string) {
   try {
     const { rows } = await client.sql`
-      SELECT 
+      SELECT
         id,
         youtube_account_id as "youtubeAccountId",
         request_id as "requestId",
@@ -430,6 +449,8 @@ export async function getMembersByYoutube(youtubeAccountId: string) {
         TO_CHAR(last_payment_date, 'YYYY-MM-DD') as "lastPaymentDate",
         TO_CHAR(payment_date, 'YYYY-MM-DD') as "paymentDate",
         deposit_status as "depositStatus",
+        will_renew as "willRenew",
+        renew_months as "renewMonths",
         created_at as "createdAt"
       FROM members
       WHERE youtube_account_id = ${youtubeAccountId}
@@ -513,7 +534,9 @@ export async function updateMember(
   name: string,
   lastPaymentDate: string,
   paymentDate: string,
-  depositStatus: string
+  depositStatus: string,
+  willRenew?: boolean,
+  renewMonths?: number | null
 ) {
   // 날짜 문자열을 YYYY-MM-DD 형식으로 확실하게 변환
   const formatDate = (dateStr: string) => {
@@ -534,13 +557,15 @@ export async function updateMember(
 
   await client.sql`
     UPDATE members
-    SET 
+    SET
       nickname = ${nickname},
       email = ${email},
       name = ${name},
       last_payment_date = ${formattedLastPaymentDate}::date,
       payment_date = ${formattedPaymentDate}::date,
-      deposit_status = ${depositStatus}
+      deposit_status = ${depositStatus},
+      will_renew = ${willRenew ?? false},
+      renew_months = ${renewMonths}
     WHERE id = ${id}
   `;
 }
@@ -643,9 +668,9 @@ export async function deleteRequest(id: string): Promise<void> {
 
 // 모든 회원을 Apple, YouTube 계정 정보와 함께 조회
 export async function getAllMembersWithDetails() {
-  
+
   const { rows } = await client.sql`
-    SELECT 
+    SELECT
       m.id,
       m.nickname,
       m.email,
@@ -653,6 +678,8 @@ export async function getAllMembersWithDetails() {
       TO_CHAR(m.last_payment_date, 'YYYY-MM-DD') as last_payment_date,
       TO_CHAR(m.payment_date, 'YYYY-MM-DD') as payment_date,
       m.deposit_status,
+      m.will_renew,
+      m.renew_months,
       m.created_at,
       y.youtube_email,
       y.nickname as youtube_nickname,
@@ -662,7 +689,7 @@ export async function getAllMembersWithDetails() {
     LEFT JOIN apple_accounts a ON y.apple_account_id = a.id
     ORDER BY m.payment_date DESC, m.created_at DESC
   `;
-  
+
   return rows.map(row => ({
     id: row.id,
     nickname: row.nickname,
@@ -671,6 +698,8 @@ export async function getAllMembersWithDetails() {
     lastPaymentDate: row.last_payment_date,
     paymentDate: row.payment_date,
     depositStatus: row.deposit_status,
+    willRenew: row.will_renew,
+    renewMonths: row.renew_months,
     createdAt: row.created_at.toISOString(),
     youtubeEmail: row.youtube_email,
     youtubeNickname: row.youtube_nickname,

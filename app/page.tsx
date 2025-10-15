@@ -2,16 +2,22 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { captureReferralFromURL } from '@/lib/referral';
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // URL에서 ref 파라미터 캡처 및 쿠키에 저장
+    captureReferralFromURL(searchParams);
+
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">

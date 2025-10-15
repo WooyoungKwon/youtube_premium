@@ -2,21 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateMember, deleteMember } from '@/lib/storage';
 
 export async function PUT(
-  request: NextRequest, 
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { nickname, email, name, lastPaymentDate, paymentDate, depositStatus } = await request.json();
+    const { nickname, email, name, lastPaymentDate, paymentDate, depositStatus, willRenew, renewMonths } = await request.json();
     const { id } = await params;
-    
+
     console.log('PUT /api/admin/members/[id] - Received dates:', {
       lastPaymentDate,
       paymentDate,
       lastPaymentDateType: typeof lastPaymentDate,
-      paymentDateType: typeof paymentDate
+      paymentDateType: typeof paymentDate,
+      willRenew,
+      renewMonths
     });
-    
-    await updateMember(id, nickname, email, name, lastPaymentDate, paymentDate, depositStatus);
+
+    await updateMember(id, nickname, email, name, lastPaymentDate, paymentDate, depositStatus, willRenew, renewMonths);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update member error:', error);
