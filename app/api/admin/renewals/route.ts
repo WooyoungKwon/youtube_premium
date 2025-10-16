@@ -20,7 +20,7 @@ export const revalidate = 0;
 // 갱신 요청 목록 조회 (관리자용)
 export async function GET() {
   try {
-    // will_renew가 true인 회원들만 조회
+    // will_renew가 true인 회원들만 조회 (메시지 포함)
     const result = await pool.query(`
       SELECT
         m.id,
@@ -30,6 +30,7 @@ export async function GET() {
         m.payment_date,
         m.will_renew,
         m.renew_months,
+        m.renewal_message,
         m.deposit_status,
         y.youtube_email,
         y.nickname as youtube_nickname
@@ -47,6 +48,7 @@ export async function GET() {
       paymentDate: row.payment_date,
       willRenew: row.will_renew,
       renewMonths: row.renew_months,
+      renewalMessage: row.renewal_message,
       depositStatus: row.deposit_status,
       youtubeEmail: row.youtube_email,
       youtubeNickname: row.youtube_nickname,

@@ -14,6 +14,7 @@ function MemberContent() {
   const [error, setError] = useState<string | null>(null);
   const [willRenew, setWillRenew] = useState(false);
   const [renewMonths, setRenewMonths] = useState(1);
+  const [renewalMessage, setRenewalMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showCompactView, setShowCompactView] = useState(false);
@@ -69,6 +70,7 @@ function MemberContent() {
           email: memberData.email,
           willRenew,
           renewMonths: willRenew ? renewMonths : null,
+          renewalMessage: willRenew && renewalMessage.trim() ? renewalMessage.trim() : null,
         }),
       });
 
@@ -202,9 +204,9 @@ function MemberContent() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900">갱신 설정</h2>
             </div>
-            {saveMessage?.type === 'success' && (
+            {showCompactView && (
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => setShowCompactView(false)}
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
                 설정 변경하기
@@ -445,6 +447,25 @@ function MemberContent() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* 관리자에게 메시지 */}
+              {willRenew && (
+                <div className="mt-4">
+                  <label htmlFor="renewal-message" className="block text-sm font-medium text-gray-700 mb-2">
+                    관리자에게 메시지 (선택사항)
+                  </label>
+                  <textarea
+                    id="renewal-message"
+                    value={renewalMessage}
+                    onChange={(e) => setRenewalMessage(e.target.value)}
+                    placeholder="입금자명이 다르거나 특이사항이 있으면 여기에 남겨주세요."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 resize-none"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{renewalMessage.length}/500자</p>
                 </div>
               )}
             </div>

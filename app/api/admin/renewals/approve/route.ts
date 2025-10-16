@@ -46,13 +46,14 @@ export async function POST(request: NextRequest) {
     const newPaymentDate = new Date(currentPaymentDate);
     newPaymentDate.setMonth(newPaymentDate.getMonth() + renewMonths);
 
-    // 회원 정보 업데이트: 만료일 연장, 갱신 상태 초기화
+    // 회원 정보 업데이트: 만료일 연장, 갱신 상태 및 메시지 초기화
     await pool.query(
       `UPDATE members
        SET payment_date = $1,
            last_payment_date = $2,
            will_renew = false,
-           renew_months = null
+           renew_months = null,
+           renewal_message = null
        WHERE id = $3`,
       [newPaymentDate.toISOString().split('T')[0], new Date().toISOString().split('T')[0], memberId]
     );

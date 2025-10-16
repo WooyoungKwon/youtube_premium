@@ -271,8 +271,9 @@ export async function getAllRequests(options?: {
     const status = options?.status || 'all';
 
     // WHERE 조건 구성
-    const whereClause = status !== 'all' ? `WHERE mr.status = $3` : '';
-    const params = status !== 'all' ? [limit, offset, status] : [limit, offset];
+    const whereClause = status !== 'all' ? `WHERE mr.status = $1` : '';
+    const countParams = status !== 'all' ? [status] : [];
+    const dataParams = status !== 'all' ? [limit, offset, status] : [limit, offset];
 
     // 전체 개수와 데이터를 동시에 조회 (병렬 처리)
     const countQuery = `
@@ -297,15 +298,15 @@ export async function getAllRequests(options?: {
         (m.id IS NOT NULL) as "isRegistered"
       FROM member_requests mr
       LEFT JOIN members m ON mr.id = m.request_id
-      ${whereClause}
+      ${status !== 'all' ? 'WHERE mr.status = $3' : ''}
       ORDER BY mr.created_at DESC
       LIMIT $1 OFFSET $2
     `;
 
     // 병렬 실행으로 성능 향상
     const [countResult, dataResult] = await Promise.all([
-      pool.query(countQuery, status !== 'all' ? [status] : []),
-      pool.query(dataQuery, params)
+      pool.query(countQuery, countParams),
+      pool.query(dataQuery, dataParams)
     ]);
 
     const total = parseInt(countResult.rows[0].total);
