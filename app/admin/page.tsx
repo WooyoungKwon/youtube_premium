@@ -271,6 +271,9 @@ export default function AdminPage() {
               <Link href="/admin/all-members" className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-200 rounded hover:bg-neutral-700 transition text-sm font-medium">
                 전체 회원 목록
               </Link>
+              <Link href="/admin/renewals" className="px-4 py-2 bg-blue-900 border border-blue-800 text-blue-100 rounded hover:bg-blue-800 transition text-sm font-medium">
+                갱신 요청 관리
+              </Link>
               <Link href="/admin/vendors" className="px-4 py-2 bg-purple-900 border border-purple-800 text-purple-100 rounded hover:bg-purple-800 transition text-sm font-medium">
                 판매자 관리
               </Link>
