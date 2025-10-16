@@ -24,6 +24,14 @@ async function ensureRenewalColumns() {
       ALTER TABLE members
       ADD COLUMN IF NOT EXISTS renew_months INTEGER DEFAULT 1
     `);
+    await pool.query(`
+      ALTER TABLE members
+      ADD COLUMN IF NOT EXISTS is_auto_payment BOOLEAN DEFAULT FALSE
+    `);
+    await pool.query(`
+      ALTER TABLE members
+      ADD COLUMN IF NOT EXISTS renewal_message TEXT
+    `);
   } catch (error) {
     console.log('Renewal columns migration:', error);
   }
@@ -52,13 +60,13 @@ export async function GET(request: NextRequest) {
     if (emailInput.includes('@')) {
       // 전체 이메일이 입력된 경우
       result = await pool.query(
-        'SELECT id, email, payment_date, will_renew, renew_months FROM members WHERE email = $1',
+        'SELECT id, email, payment_date, will_renew, renew_months, is_auto_payment FROM members WHERE email = $1',
         [emailInput]
       );
     } else {
       // 아이디만 입력된 경우 (@ 앞부분으로 검색)
       result = await pool.query(
-        'SELECT id, email, payment_date, will_renew, renew_months FROM members WHERE email LIKE $1',
+        'SELECT id, email, payment_date, will_renew, renew_months, is_auto_payment FROM members WHERE email LIKE $1',
         [`${emailInput}@%`]
       );
     }
@@ -86,6 +94,7 @@ export async function GET(request: NextRequest) {
       expiryDate: member.payment_date,
       willRenew: member.will_renew || false,
       renewMonths: member.renew_months || 1,
+      isAutoPayment: member.is_auto_payment || false,
     });
   } catch (error) {
     console.error('Error checking expiry date:', error);

@@ -11,6 +11,7 @@ interface RenewalRequest {
   paymentDate: string;
   willRenew: boolean;
   renewMonths: number;
+  isAutoPayment: boolean;
   renewalMessage?: string;
   depositStatus: string;
   youtubeEmail: string;
@@ -188,9 +189,12 @@ export default function RenewalsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-gray-600">예상 총 수익</p>
+                <p className="text-sm text-gray-600">일시불 예상 수익</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {renewals.reduce((sum, r) => sum + calculatePrice(r.renewMonths), 0).toLocaleString()}원
+                  {renewals.filter(r => !r.isAutoPayment).reduce((sum, r) => sum + calculatePrice(r.renewMonths), 0).toLocaleString()}원
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  자동이체: {renewals.filter(r => r.isAutoPayment).length}건 (월 {renewals.filter(r => r.isAutoPayment).length * 4000}원)
                 </p>
               </div>
             </div>
@@ -204,11 +208,12 @@ export default function RenewalsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm text-gray-600">평균 갱신 기간</p>
+                <p className="text-sm text-gray-600">결제 방식 분포</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {renewals.length > 0
-                    ? (renewals.reduce((sum, r) => sum + r.renewMonths, 0) / renewals.length).toFixed(1)
-                    : 0}개월
+                  일시불 {renewals.filter(r => !r.isAutoPayment).length}건
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  자동이체: {renewals.filter(r => r.isAutoPayment).length}건
                 </p>
               </div>
             </div>
@@ -280,91 +285,133 @@ export default function RenewalsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-[180px]" />
+                  <col className="w-[200px]" />
+                  <col className="w-[110px]" />
+                  <col className="w-[90px]" />
+                  <col className="w-[140px]" />
+                  <col className="w-[120px]" />
+                  <col className="w-[110px]" />
+                  <col className="w-[100px]" />
+                  <col className="w-[200px]" />
+                </colgroup>
                 <thead className="bg-gray-50 border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">회원 정보</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">YouTube 계정</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">현재 만료일</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">갱신 기간</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">결제 방식</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">결제 금액</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">새 만료일</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">메시지</th>
                     <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">작업</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">메시지</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {renewals.map((renewal) => (
                     <tr key={renewal.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-4">
-                        <div>
-                          <p className="font-semibold text-gray-900">{renewal.nickname}</p>
-                          <p className="text-sm text-gray-600">{renewal.name}</p>
-                          <p className="text-xs text-gray-500">{renewal.email}</p>
+                        <div className="overflow-hidden">
+                          <p className="font-semibold text-gray-900 truncate">{renewal.nickname}</p>
+                          <p className="text-sm text-gray-600 truncate">{renewal.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{renewal.email}</p>
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <div>
-                          <p className="text-sm text-gray-900">{renewal.youtubeEmail}</p>
+                        <div className="overflow-hidden">
+                          <p className="text-sm text-gray-900 truncate">{renewal.youtubeEmail}</p>
                           {renewal.youtubeNickname && (
-                            <p className="text-xs text-blue-600">{renewal.youtubeNickname}</p>
+                            <p className="text-xs text-blue-600 truncate">{renewal.youtubeNickname}</p>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <p className="text-sm font-medium text-gray-900">
-                          {new Date(renewal.paymentDate).toLocaleDateString('ko-KR')}
+                        <p className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                          {new Date(renewal.paymentDate).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                         </p>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
-                          {renewal.renewMonths}개월
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 whitespace-nowrap">
+                          {renewal.isAutoPayment ? 1 : renewal.renewMonths}개월
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <p className="text-lg font-bold text-green-600">
-                          {calculatePrice(renewal.renewMonths).toLocaleString()}원
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="text-sm font-medium text-purple-600">
-                          {calculateNewExpiryDate(renewal.paymentDate, renewal.renewMonths)}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        {renewal.renewalMessage ? (
-                          <div className="max-w-xs">
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                              <div className="flex items-start gap-2">
-                                <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                </svg>
-                                <p className="text-sm text-gray-700 break-words">{renewal.renewalMessage}</p>
-                              </div>
-                            </div>
+                        {renewal.isAutoPayment ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 whitespace-nowrap">
+                              🔄 자동이체
+                            </span>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              월 4천원
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 whitespace-nowrap">
+                              💰 일시불
+                            </span>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {renewal.renewMonths}개월
+                            </span>
+                          </div>
                         )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {renewal.isAutoPayment ? (
+                          <div>
+                            <p className="text-base font-bold text-green-600 whitespace-nowrap">
+                              4,000원
+                            </p>
+                            <p className="text-xs text-gray-500 whitespace-nowrap">
+                              매월
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-base font-bold text-green-600 whitespace-nowrap">
+                            {calculatePrice(renewal.renewMonths).toLocaleString()}원
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm font-medium text-purple-600 whitespace-nowrap">
+                          {new Date(new Date(renewal.paymentDate).setMonth(new Date(renewal.paymentDate).getMonth() + (renewal.isAutoPayment ? 1 : renewal.renewMonths))).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
+                        </p>
                       </td>
                       <td className="px-4 py-4">
                         <button
                           onClick={() => handleApprove(renewal.id)}
                           disabled={processingId === renewal.id}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
                         >
                           {processingId === renewal.id ? (
-                            <span className="flex items-center gap-2">
-                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <span className="flex items-center gap-1">
+                              <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
-                              처리중...
+                              처리중
                             </span>
                           ) : (
                             '승인'
                           )}
                         </button>
+                      </td>
+                      <td className="px-4 py-4">
+                        {renewal.renewalMessage ? (
+                          <div className="group relative">
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 cursor-pointer hover:bg-amber-100 transition">
+                              <p className="text-xs text-gray-700 line-clamp-2">{renewal.renewalMessage}</p>
+                            </div>
+                            <div className="hidden group-hover:block absolute z-10 right-0 top-full mt-1 w-64 bg-white border-2 border-amber-300 rounded-lg p-3 shadow-xl">
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{renewal.renewalMessage}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}

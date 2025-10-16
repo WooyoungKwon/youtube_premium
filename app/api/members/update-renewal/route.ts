@@ -15,7 +15,7 @@ const pool = new Pool({
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, willRenew, renewMonths, renewalMessage } = await request.json();
+    const { email, willRenew, renewMonths, isAutoPayment, renewalMessage } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -38,10 +38,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 회원 갱신 정보 업데이트 (메시지 포함)
+    // 회원 갱신 정보 업데이트 (자동이체 및 메시지 포함)
     const result = await pool.query(
-      'UPDATE members SET will_renew = $1, renew_months = $2, renewal_message = $3 WHERE email = $4 RETURNING id, email, will_renew, renew_months',
-      [willRenew, willRenew ? renewMonths : null, willRenew && renewalMessage ? renewalMessage : null, email]
+      'UPDATE members SET will_renew = $1, renew_months = $2, is_auto_payment = $3, renewal_message = $4 WHERE email = $5 RETURNING id, email, will_renew, renew_months, is_auto_payment',
+      [
+        willRenew,
+        willRenew ? renewMonths : null,
+        willRenew ? isAutoPayment : false,
+        willRenew && renewalMessage ? renewalMessage : null,
+        email
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -57,6 +63,7 @@ export async function POST(request: NextRequest) {
       success: true,
       willRenew: updatedMember.will_renew,
       renewMonths: updatedMember.renew_months,
+      isAutoPayment: updatedMember.is_auto_payment,
     });
   } catch (error) {
     console.error('Error updating renewal preferences:', error);

@@ -191,6 +191,24 @@ export async function initDatabase() {
     } catch (error) {
       console.log('renew_months column already exists or migration failed:', error);
     }
+
+    try {
+      await client.sql`
+        ALTER TABLE members
+        ADD COLUMN IF NOT EXISTS renewal_message TEXT
+      `;
+    } catch (error) {
+      console.log('renewal_message column already exists or migration failed:', error);
+    }
+
+    try {
+      await client.sql`
+        ALTER TABLE members
+        ADD COLUMN IF NOT EXISTS is_auto_payment BOOLEAN DEFAULT FALSE
+      `;
+    } catch (error) {
+      console.log('is_auto_payment column already exists or migration failed:', error);
+    }
     
     // 수익 기록 테이블 (누적 수익 관리)
     await client.sql`
