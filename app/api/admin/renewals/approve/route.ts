@@ -42,20 +42,42 @@ export async function POST(request: NextRequest) {
     const currentPaymentDate = new Date(member.payment_date);
     const renewMonths = member.renew_months || 0;
 
-    // 갱신 개월수만큼 날짜 연장
+    // 갱신 개월수만큼 다음 결제일 연장
     const newPaymentDate = new Date(currentPaymentDate);
     newPaymentDate.setMonth(newPaymentDate.getMonth() + renewMonths);
 
-    // 회원 정보 업데이트: 만료일 연장, 갱신 상태 및 메시지 초기화
+    // 갱신 금액 계산
+    const prices: { [key: number]: number } = {
+      1: 4000,
+      2: 8000,
+      3: 12000,
+      6: 23000,
+      12: 45000
+    };
+    const renewalAmount = prices[renewMonths] || renewMonths * 4000;
+
+    // 회원 정보 업데이트:
+    // - last_payment_date: 오늘 (갱신 결제한 날)
+    // - payment_date: 기존 다음 결제일 + 갱신 개월 수
+    // - deposit_status: 완료
     await pool.query(
       `UPDATE members
        SET payment_date = $1,
            last_payment_date = $2,
            will_renew = false,
            renew_months = null,
-           renewal_message = null
+           renewal_message = null,
+           deposit_status = '완료'
        WHERE id = $3`,
       [newPaymentDate.toISOString().split('T')[0], new Date().toISOString().split('T')[0], memberId]
+    );
+
+    // 수익 기록 추가
+    const revenueId = Date.now().toString();
+    await pool.query(
+      `INSERT INTO revenue_records (id, member_id, amount, months, description, recorded_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+      [revenueId, memberId, renewalAmount, renewMonths, '갱신']
     );
 
     return NextResponse.json({

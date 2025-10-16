@@ -18,10 +18,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // 갱신 요청 목록 조회 (관리자용)
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // will_renew가 true인 회원들만 조회 (메시지 포함)
-    const result = await pool.query(`
+    // URL에서 검색 파라미터 추출
+    const { searchParams } = new URL(request.url);
+    const searchQuery = searchParams.get('search') || '';
+
+    // will_renew가 true인 회원들만 조회 (입금자명으로 검색 가능)
+    let query = `
       SELECT
         m.id,
         m.nickname,
@@ -37,8 +41,19 @@ export async function GET() {
       FROM members m
       LEFT JOIN youtube_accounts y ON m.youtube_account_id = y.id
       WHERE m.will_renew = true
-      ORDER BY m.payment_date ASC
-    `);
+    `;
+
+    const params: any[] = [];
+
+    // 검색어가 있으면 입금자명으로 필터링
+    if (searchQuery.trim()) {
+      query += ` AND m.name ILIKE $1`;
+      params.push(`%${searchQuery.trim()}%`);
+    }
+
+    query += ` ORDER BY m.payment_date ASC`;
+
+    const result = await pool.query(query, params);
 
     const renewals = result.rows.map(row => ({
       id: row.id,
