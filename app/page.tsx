@@ -84,41 +84,37 @@ function HomeContent() {
             </div>
           </Link>
 
-          {/* 영화 티켓 대리 예매 카드 */}
-          <Link
-            href="/movie"
-            className={`group relative bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl p-10 border-2 border-purple-200 hover:border-purple-400 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-3 ${
-              isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+          {/* 영화 티켓 대리 예매 카드 - 비활성화 */}
+          <div
+            className={`group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-10 border-2 border-gray-300 shadow-2xl transition-all duration-500 opacity-60 cursor-not-allowed ${
+              isVisible ? 'translate-y-0 opacity-60' : 'translate-y-10 opacity-0'
             }`}
             style={{ transitionDelay: '200ms' }}
           >
             <div className="absolute top-6 right-6">
-              <span className="bg-purple-500 text-white text-sm px-4 py-1.5 rounded-full font-bold shadow-lg">NEW</span>
+              <span className="bg-gray-500 text-white text-sm px-4 py-1.5 rounded-full font-bold shadow-lg">준비중</span>
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-14 h-14 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl">
+                <svg className="w-14 h-14 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                 </svg>
               </div>
 
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">영화 티켓 대리 예매</h2>
-              <p className="text-gray-600 mb-6 leading-relaxed">정가에 비해 30% 할인된 가격으로<br />편리하게 영화 티켓을 예매해드립니다</p>
+              <h2 className="text-3xl font-bold text-gray-500 mb-3">영화 티켓 대리 예매</h2>
+              <p className="text-gray-500 mb-6 leading-relaxed">정가에 비해 30% 할인된 가격으로<br />편리하게 영화 티켓을 예매해드립니다</p>
 
               <div className="flex flex-wrap gap-2 justify-center mb-6">
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">🎬 CGV/메가박스/롯데</span>
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">⚡ 빠른 예매</span>
+                <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-full text-sm font-semibold">🎬 CGV/메가박스/롯데</span>
+                <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-full text-sm font-semibold">⚡ 빠른 예매</span>
               </div>
 
-              <div className="flex items-center gap-3 text-purple-600 font-bold text-lg group-hover:gap-4 transition-all">
-                <span>자세히 보기</span>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+              <div className="flex items-center gap-3 text-gray-400 font-bold text-lg">
+                <span>서비스 준비 중</span>
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       </div>
     </div>

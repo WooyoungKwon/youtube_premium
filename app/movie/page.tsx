@@ -7,18 +7,14 @@ import { captureReferralFromURL } from '@/lib/referral';
 
 function MovieServiceContent() {
   const [isVisible, setIsVisible] = useState(false);
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // URL에서 ref 파라미터 캡처 및 쿠키에 저장
-    captureReferralFromURL(searchParams);
-
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [searchParams]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 relative overflow-hidden">
@@ -101,16 +97,16 @@ function MovieServiceContent() {
             영화 티켓 대리 예매
             <br />
             <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
-              지금 바로 신청하세요
+              Coming Soon
             </span>
           </h1>
 
           {/* 설명 */}
           <p className="text-xl md:text-2xl text-white/90 mb-4 leading-relaxed font-semibold">
-            정가 15,000원 → <span className="text-yellow-300">10,000원</span>
+            서비스 준비 중입니다
           </p>
           <p className="text-lg text-white/70 mb-12">
-            간편한 신청으로 영화관에서 바로 사용 가능한 티켓을 받아보세요
+            더 나은 서비스로 곧 찾아뵙겠습니다
           </p>
 
           {/* 특징 카드 */}
@@ -137,73 +133,16 @@ function MovieServiceContent() {
           {/* CTA 버튼들 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <Link
-              href="/apply/movie"
-              className="group px-10 py-5 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-gray-900 rounded-xl font-bold text-xl shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 flex items-center gap-3"
+              href="/"
+              className="group px-10 py-5 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-xl font-bold text-xl shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
-              <span>지금 예매 신청하기</span>
-              <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              <svg className="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
+              <span>홈으로 돌아가기</span>
             </Link>
           </div>
 
-          {/* 이용 방법 섹션 */}
-          <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-3xl mx-auto mb-8">
-            <h3 className="text-2xl font-bold text-white mb-6">이용 방법</h3>
-            <div className="grid md:grid-cols-3 gap-6 text-left">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
-                  1
-                </div>
-                <h4 className="text-lg font-bold text-white mb-2">정보 입력</h4>
-                <p className="text-white/70 text-sm">
-                  원하시는 영화관, 영화, 날짜/시간을 입력해주세요
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
-                  2
-                </div>
-                <h4 className="text-lg font-bold text-white mb-2">예매 진행</h4>
-                <p className="text-white/70 text-sm">
-                  관리자가 예매를 진행하고 카카오톡으로 안내드립니다
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
-                  3
-                </div>
-                <h4 className="text-lg font-bold text-white mb-2">영화 관람</h4>
-                <p className="text-white/70 text-sm">
-                  티켓을 받으시고 영화관에서 편하게 관람하세요
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 추가 정보 */}
-          <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-3xl mx-auto">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-bold text-white mb-3">안내사항</h3>
-                <ul className="text-white/80 text-sm leading-relaxed space-y-2">
-                  <li>• 예매 수수료는 별도로 안내드립니다</li>
-                  <li>• 주말 및 공휴일에는 예매가 지연될 수 있습니다</li>
-                  <li>• 특정 상영관(IMAX, 4DX 등)은 별도 문의 필요</li>
-                  <li>• 문의사항은 카카오톡으로 편하게 문의해주세요</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
