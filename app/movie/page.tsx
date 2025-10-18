@@ -1,44 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { captureReferralFromURL } from '@/lib/referral';
 
-export default function MovieComingSoon() {
+function MovieServiceContent() {
   const [isVisible, setIsVisible] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // URL에서 ref 파라미터 캡처 및 쿠키에 저장
+    captureReferralFromURL(searchParams);
+
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
+
     return () => clearTimeout(timer);
-
-    // Kakao SDK 초기화
-    const script = document.createElement('script');
-    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
-    script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4';
-    script.crossOrigin = 'anonymous';
-    script.async = true;
-    script.onload = () => {
-      if (typeof window !== 'undefined' && window.Kakao && !window.Kakao.isInitialized()) {
-        window.Kakao.init('fd0f2e6e7067b6c9c5705962e6ca7e40');
-      }
-    };
-    document.head.appendChild(script);
-    return () => {
-      clearTimeout(timer);
-      if (script.parentNode) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
-
-  const openKakaoChat = () => {
-    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.Channel) {
-      window.Kakao.Channel.chat({ channelPublicId: '_BxlKLn' });
-    } else {
-      window.open('https://pf.kakao.com/_BxlKLn', '_blank');
-    }
-  };
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 relative overflow-hidden">
@@ -118,64 +98,93 @@ export default function MovieComingSoon() {
 
           {/* 제목 */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            영화 티켓 예매 서비스
+            영화 티켓 대리 예매
             <br />
-            <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent animate-gradient-x">
-              Coming Soon
+            <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent">
+              지금 바로 신청하세요
             </span>
           </h1>
 
           {/* 설명 */}
-          <p className="text-xl md:text-2xl text-white/80 mb-4 leading-relaxed">
-            더 나은 서비스로 찾아뵙겠습니다
+          <p className="text-xl md:text-2xl text-white/90 mb-4 leading-relaxed font-semibold">
+            정가 15,000원 → <span className="text-yellow-300">10,000원</span>
           </p>
-          <p className="text-lg text-white/60 mb-12">
-            현재 서비스 준비 중이며, 곧 만나보실 수 있습니다
+          <p className="text-lg text-white/70 mb-12">
+            간편한 신청으로 영화관에서 바로 사용 가능한 티켓을 받아보세요
           </p>
 
           {/* 특징 카드 */}
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105">
               <div className="text-5xl mb-4">🎬</div>
-              <h3 className="text-xl font-bold text-white mb-2">모든 극장</h3>
-              <p className="text-white/70 text-sm">CGV, 메가박스, 롯데시네마 등<br />주요 극장 예매 지원 예정</p>
+              <h3 className="text-xl font-bold text-white mb-2">모든 극장 지원</h3>
+              <p className="text-white/70 text-sm">CGV, 메가박스, 롯데시네마<br />주요 극장 예매 가능</p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105">
               <div className="text-5xl mb-4">⚡</div>
-              <h3 className="text-xl font-bold text-white mb-2">빠른 예매</h3>
-              <p className="text-white/70 text-sm">간편한 신청으로<br />빠르게 예매를 진행</p>
+              <h3 className="text-xl font-bold text-white mb-2">빠른 처리</h3>
+              <p className="text-white/70 text-sm">신청 후 빠르게<br />카카오톡으로 안내</p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 hover:scale-105">
               <div className="text-5xl mb-4">💰</div>
               <h3 className="text-xl font-bold text-white mb-2">저렴한 가격</h3>
-              <p className="text-white/70 text-sm">정가 15,000원보다 저렴한<br />10,000원에 예매 가능</p>
+              <p className="text-white/70 text-sm">정가보다 5,000원 저렴한<br />10,000원에 예매</p>
             </div>
           </div>
 
           {/* CTA 버튼들 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-            <button
-              onClick={openKakaoChat}
-              className="group px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-xl font-bold text-lg shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 flex items-center gap-3"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
-              </svg>
-              <span>서비스 출시 알림 받기</span>
-            </button>
-
             <Link
-              href="/"
-              className="px-8 py-4 bg-white/10 backdrop-blur-md border-2 border-white/30 hover:bg-white/20 text-white rounded-xl font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105"
+              href="/apply/movie"
+              className="group px-10 py-5 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-gray-900 rounded-xl font-bold text-xl shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-105 flex items-center gap-3"
             >
-              홈으로 돌아가기
+              <span>지금 예매 신청하기</span>
+              <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </Link>
           </div>
 
+          {/* 이용 방법 섹션 */}
+          <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-3xl mx-auto mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6">이용 방법</h3>
+            <div className="grid md:grid-cols-3 gap-6 text-left">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
+                  1
+                </div>
+                <h4 className="text-lg font-bold text-white mb-2">정보 입력</h4>
+                <p className="text-white/70 text-sm">
+                  원하시는 영화관, 영화, 날짜/시간을 입력해주세요
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-orange-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
+                  2
+                </div>
+                <h4 className="text-lg font-bold text-white mb-2">예매 진행</h4>
+                <p className="text-white/70 text-sm">
+                  관리자가 예매를 진행하고 카카오톡으로 안내드립니다
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center mb-4 text-2xl font-bold text-gray-900">
+                  3
+                </div>
+                <h4 className="text-lg font-bold text-white mb-2">영화 관람</h4>
+                <p className="text-white/70 text-sm">
+                  티켓을 받으시고 영화관에서 편하게 관람하세요
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* 추가 정보 */}
-          <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-3xl mx-auto">
+          <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-3xl mx-auto">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -185,13 +194,13 @@ export default function MovieComingSoon() {
                 </div>
               </div>
               <div className="text-left">
-                <h3 className="text-xl font-bold text-white mb-3">서비스 준비 중</h3>
-                <p className="text-white/80 text-sm leading-relaxed mb-2">
-                  현재 영화 티켓 대리 예매 서비스를 준비하고 있습니다.
-                </p>
-                <p className="text-white/80 text-sm leading-relaxed">
-                  카카오톡으로 문의 주시면 서비스 출시 시 가장 먼저 알려드리겠습니다!
-                </p>
+                <h3 className="text-xl font-bold text-white mb-3">안내사항</h3>
+                <ul className="text-white/80 text-sm leading-relaxed space-y-2">
+                  <li>• 예매 수수료는 별도로 안내드립니다</li>
+                  <li>• 주말 및 공휴일에는 예매가 지연될 수 있습니다</li>
+                  <li>• 특정 상영관(IMAX, 4DX 등)은 별도 문의 필요</li>
+                  <li>• 문의사항은 카카오톡으로 편하게 문의해주세요</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -201,23 +210,9 @@ export default function MovieComingSoon() {
       {/* Footer */}
       <footer className="relative z-10 bg-black/30 backdrop-blur-md border-t border-white/10 py-8 mt-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-xs text-white/50">© 2025 영화 티켓 예매 서비스. 곧 만나요!</p>
+          <p className="text-xs text-white/50">© 2025 영화 티켓 대리 예매 서비스. All rights reserved.</p>
         </div>
       </footer>
-
-      {/* 플로팅 카톡 버튼 */}
-      <button
-        onClick={openKakaoChat}
-        className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 rounded-full shadow-2xl hover:shadow-3xl px-5 py-4 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 z-50 group"
-        aria-label="카카오톡 문의하기"
-      >
-        <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
-        </svg>
-        <span className="text-gray-900 font-bold text-sm whitespace-nowrap">문의하기</span>
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
-      </button>
 
       {/* 커스텀 애니메이션 스타일 */}
       <style jsx>{`
@@ -259,15 +254,6 @@ export default function MovieComingSoon() {
           }
         }
 
-        @keyframes gradient-x {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-
         .animate-scroll-horizontal {
           animation: scroll-horizontal 30s linear infinite;
         }
@@ -283,12 +269,22 @@ export default function MovieComingSoon() {
         .animate-bounce-slow {
           animation: bounce-slow 3s ease-in-out infinite;
         }
-
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 3s ease infinite;
-        }
       `}</style>
     </div>
+  );
+}
+
+export default function MoviePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-purple-300 border-t-white rounded-full animate-spin mb-4"></div>
+          <p className="text-white">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <MovieServiceContent />
+    </Suspense>
   );
 }

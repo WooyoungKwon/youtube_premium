@@ -1,15 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { captureReferralFromURL, getReferralCode } from '@/lib/referral';
 
 export default function MovieApply() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [theater, setTheater] = useState('');
   const [movieTitle, setMovieTitle] = useState('');
-  const [showDate, setShowDate] = useState('');
+  const [showDate, setShowDate] = useState(getTodayDate()); // 오늘 날짜로 기본 설정
   const [showTime, setShowTime] = useState('');
   const [seats, setSeats] = useState('2');
   const [additionalInfo, setAdditionalInfo] = useState('');
@@ -17,14 +29,25 @@ export default function MovieApply() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isPageReady, setIsPageReady] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
     setIsPageReady(true);
+
+    // URL에서 ref 파라미터가 있으면 우선적으로 사용 (쿠키에도 저장)
+    const urlRef = captureReferralFromURL(searchParams);
+
+    // URL에 없으면 쿠키에서 읽기
+    const ref = urlRef || getReferralCode();
+    if (ref) {
+      setReferralCode(ref);
+    }
+
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +55,7 @@ export default function MovieApply() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/requests', {
+      const response = await fetch('/api/movie/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,22 +63,32 @@ export default function MovieApply() {
         body: JSON.stringify({
           email,
           phone,
-          platform: 'movie',
-          movieDetails: {
-            theater,
-            movieTitle,
-            showDate,
-            showTime,
-            seats: parseInt(seats),
-            additionalInfo
-          }
+          theater,
+          movieTitle,
+          showDate,
+          showTime,
+          seats: parseInt(seats),
+          additionalInfo,
+          referralCode: referralCode || undefined
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        router.push(`/payment?requestId=${data.id}&email=${encodeURIComponent(email)}&platform=movie`);
+        setMessage({
+          type: 'success',
+          text: '예매 신청이 완료되었습니다! 관리자가 확인 후 카카오톡으로 연락드립니다.'
+        });
+        // 폼 초기화
+        setEmail('');
+        setPhone('');
+        setTheater('');
+        setMovieTitle('');
+        setShowDate(getTodayDate()); // 오늘 날짜로 리셋
+        setShowTime('');
+        setSeats('2');
+        setAdditionalInfo('');
       } else {
         setMessage({
           type: 'error',
@@ -198,6 +231,7 @@ export default function MovieApply() {
                 id="showDate"
                 value={showDate}
                 onChange={(e) => setShowDate(e.target.value)}
+                min={getTodayDate()}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900"
               />
@@ -207,14 +241,63 @@ export default function MovieApply() {
               <label htmlFor="showTime" className="block text-sm font-medium text-gray-700 mb-2">
                 관람 시간 <span className="text-red-500">*</span>
               </label>
-              <input
-                type="time"
+              <select
                 id="showTime"
                 value={showTime}
                 onChange={(e) => setShowTime(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900"
-              />
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900 cursor-pointer"
+              >
+                <option value="">시간 선택</option>
+                <optgroup label="오전">
+                  <option value="09:00">09:00</option>
+                  <option value="09:30">09:30</option>
+                  <option value="10:00">10:00</option>
+                  <option value="10:30">10:30</option>
+                  <option value="11:00">11:00</option>
+                  <option value="11:30">11:30</option>
+                </optgroup>
+                <optgroup label="오후">
+                  <option value="12:00">12:00 (정오)</option>
+                  <option value="12:30">12:30</option>
+                  <option value="13:00">13:00</option>
+                  <option value="13:30">13:30</option>
+                  <option value="14:00">14:00</option>
+                  <option value="14:30">14:30</option>
+                  <option value="15:00">15:00</option>
+                  <option value="15:30">15:30</option>
+                  <option value="16:00">16:00</option>
+                  <option value="16:30">16:30</option>
+                  <option value="17:00">17:00</option>
+                  <option value="17:30">17:30</option>
+                </optgroup>
+                <optgroup label="저녁">
+                  <option value="18:00">18:00</option>
+                  <option value="18:30">18:30</option>
+                  <option value="19:00">19:00</option>
+                  <option value="19:30">19:30</option>
+                  <option value="20:00">20:00</option>
+                  <option value="20:30">20:30</option>
+                  <option value="21:00">21:00</option>
+                  <option value="21:30">21:30</option>
+                  <option value="22:00">22:00</option>
+                  <option value="22:30">22:30</option>
+                  <option value="23:00">23:00</option>
+                  <option value="23:30">23:30</option>
+                </optgroup>
+                <optgroup label="심야">
+                  <option value="00:00">00:00 (자정)</option>
+                  <option value="00:30">00:30</option>
+                  <option value="01:00">01:00</option>
+                  <option value="01:30">01:30</option>
+                </optgroup>
+                <option value="기타">기타 (요청사항에 입력)</option>
+              </select>
+              {showTime === '기타' && (
+                <p className="mt-2 text-sm text-purple-600">
+                  💡 원하시는 시간을 아래 추가 요청사항에 입력해주세요
+                </p>
+              )}
             </div>
 
             <div>

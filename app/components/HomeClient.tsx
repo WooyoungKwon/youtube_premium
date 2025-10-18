@@ -47,28 +47,6 @@ export default function HomeClient({ initialStats }: { initialStats: Stats }) {
   const [memberEmailLoading, setMemberEmailLoading] = useState(false);
   const [memberEmailError, setMemberEmailError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
-    script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4';
-    script.crossOrigin = 'anonymous';
-    script.async = true;
-    script.onload = () => {
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        window.Kakao.init('fd0f2e6e7067b6c9c5705962e6ca7e40');
-      }
-    };
-    document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
-  }, []);
-
-  const openKakaoChat = () => {
-    if (window.Kakao && window.Kakao.Channel) {
-      window.Kakao.Channel.chat({ channelPublicId: '_BxlKLn' });
-    } else {
-      window.open('https://pf.kakao.com/_BxlKLn', '_blank');
-    }
-  };
 
   const maskName = (name: string) => {
     if (name.length <= 1) return name;
@@ -315,8 +293,6 @@ export default function HomeClient({ initialStats }: { initialStats: Stats }) {
       </div>
 
       <footer className="bg-white border-t border-gray-200 py-8 mt-20"><div className="max-w-7xl mx-auto px-4 text-center"><p className="text-xs text-gray-400">© 2025 YouTube Premium 공유 서비스. All rights reserved.</p></div></footer>
-
-      <button onClick={openKakaoChat} className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 rounded-full shadow-2xl hover:shadow-3xl px-5 py-4 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 z-40" aria-label="카카오톡 문의하기"><svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" /></svg><span className="text-gray-900 font-bold text-sm whitespace-nowrap">문의하기</span></button>
 
       {showReviewModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn" onClick={() => { if (!reviewSubmitting) { setShowReviewModal(false); setReviewMessage(null); } }}>

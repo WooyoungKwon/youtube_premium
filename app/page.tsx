@@ -120,22 +120,6 @@ function HomeContent() {
             </div>
           </Link>
         </div>
-
-        <div className="mt-16 text-center">
-          <p className="text-gray-500 text-sm">문의사항이 있으신가요?</p>
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined' && window.Kakao && window.Kakao.Channel) {
-                window.Kakao.Channel.chat({ channelPublicId: '_BxlKLn' });
-              } else {
-                window.open('https://pf.kakao.com/_BxlKLn', '_blank');
-              }
-            }}
-            className="mt-3 px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
-          >
-            💬 카카오톡 문의하기
-          </button>
-        </div>
       </div>
     </div>
   );

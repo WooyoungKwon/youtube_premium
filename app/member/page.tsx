@@ -631,27 +631,6 @@ function MemberContent() {
           )}
         </div>
 
-        {/* Contact Section */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600 mb-4">문의사항이 있으신가요?</p>
-          <button
-            onClick={() => {
-              if (window.Kakao && window.Kakao.Channel) {
-                window.Kakao.Channel.chat({
-                  channelPublicId: '_BxlKLn'
-                });
-              } else {
-                window.open('https://pf.kakao.com/_BxlKLn', '_blank');
-              }
-            }}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-xl transition shadow-lg"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z"/>
-            </svg>
-            카카오톡 문의하기
-          </button>
-        </div>
       </div>
     </div>
   );
