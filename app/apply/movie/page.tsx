@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { captureReferralFromURL, getReferralCode } from '@/lib/referral';
 
-export default function MovieApply() {
+function MovieApplyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -375,5 +375,20 @@ export default function MovieApply() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MovieApply() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-purple-300 border-t-white rounded-full animate-spin mb-4"></div>
+          <p className="text-white">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <MovieApplyForm />
+    </Suspense>
   );
 }
