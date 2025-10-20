@@ -33,6 +33,7 @@ export default function AdminPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string } | null>(null);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const authenticated = sessionStorage.getItem('adminAuthenticated');
@@ -103,6 +104,12 @@ export default function AdminPage() {
   };
 
   const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected') => {
+    // 이미 처리 중이면 중복 실행 방지
+    if (processingIds.has(id)) return;
+
+    // 처리 중 상태 추가
+    setProcessingIds(prev => new Set(prev).add(id));
+
     try {
       const response = await fetch(`/api/admin/${id}`, {
         method: 'PATCH',
@@ -114,9 +121,23 @@ export default function AdminPage() {
 
       if (response.ok) {
         await fetchRequests();
+        showToastMessage(
+          status === 'approved' ? '승인되었습니다.' : '거부되었습니다.',
+          'success'
+        );
+      } else {
+        showToastMessage('처리에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('Failed to update status:', error);
+      showToastMessage('처리에 실패했습니다.', 'error');
+    } finally {
+      // 처리 완료 후 상태 제거
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
 
@@ -474,15 +495,29 @@ export default function AdminPage() {
                             <>
                               <button
                                 onClick={() => handleUpdateStatus(request.id, 'approved')}
-                                className="px-3 py-1 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition"
+                                disabled={processingIds.has(request.id)}
+                                className="px-3 py-1 bg-green-900 border border-green-800 text-green-100 rounded hover:bg-green-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                               >
-                                승인
+                                {processingIds.has(request.id) && (
+                                  <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                )}
+                                {processingIds.has(request.id) ? '처리중...' : '승인'}
                               </button>
                               <button
                                 onClick={() => handleUpdateStatus(request.id, 'rejected')}
-                                className="px-3 py-1 bg-red-900 border border-red-800 text-red-100 rounded hover:bg-red-800 transition"
+                                disabled={processingIds.has(request.id)}
+                                className="px-3 py-1 bg-red-900 border border-red-800 text-red-100 rounded hover:bg-red-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                               >
-                                거부
+                                {processingIds.has(request.id) && (
+                                  <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                )}
+                                {processingIds.has(request.id) ? '처리중...' : '거부'}
                               </button>
                             </>
                           )}
