@@ -7,14 +7,43 @@ import { captureReferralFromURL } from '@/lib/referral';
 
 function MovieServiceContent() {
   const [isVisible, setIsVisible] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // URL에서 ref 파라미터 캡처 및 쿠키에 저장
+    captureReferralFromURL(searchParams);
+
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 100);
 
-    return () => clearTimeout(timer);
-  }, []);
+    // Kakao SDK 초기화
+    const script = document.createElement('script');
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+    script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4';
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+    script.onload = () => {
+      if (typeof window !== 'undefined' && window.Kakao && !window.Kakao.isInitialized()) {
+        window.Kakao.init('fd0f2e6e7067b6c9c5705962e6ca7e40');
+      }
+    };
+    document.head.appendChild(script);
+    return () => {
+      clearTimeout(timer);
+      if (script.parentNode) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [searchParams]);
+
+  const openKakaoChat = () => {
+    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.Channel) {
+      window.Kakao.Channel.chat({ channelPublicId: '_BxlKLn' });
+    } else {
+      window.open('https://pf.kakao.com/_BxlKLn', '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 relative overflow-hidden">
@@ -152,6 +181,20 @@ function MovieServiceContent() {
           <p className="text-xs text-white/50">© 2025 영화 티켓 대리 예매 서비스. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* 플로팅 카톡 버튼 */}
+      <button
+        onClick={openKakaoChat}
+        className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 rounded-full shadow-2xl hover:shadow-3xl px-5 py-4 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 z-50 group"
+        aria-label="카카오톡 문의하기"
+      >
+        <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" />
+        </svg>
+        <span className="text-gray-900 font-bold text-sm whitespace-nowrap">문의하기</span>
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+      </button>
 
       {/* 커스텀 애니메이션 스타일 */}
       <style jsx>{`

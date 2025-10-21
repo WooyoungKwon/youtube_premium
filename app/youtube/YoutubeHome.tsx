@@ -25,6 +25,28 @@ export default function YoutubeHome({ initialStats }: { initialStats: Stats }) {
   const [memberEmailLoading, setMemberEmailLoading] = useState(false);
   const [memberEmailError, setMemberEmailError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+    script.integrity = 'sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4';
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+    script.onload = () => {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        window.Kakao.init('fd0f2e6e7067b6c9c5705962e6ca7e40');
+      }
+    };
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(script); };
+  }, []);
+
+  const openKakaoChat = () => {
+    if (window.Kakao && window.Kakao.Channel) {
+      window.Kakao.Channel.chat({ channelPublicId: '_BxlKLn' });
+    } else {
+      window.open('https://pf.kakao.com/_BxlKLn', '_blank');
+    }
+  };
 
   const handleMemberEmailCheck = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +126,19 @@ export default function YoutubeHome({ initialStats }: { initialStats: Stats }) {
           <div className="flex flex-col gap-6 justify-center items-center">
             <div className="flex gap-3 justify-center items-center mx-4">
               <div className="relative"><div className="absolute -top-3 -left-3 bg-yellow-400 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold shadow-lg z-20 animate-bounce">💸 최저가 보장</div><Link href="/apply/youtube" className="group relative px-6 py-4 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl shadow-lg hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:scale-105 animate-pulse-slow overflow-hidden block"><div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div><div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-ping opacity-75"></div><div className="relative flex items-center gap-3"><div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg></div><div className="flex flex-col items-start"><span className="text-xs text-white/80 font-medium">NEW</span><span className="text-lg font-bold text-white whitespace-nowrap">신규 가입</span></div></div></Link></div>
-              <button onClick={() => setShowMemberEmailModal(true)} className="group relative px-6 py-4 bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-blue-400 transition-all duration-200 hover:-translate-y-0.5"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"><svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><div className="flex flex-col items-start"><span className="text-xs text-gray-500 font-medium">MEMBER</span><span className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors whitespace-nowrap">기존 회원</span></div></div></button>
+              <button onClick={() => setShowMemberEmailModal(true)} className="group relative px-6 py-4 bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-blue-400 transition-all duration-200 hover:-translate-y-0.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-blue-600 font-medium">기존 회원 전용</span>
+                    <span className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors whitespace-nowrap">갱신 신청</span>
+                  </div>
+                </div>
+              </button>
             </div>
             <div className="flex flex-wrap gap-4 justify-center items-center">
               <button onClick={() => { const element = document.getElementById('pricing-section'); element?.scrollIntoView({ behavior: 'smooth' }); }} className="px-6 py-3 text-gray-700 hover:text-red-600 font-semibold transition-all duration-300 flex items-center gap-2 group"><svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span className="border-b-2 border-transparent group-hover:border-red-600 transition-all">요금제 보기</span></button>
@@ -128,6 +162,8 @@ export default function YoutubeHome({ initialStats }: { initialStats: Stats }) {
       </div>
 
       <footer className="bg-white border-t border-gray-200 py-8 mt-20"><div className="max-w-7xl mx-auto px-4 text-center"><p className="text-xs text-gray-400">© 2025 YouTube Premium 공유 서비스. All rights reserved.</p></div></footer>
+
+      <button onClick={openKakaoChat} className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 rounded-full shadow-2xl hover:shadow-3xl px-5 py-4 flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 z-40" aria-label="카카오톡 문의하기"><svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.442 1.492 4.623 3.768 6.033L5 21l5.246-2.763C10.826 18.41 11.405 18.5 12 18.5c5.523 0 10-3.477 10-8S17.523 3 12 3z" /></svg><span className="text-gray-900 font-bold text-sm whitespace-nowrap">문의하기</span></button>
 
       {showMemberEmailModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn" onClick={() => { if (!memberEmailLoading) { setShowMemberEmailModal(false); setMemberEmail(''); setMemberEmailError(null); } }}>
