@@ -355,9 +355,25 @@ export default function Home() {
               type="tel"
               id="phone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 추출
+                let formatted = '';
+
+                if (value.length <= 3) {
+                  formatted = value;
+                } else if (value.length <= 7) {
+                  formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
+                } else if (value.length <= 11) {
+                  formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7)}`;
+                } else {
+                  formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
+                }
+
+                setPhone(formatted);
+              }}
               placeholder="010-1234-5678"
               required
+              maxLength={13}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition text-gray-900"
             />
 
