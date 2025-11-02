@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // 회원 정보 업데이트:
     // - last_payment_date: 오늘 (갱신 결제한 날)
     // - payment_date: 기존 다음 결제일 + 갱신 개월 수
-    // - deposit_status: 완료
+    // - deposit_status: 대기
     // - 자동이체인 경우: will_renew, renew_months, is_auto_payment 유지
     // - 일시불인 경우: will_renew, renew_months, renewal_message 초기화
     if (isAutoPayment) {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         `UPDATE members
          SET payment_date = $1,
              last_payment_date = $2,
-             deposit_status = '완료'
+             deposit_status = 'pending'
          WHERE id = $3`,
         [newPaymentDate.toISOString().split('T')[0], new Date().toISOString().split('T')[0], memberId]
       );
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
              renew_months = null,
              is_auto_payment = false,
              renewal_message = null,
-             deposit_status = '완료'
+             deposit_status = 'pending'
          WHERE id = $3`,
         [newPaymentDate.toISOString().split('T')[0], new Date().toISOString().split('T')[0], memberId]
       );

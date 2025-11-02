@@ -82,6 +82,9 @@ export default function AllMembersPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
   const sortedAndFilteredMembers = useMemo(() => {
     let filtered = members;
 
@@ -305,6 +308,58 @@ export default function AllMembersPage() {
     setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest');
   };
 
+  const handleSelectAll = () => {
+    if (selectedMemberIds.length === paginatedMembers.length) {
+      setSelectedMemberIds([]);
+    } else {
+      setSelectedMemberIds(paginatedMembers.map(m => m.id));
+    }
+  };
+
+  const handleSelectMember = (memberId: string) => {
+    setSelectedMemberIds(prev => {
+      if (prev.includes(memberId)) {
+        return prev.filter(id => id !== memberId);
+      } else {
+        return [...prev, memberId];
+      }
+    });
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedMemberIds.length === 0) {
+      showToastMessage('선택된 회원이 없습니다.', 'error');
+      return;
+    }
+
+    if (!confirm(`선택한 ${selectedMemberIds.length}명의 회원 상태를 "${getStatusText(newStatus)}"로 변경하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setBulkUpdating(true);
+      const res = await fetch('/api/admin/members/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberIds: selectedMemberIds, depositStatus: newStatus }),
+      });
+
+      if (res.ok) {
+        await fetchAllMembers();
+        setSelectedMemberIds([]);
+        showToastMessage(`${selectedMemberIds.length}명의 상태가 변경되었습니다.`);
+      } else {
+        const errorData = await res.json();
+        showToastMessage(`상태 변경에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error bulk updating members:', error);
+      showToastMessage('오류가 발생했습니다. 다시 시도해주세요.', 'error');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -380,6 +435,39 @@ export default function AllMembersPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Bulk Actions */}
+        {selectedMemberIds.length > 0 && (
+          <div className="bg-blue-950 border border-blue-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-blue-100">
+                <span className="font-semibold">{selectedMemberIds.length}명</span> 선택됨
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkStatusChange('completed')}
+                  disabled={bulkUpdating}
+                  className="px-4 py-2 bg-green-900 border border-green-800 text-green-100 rounded text-sm font-medium hover:bg-green-800 transition disabled:opacity-50"
+                >
+                  {bulkUpdating ? '처리 중...' : '완료로 변경'}
+                </button>
+                <button
+                  onClick={() => handleBulkStatusChange('pending')}
+                  disabled={bulkUpdating}
+                  className="px-4 py-2 bg-yellow-900 border border-yellow-800 text-yellow-100 rounded text-sm font-medium hover:bg-yellow-800 transition disabled:opacity-50"
+                >
+                  {bulkUpdating ? '처리 중...' : '대기로 변경'}
+                </button>
+                <button
+                  onClick={() => setSelectedMemberIds([])}
+                  className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded text-sm font-medium hover:bg-neutral-700 transition"
+                >
+                  선택 해제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -440,6 +528,14 @@ export default function AllMembersPage() {
               <table className="min-w-full divide-y divide-neutral-800">
                 <thead className="bg-neutral-800">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        checked={paginatedMembers.length > 0 && selectedMemberIds.length === paginatedMembers.length}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-neutral-600 bg-neutral-700 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">번호</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">회원 정보</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase tracking-wider">계정 정보</th>
@@ -452,6 +548,14 @@ export default function AllMembersPage() {
                 <tbody className="bg-neutral-900 divide-y divide-neutral-800">
                   {paginatedMembers.map((member, index) => (
                     <tr key={member.id} className="hover:bg-neutral-850">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedMemberIds.includes(member.id)}
+                          onChange={() => handleSelectMember(member.id)}
+                          className="w-4 h-4 rounded border-neutral-600 bg-neutral-700 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-semibold text-white">{startIndex + index + 1}</div>
                       </td>
