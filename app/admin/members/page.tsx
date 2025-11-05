@@ -42,9 +42,11 @@ export default function MembersPage() {
 
   const [newAppleEmail, setNewAppleEmail] = useState('');
   const [newAppleCredit, setNewAppleCredit] = useState(0);
+  const [newAppleMemo, setNewAppleMemo] = useState('');
   const [newYoutubeEmail, setNewYoutubeEmail] = useState('');
   const [newYoutubeNickname, setNewYoutubeNickname] = useState('');
   const [newYoutubeRenewalDate, setNewYoutubeRenewalDate] = useState('');
+  const [newYoutubeMemo, setNewYoutubeMemo] = useState('');
 
   const [newMemberNickname, setNewMemberNickname] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -211,6 +213,7 @@ export default function MembersPage() {
     setEditingApple(apple);
     setNewAppleEmail(apple.appleEmail);
     setNewAppleCredit(apple.remainingCredit || 0);
+    setNewAppleMemo(apple.memo || '');
     setShowAddApple(true);
   };
 
@@ -220,7 +223,7 @@ export default function MembersPage() {
       const res = await fetch(`/api/admin/apple-accounts/${editingApple.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit }),
+        body: JSON.stringify({ appleEmail: newAppleEmail, remainingCredit: newAppleCredit, memo: newAppleMemo }),
       });
       if (res.ok) {
         handleCancelEdit();
@@ -308,6 +311,7 @@ export default function MembersPage() {
     setNewYoutubeEmail(youtube.youtubeEmail);
     setNewYoutubeNickname(youtube.nickname || '');
     setNewYoutubeRenewalDate(formatDateForInput(youtube.renewalDate));
+    setNewYoutubeMemo(youtube.memo || '');
     setShowAddYoutube(true);
   };
 
@@ -323,7 +327,8 @@ export default function MembersPage() {
         body: JSON.stringify({
           youtubeEmail: newYoutubeEmail,
           nickname: newYoutubeNickname,
-          renewalDate: newYoutubeRenewalDate
+          renewalDate: newYoutubeRenewalDate,
+          memo: newYoutubeMemo
         }),
       });
       if (res.ok) {
@@ -594,6 +599,16 @@ export default function MembersPage() {
                     className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">메모</label>
+                  <textarea
+                    placeholder="계정에 대한 메모를 입력하세요"
+                    value={newAppleMemo}
+                    onChange={(e) => setNewAppleMemo(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition resize-none"
+                  />
+                </div>
                 <div className="flex gap-2 pt-2">
                   <button onClick={handleCancelEdit} className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition">
                     취소
@@ -641,6 +656,16 @@ export default function MembersPage() {
                     value={newYoutubeRenewalDate}
                     onChange={(e) => setNewYoutubeRenewalDate(e.target.value)}
                     className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white focus:outline-none focus:border-neutral-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">메모</label>
+                  <textarea
+                    placeholder="계정에 대한 메모를 입력하세요"
+                    value={newYoutubeMemo}
+                    onChange={(e) => setNewYoutubeMemo(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition resize-none"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
@@ -800,9 +825,17 @@ export default function MembersPage() {
                     }`}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 group/email relative">
                         <p className="text-sm font-medium text-white truncate">{apple.appleEmail}</p>
                         <p className="text-xs text-neutral-400 mt-0.5">{formatDateOnly(apple.createdAt)}</p>
+                        {apple.memo && (
+                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover/email:block z-50 w-64">
+                            <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-3 shadow-xl">
+                              <p className="text-xs text-neutral-300 whitespace-pre-wrap break-words">{apple.memo}</p>
+                              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-neutral-700"></div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -879,10 +912,18 @@ export default function MembersPage() {
                     }`}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 group/email relative">
                         <p className="text-sm font-medium text-white truncate">{youtube.youtubeEmail}</p>
                         {youtube.nickname && <p className="text-xs text-neutral-400 mt-0.5">{youtube.nickname}</p>}
                         <p className="text-xs text-neutral-500 mt-1">갱신일: {formatDateOnly(youtube.renewalDate)}</p>
+                        {youtube.memo && (
+                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover/email:block z-50 w-64">
+                            <div className="bg-neutral-800 border border-neutral-700 rounded-lg p-3 shadow-xl">
+                              <p className="text-xs text-neutral-300 whitespace-pre-wrap break-words">{youtube.memo}</p>
+                              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-neutral-700"></div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button

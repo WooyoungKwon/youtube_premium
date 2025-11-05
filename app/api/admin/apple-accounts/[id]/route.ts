@@ -7,9 +7,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { appleEmail, remainingCredit } = await request.json();
-    
-    await updateAppleAccount(id, appleEmail, remainingCredit);
+    const { appleEmail, remainingCredit, memo } = await request.json();
+
+    await updateAppleAccount(id, appleEmail, remainingCredit, memo);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update apple account error:', error);

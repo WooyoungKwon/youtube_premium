@@ -41,6 +41,7 @@ export interface AppleAccount {
   id: string;
   appleEmail: string;
   remainingCredit: number;
+  memo?: string;
   lastUpdated?: string;
   createdAt: string;
 }
@@ -51,6 +52,7 @@ export interface YoutubeAccount {
   youtubeEmail: string;
   nickname?: string;
   renewalDate: string; // Required field
+  memo?: string;
   createdAt: string;
 }
 

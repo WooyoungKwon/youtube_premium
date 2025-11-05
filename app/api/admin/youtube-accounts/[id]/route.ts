@@ -7,8 +7,8 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { youtubeEmail, nickname, renewalDate } = await request.json();
-    await updateYoutubeAccount(id, youtubeEmail, nickname, renewalDate);
+    const { youtubeEmail, nickname, renewalDate, memo } = await request.json();
+    await updateYoutubeAccount(id, youtubeEmail, nickname, renewalDate, memo);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update youtube account error:', error);

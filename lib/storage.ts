@@ -349,10 +349,11 @@ export async function getAllRequests(options?: {
 export async function getAllAppleAccounts() {
   try {
     const { rows } = await client.sql`
-      SELECT 
-        id, 
-        apple_email as "appleEmail", 
+      SELECT
+        id,
+        apple_email as "appleEmail",
         remaining_credit as "remainingCredit",
+        memo,
         last_updated as "lastUpdated",
         created_at as "createdAt"
       FROM apple_accounts
@@ -385,10 +386,10 @@ export async function addAppleAccount(appleEmail: string, remainingCredit?: numb
   }
 }
 
-export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number) {
+export async function updateAppleAccount(id: string, appleEmail: string, remainingCredit: number, memo?: string) {
   await client.sql`
     UPDATE apple_accounts
-    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, last_updated = CURRENT_TIMESTAMP
+    SET apple_email = ${appleEmail}, remaining_credit = ${remainingCredit}, memo = ${memo !== undefined ? memo : null}, last_updated = CURRENT_TIMESTAMP
     WHERE id = ${id}
   `;
 }
@@ -402,12 +403,13 @@ export async function deleteAppleAccount(id: string) {
 export async function getYoutubeAccountsByApple(appleAccountId: string) {
   try {
     const { rows } = await client.sql`
-      SELECT 
-        id, 
+      SELECT
+        id,
         apple_account_id as "appleAccountId",
         youtube_email as "youtubeEmail",
         nickname,
         renewal_date as "renewalDate",
+        memo,
         created_at as "createdAt"
       FROM youtube_accounts
       WHERE apple_account_id = ${appleAccountId}
@@ -434,17 +436,18 @@ export async function addYoutubeAccount(appleAccountId: string, youtubeEmail: st
   return { id, appleAccountId, youtubeEmail, nickname, renewalDate };
 }
 
-export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string) {
+export async function updateYoutubeAccount(id: string, youtubeEmail: string, nickname?: string, renewalDate?: string, memo?: string) {
   if (!renewalDate) {
     throw new Error('renewalDate is required for YouTube accounts');
   }
-  
+
   await client.sql`
     UPDATE youtube_accounts
-    SET 
+    SET
       youtube_email = ${youtubeEmail},
       nickname = ${nickname || null},
-      renewal_date = ${renewalDate}
+      renewal_date = ${renewalDate},
+      memo = ${memo !== undefined ? memo : null}
     WHERE id = ${id}
   `;
 }
