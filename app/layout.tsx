@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   description: "편리하고 저렴한 구독 서비스. YouTube Premium을 최저가로 이용하세요.",
   keywords: ["YouTube Premium", "유튜브 프리미엄", "구독", "최저가", "Linkuni"],
   authors: [{ name: "Linkuni" }],
+  metadataBase: new URL("https://linkuni.site"),
   openGraph: {
     type: "website",
     locale: "ko_KR",
@@ -26,11 +27,20 @@ export const metadata: Metadata = {
     siteName: "Linkuni",
     title: "Linkuni - 원하시는 서비스를 선택해주세요",
     description: "편리하고 저렴한 구독 서비스. YouTube Premium을 최저가로 이용하세요.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Linkuni Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Linkuni - 원하시는 서비스를 선택해주세요",
     description: "편리하고 저렴한 구독 서비스. YouTube Premium을 최저가로 이용하세요.",
+    images: ["/logo.png"],
   },
 };
 
