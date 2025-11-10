@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     description: "편리하고 저렴한 구독 서비스. YouTube Premium을 최저가로 이용하세요.",
     images: [
       {
-        url: "/logo.png",
+        url: "https://linkuni.site/logo.png",
         width: 819,
         height: 283,
         alt: "Linkuni Logo",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Linkuni - 원하시는 서비스를 선택해주세요",
     description: "편리하고 저렴한 구독 서비스. YouTube Premium을 최저가로 이용하세요.",
-    images: ["/logo.png"],
+    images: ["https://linkuni.site/logo.png"],
   },
 };
 
