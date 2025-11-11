@@ -60,34 +60,64 @@ export default function MembersPage() {
   const [editingCreditId, setEditingCreditId] = useState<string | null>(null);
   const [editingCreditValue, setEditingCreditValue] = useState(0);
 
+  const [appleSearchQuery, setAppleSearchQuery] = useState('');
+  const [youtubeSearchQuery, setYoutubeSearchQuery] = useState('');
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string; appleId?: string } | null>(null);
 
   const sortedAppleAccounts = useMemo(() => {
-    return [...appleAccounts].sort((a, b) => {
+    const filtered = appleAccounts.filter(account => {
+      if (!appleSearchQuery) return true;
+      const query = appleSearchQuery.toLowerCase();
+      return (
+        account.appleEmail.toLowerCase().includes(query) ||
+        (account.memo && account.memo.toLowerCase().includes(query))
+      );
+    });
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return appleSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [appleAccounts, appleSortOrder]);
+  }, [appleAccounts, appleSortOrder, appleSearchQuery]);
 
   const sortedYoutubeAccounts = useMemo(() => {
-    return [...youtubeAccounts].sort((a, b) => {
+    const filtered = youtubeAccounts.filter(account => {
+      if (!youtubeSearchQuery) return true;
+      const query = youtubeSearchQuery.toLowerCase();
+      return (
+        account.youtubeEmail.toLowerCase().includes(query) ||
+        (account.nickname && account.nickname.toLowerCase().includes(query)) ||
+        (account.memo && account.memo.toLowerCase().includes(query))
+      );
+    });
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return youtubeSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [youtubeAccounts, youtubeSortOrder]);
+  }, [youtubeAccounts, youtubeSortOrder, youtubeSearchQuery]);
 
   const sortedMembers = useMemo(() => {
-    return [...members].sort((a, b) => {
+    const filtered = members.filter(member => {
+      if (!memberSearchQuery) return true;
+      const query = memberSearchQuery.toLowerCase();
+      return (
+        member.nickname.toLowerCase().includes(query) ||
+        member.email.toLowerCase().includes(query) ||
+        member.name.toLowerCase().includes(query)
+      );
+    });
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return memberSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
-  }, [members, memberSortOrder]);
+  }, [members, memberSortOrder, memberSearchQuery]);
 
   useEffect(() => {
     const authenticated = sessionStorage.getItem('adminAuthenticated');
@@ -796,22 +826,31 @@ export default function MembersPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Apple Accounts Column */}
           <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b border-neutral-800 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-white">Apple 계정</h2>
-              <div className="flex gap-2">
-                <button onClick={handleSortApple} className="px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition">
-                  {appleSortOrder === 'oldest' ? '오래된순' : '최신순'}
-                </button>
-                <button onClick={() => setShowAddApple(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
-                  추가
-                </button>
+            <div className="px-4 py-3 border-b border-neutral-800">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-sm font-semibold text-white">Apple 계정</h2>
+                <div className="flex gap-2">
+                  <button onClick={handleSortApple} className="px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition">
+                    {appleSortOrder === 'oldest' ? '오래된순' : '최신순'}
+                  </button>
+                  <button onClick={() => setShowAddApple(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
+                    추가
+                  </button>
+                </div>
               </div>
+              <input
+                type="text"
+                placeholder="이메일, 메모로 검색..."
+                value={appleSearchQuery}
+                onChange={(e) => setAppleSearchQuery(e.target.value)}
+                className="w-full px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+              />
             </div>
 
-            <div className="p-3 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[calc(100vh-260px)] overflow-y-auto">
               {sortedAppleAccounts.length === 0 ? (
                 <div className="text-center py-12 text-neutral-500 text-sm">
-                  Apple 계정이 없습니다
+                  {appleSearchQuery ? '검색 결과가 없습니다' : 'Apple 계정이 없습니다'}
                 </div>
               ) : (
                 sortedAppleAccounts.map(apple => (
@@ -882,23 +921,34 @@ export default function MembersPage() {
 
           {/* YouTube Accounts Column */}
           <div id="youtube-section" className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden scroll-mt-4">
-            <div className="px-4 py-3 border-b border-neutral-800 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-white">YouTube 계정</h2>
+            <div className="px-4 py-3 border-b border-neutral-800">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-sm font-semibold text-white">YouTube 계정</h2>
+                {selectedApple && (
+                  <button onClick={() => setShowAddYoutube(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
+                    추가
+                  </button>
+                )}
+              </div>
               {selectedApple && (
-                <button onClick={() => setShowAddYoutube(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
-                  추가
-                </button>
+                <input
+                  type="text"
+                  placeholder="이메일, 닉네임, 메모로 검색..."
+                  value={youtubeSearchQuery}
+                  onChange={(e) => setYoutubeSearchQuery(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+                />
               )}
             </div>
 
-            <div className="p-3 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[calc(100vh-260px)] overflow-y-auto">
               {!selectedApple ? (
                 <div className="text-center py-12 text-neutral-500 text-sm">
                   Apple 계정을 선택하세요
                 </div>
               ) : sortedYoutubeAccounts.length === 0 ? (
                 <div className="text-center py-12 text-neutral-500 text-sm">
-                  YouTube 계정이 없습니다
+                  {youtubeSearchQuery ? '검색 결과가 없습니다' : 'YouTube 계정이 없습니다'}
                 </div>
               ) : (
                 sortedYoutubeAccounts.map(youtube => (
@@ -948,23 +998,34 @@ export default function MembersPage() {
 
           {/* Members Column */}
           <div id="members-section" className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden scroll-mt-4">
-            <div className="px-4 py-3 border-b border-neutral-800 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-white">회원 목록</h2>
+            <div className="px-4 py-3 border-b border-neutral-800">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-sm font-semibold text-white">회원 목록</h2>
+                {selectedYoutube && (
+                  <button onClick={() => setShowAddMember(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
+                    추가
+                  </button>
+                )}
+              </div>
               {selectedYoutube && (
-                <button onClick={() => setShowAddMember(true)} className="px-2 py-1 text-xs bg-white text-neutral-900 rounded hover:bg-neutral-100 transition font-medium">
-                  추가
-                </button>
+                <input
+                  type="text"
+                  placeholder="닉네임, 이메일, 이름으로 검색..."
+                  value={memberSearchQuery}
+                  onChange={(e) => setMemberSearchQuery(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+                />
               )}
             </div>
 
-            <div className="p-3 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[calc(100vh-260px)] overflow-y-auto">
               {!selectedYoutube ? (
                 <div className="text-center py-12 text-neutral-500 text-sm">
                   YouTube 계정을 선택하세요
                 </div>
               ) : sortedMembers.length === 0 ? (
                 <div className="text-center py-12 text-neutral-500 text-sm">
-                  회원이 없습니다
+                  {memberSearchQuery ? '검색 결과가 없습니다' : '회원이 없습니다'}
                 </div>
               ) : (
                 sortedMembers.map(member => (

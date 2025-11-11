@@ -85,6 +85,9 @@ export default function AllMembersPage() {
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [bulkUpdating, setBulkUpdating] = useState(false);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<MemberWithDetails | null>(null);
+
   const sortedAndFilteredMembers = useMemo(() => {
     let filtered = members;
 
@@ -360,6 +363,34 @@ export default function AllMembersPage() {
     }
   };
 
+  const handleDeleteClick = (member: MemberWithDetails) => {
+    setMemberToDelete(member);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!memberToDelete) return;
+
+    try {
+      const res = await fetch(`/api/admin/members/${memberToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        await fetchAllMembers();
+        setShowDeleteModal(false);
+        setMemberToDelete(null);
+        showToastMessage('회원이 삭제되었습니다.');
+      } else {
+        const errorData = await res.json();
+        showToastMessage(`삭제에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      showToastMessage('오류가 발생했습니다. 다시 시도해주세요.', 'error');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -624,6 +655,12 @@ export default function AllMembersPage() {
                             }`}
                           >
                             {updatingMember === member.id ? '처리중...' : (member.depositStatus === 'pending' ? '완료' : '대기')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(member)}
+                            className="px-3 py-1 text-xs font-medium rounded bg-red-900 border border-red-800 text-red-100 hover:bg-red-800 transition"
+                          >
+                            삭제
                           </button>
                         </div>
                       </td>
@@ -910,6 +947,64 @@ export default function AllMembersPage() {
                 className="px-4 py-2 bg-blue-900 border border-blue-800 text-blue-100 rounded hover:bg-blue-800 transition"
               >
                 저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && memberToDelete && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">회원 삭제 확인</h3>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMemberToDelete(null);
+                }}
+                className="text-neutral-400 hover:text-white transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-neutral-300 mb-4">
+                정말로 이 회원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              </p>
+              <div className="bg-neutral-800 p-4 rounded border border-neutral-700">
+                <p className="text-sm text-white font-medium mb-2">{memberToDelete.nickname} ({memberToDelete.name})</p>
+                <p className="text-xs text-neutral-400">{memberToDelete.email}</p>
+                <div className="mt-3 pt-3 border-t border-neutral-700 space-y-1">
+                  <p className="text-xs text-neutral-400">
+                    <span className="font-medium text-neutral-300">Apple:</span> {memberToDelete.appleEmail}
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    <span className="font-medium text-neutral-300">YouTube:</span> {memberToDelete.youtubeEmail}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setMemberToDelete(null);
+                }}
+                className="px-4 py-2 bg-neutral-800 border border-neutral-700 text-neutral-300 rounded hover:bg-neutral-700 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition font-medium"
+              >
+                삭제
               </button>
             </div>
           </div>
