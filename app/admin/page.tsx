@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [confirmAction, setConfirmAction] = useState<{ type: string; id: string } | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const authenticated = sessionStorage.getItem('adminAuthenticated');
@@ -44,10 +45,20 @@ export default function AdminPage() {
 
   // React Query로 요청 목록 조회 (서버 측 페이지네이션)
   const { data: requestsData, isLoading: requestsLoading } = useQuery({
-    queryKey: ['adminRequests', currentPage, filter],
+    queryKey: ['adminRequests', currentPage, filter, searchQuery],
     queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        status: filter,
+      });
+
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
       const response = await fetch(
-        `/api/admin/list?page=${currentPage}&limit=${itemsPerPage}&status=${filter}`,
+        `/api/admin/list?${params.toString()}`,
         { cache: 'no-store' }
       );
       if (!response.ok) throw new Error('Failed to fetch requests');
@@ -174,10 +185,10 @@ export default function AdminPage() {
     fetchStats();
   };
 
-  // 필터 변경 시 첫 페이지로 이동
+  // 필터/검색 변경 시 첫 페이지로 이동
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter]);
+  }, [filter, searchQuery]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -393,21 +404,32 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex gap-2">
-          {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded font-medium transition text-sm ${
-                filter === status
-                  ? 'bg-white text-neutral-900'
-                  : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
-              }`}
-            >
-              {status === 'all' ? '전체' : status === 'pending' ? '대기중' : status === 'approved' ? '승인됨' : '거부됨'}
-            </button>
-          ))}
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="이메일, 입금자명, 전화번호로 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+            />
+          </div>
+          <div className="flex gap-2">
+            {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-4 py-2 rounded font-medium transition text-sm ${
+                  filter === status
+                    ? 'bg-white text-neutral-900'
+                    : 'bg-neutral-800 border border-neutral-700 text-neutral-300 hover:bg-neutral-700'
+                }`}
+              >
+                {status === 'all' ? '전체' : status === 'pending' ? '대기중' : status === 'approved' ? '승인됨' : '거부됨'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Requests List */}
@@ -448,7 +470,9 @@ export default function AdminPage() {
               </table>
             </div>
           ) : requests.length === 0 ? (
-            <div className="p-8 text-center text-neutral-500">신청 내역이 없습니다.</div>
+            <div className="p-8 text-center text-neutral-500">
+              {searchQuery ? '검색 결과가 없습니다.' : '신청 내역이 없습니다.'}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

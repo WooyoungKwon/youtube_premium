@@ -12,8 +12,9 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = (searchParams.get('status') || 'all') as 'all' | 'pending' | 'approved' | 'rejected';
+    const search = searchParams.get('search') || '';
 
-    const { requests, total } = await getAllRequests({ page, limit, status });
+    const { requests, total } = await getAllRequests({ page, limit, status, search });
 
     const response = NextResponse.json({
       requests,

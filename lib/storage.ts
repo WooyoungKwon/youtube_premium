@@ -280,6 +280,7 @@ export async function getAllRequests(options?: {
   page?: number;
   limit?: number;
   status?: 'all' | 'pending' | 'approved' | 'rejected';
+  search?: string;
 }): Promise<{ requests: MemberRequest[]; total: number }> {
   try {
     const startTime = Date.now();
@@ -287,11 +288,29 @@ export async function getAllRequests(options?: {
     const limit = options?.limit || 10;
     const offset = (page - 1) * limit;
     const status = options?.status || 'all';
+    const search = options?.search || '';
 
     // WHERE 조건 구성
-    const whereClause = status !== 'all' ? `WHERE mr.status = $1` : '';
-    const countParams = status !== 'all' ? [status] : [];
-    const dataParams = status !== 'all' ? [limit, offset, status] : [limit, offset];
+    const conditions: string[] = [];
+    const countParams: any[] = [];
+    const dataParams: any[] = [];
+
+    let paramIndex = 1;
+
+    if (status !== 'all') {
+      conditions.push(`mr.status = $${paramIndex}`);
+      countParams.push(status);
+      paramIndex++;
+    }
+
+    if (search) {
+      const searchPattern = `%${search}%`;
+      conditions.push(`(mr.email ILIKE $${paramIndex} OR mr.depositor_name ILIKE $${paramIndex} OR mr.phone ILIKE $${paramIndex})`);
+      countParams.push(searchPattern);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // 전체 개수와 데이터를 동시에 조회 (병렬 처리)
     const countQuery = `
@@ -299,6 +318,19 @@ export async function getAllRequests(options?: {
       FROM member_requests mr
       ${whereClause}
     `;
+
+    // 데이터 쿼리 파라미터 구성
+    dataParams.push(limit, offset);
+    let dataParamIndex = 3;
+
+    if (status !== 'all') {
+      dataParams.push(status);
+      dataParamIndex++;
+    }
+
+    if (search) {
+      dataParams.push(`%${search}%`);
+    }
 
     const dataQuery = `
       SELECT
@@ -316,7 +348,7 @@ export async function getAllRequests(options?: {
         (m.id IS NOT NULL) as "isRegistered"
       FROM member_requests mr
       LEFT JOIN members m ON mr.id = m.request_id
-      ${status !== 'all' ? 'WHERE mr.status = $3' : ''}
+      ${whereClause}
       ORDER BY mr.created_at DESC
       LIMIT $1 OFFSET $2
     `;
@@ -335,7 +367,7 @@ export async function getAllRequests(options?: {
     })) as MemberRequest[];
 
     const endTime = Date.now();
-    console.log(`[Performance] getAllRequests took ${endTime - startTime}ms (page: ${page}, status: ${status})`);
+    console.log(`[Performance] getAllRequests took ${endTime - startTime}ms (page: ${page}, status: ${status}, search: ${search})`);
 
     return { requests, total };
   } catch (error) {
