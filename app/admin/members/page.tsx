@@ -64,6 +64,14 @@ export default function MembersPage() {
   const [youtubeSearchQuery, setYoutubeSearchQuery] = useState('');
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
 
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResults, setSearchResults] = useState<{
+    appleAccounts: AppleAccount[];
+    youtubeAccounts: YoutubeAccount[];
+    members: Member[];
+  }>({ appleAccounts: [], youtubeAccounts: [], members: [] });
+
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
@@ -526,6 +534,100 @@ export default function MembersPage() {
     setNewRenewMonths(1);
   };
 
+  const handleGlobalSearch = async () => {
+    if (!globalSearchQuery.trim()) {
+      showToastMessage('검색어를 입력해주세요.', 'error');
+      return;
+    }
+
+    const query = globalSearchQuery.toLowerCase();
+
+    // 모든 계정에서 검색
+    const foundApple = appleAccounts.filter(account =>
+      account.appleEmail.toLowerCase().includes(query) ||
+      (account.memo && account.memo.toLowerCase().includes(query))
+    );
+
+    const foundYoutube = youtubeAccounts.filter(account =>
+      account.youtubeEmail.toLowerCase().includes(query) ||
+      (account.nickname && account.nickname.toLowerCase().includes(query)) ||
+      (account.memo && account.memo.toLowerCase().includes(query))
+    );
+
+    const foundMembers = members.filter(member =>
+      member.nickname.toLowerCase().includes(query) ||
+      member.email.toLowerCase().includes(query) ||
+      member.name.toLowerCase().includes(query)
+    );
+
+    const totalResults = foundApple.length + foundYoutube.length + foundMembers.length;
+
+    if (totalResults === 0) {
+      showToastMessage('검색 결과가 없습니다.', 'error');
+      return;
+    }
+
+    // 결과가 1개인 경우 자동 선택
+    if (totalResults === 1) {
+      if (foundApple.length === 1) {
+        await handleAppleSelect(foundApple[0]);
+        showToastMessage('Apple 계정을 선택했습니다.');
+      } else if (foundYoutube.length === 1) {
+        // YouTube 계정의 Apple 계정 찾기
+        const appleAccount = appleAccounts.find(a => a.id === foundYoutube[0].appleAccountId);
+        if (appleAccount) {
+          await handleAppleSelect(appleAccount);
+          await handleYoutubeSelect(foundYoutube[0]);
+          showToastMessage('YouTube 계정을 선택했습니다.');
+        }
+      } else if (foundMembers.length === 1) {
+        // 회원의 YouTube 및 Apple 계정 찾기
+        const youtubeAccount = youtubeAccounts.find(y => y.id === foundMembers[0].youtubeAccountId);
+        if (youtubeAccount) {
+          const appleAccount = appleAccounts.find(a => a.id === youtubeAccount.appleAccountId);
+          if (appleAccount) {
+            await handleAppleSelect(appleAccount);
+            await handleYoutubeSelect(youtubeAccount);
+            showToastMessage('회원을 선택했습니다.');
+          }
+        }
+      }
+      setGlobalSearchQuery('');
+    } else {
+      // 여러 결과가 있는 경우 선택 모달 표시
+      setSearchResults({
+        appleAccounts: foundApple,
+        youtubeAccounts: foundYoutube,
+        members: foundMembers,
+      });
+      setShowSearchResults(true);
+    }
+  };
+
+  const handleSelectSearchResult = async (type: 'apple' | 'youtube' | 'member', item: any) => {
+    if (type === 'apple') {
+      await handleAppleSelect(item);
+    } else if (type === 'youtube') {
+      const appleAccount = appleAccounts.find(a => a.id === item.appleAccountId);
+      if (appleAccount) {
+        await handleAppleSelect(appleAccount);
+        await handleYoutubeSelect(item);
+      }
+    } else if (type === 'member') {
+      const youtubeAccount = youtubeAccounts.find(y => y.id === item.youtubeAccountId);
+      if (youtubeAccount) {
+        const appleAccount = appleAccounts.find(a => a.id === youtubeAccount.appleAccountId);
+        if (appleAccount) {
+          await handleAppleSelect(appleAccount);
+          await handleYoutubeSelect(youtubeAccount);
+        }
+      }
+    }
+    setShowSearchResults(false);
+    setGlobalSearchQuery('');
+    showToastMessage('선택되었습니다.');
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
@@ -582,7 +684,7 @@ export default function MembersPage() {
       <div className="max-w-[1800px] mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-semibold text-white">멤버 관리</h1>
               <p className="text-sm text-neutral-400 mt-1">Apple, YouTube 계정 및 회원 정보 관리</p>
@@ -598,6 +700,29 @@ export default function MembersPage() {
                 로그아웃
               </button>
             </div>
+          </div>
+
+          {/* Global Search */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="이메일, 이름, 닉네임으로 검색 (모든 계정에서 검색)"
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGlobalSearch()}
+                className="flex-1 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition"
+              />
+              <button
+                onClick={handleGlobalSearch}
+                className="px-6 py-2 bg-blue-900 border border-blue-800 text-blue-100 rounded hover:bg-blue-800 transition font-medium"
+              >
+                검색
+              </button>
+            </div>
+            <p className="text-xs text-neutral-500 mt-2">
+              검색 결과가 1개면 자동으로 선택되며, 여러 개면 선택 목록이 표시됩니다.
+            </p>
           </div>
         </div>
 
@@ -1107,6 +1232,93 @@ export default function MembersPage() {
               >
                 삭제
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Results Modal */}
+      {showSearchResults && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg w-full max-w-3xl max-h-[80vh] overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-800 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">검색 결과 ({searchResults.appleAccounts.length + searchResults.youtubeAccounts.length + searchResults.members.length}개)</h3>
+              <button
+                onClick={() => {
+                  setShowSearchResults(false);
+                  setGlobalSearchQuery('');
+                }}
+                className="text-neutral-400 hover:text-white transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              {/* Apple Accounts */}
+              {searchResults.appleAccounts.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-neutral-400 mb-3">Apple 계정 ({searchResults.appleAccounts.length})</h4>
+                  <div className="space-y-2">
+                    {searchResults.appleAccounts.map(account => (
+                      <button
+                        key={account.id}
+                        onClick={() => handleSelectSearchResult('apple', account)}
+                        className="w-full p-4 bg-neutral-800 border border-neutral-700 rounded hover:border-neutral-500 transition text-left"
+                      >
+                        <div className="text-sm font-medium text-white">{account.appleEmail}</div>
+                        {account.memo && <div className="text-xs text-neutral-400 mt-1">{account.memo}</div>}
+                        <div className="text-xs text-neutral-500 mt-1">크레딧: {account.remainingCredit?.toLocaleString() || 0}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* YouTube Accounts */}
+              {searchResults.youtubeAccounts.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-neutral-400 mb-3">YouTube 계정 ({searchResults.youtubeAccounts.length})</h4>
+                  <div className="space-y-2">
+                    {searchResults.youtubeAccounts.map(account => (
+                      <button
+                        key={account.id}
+                        onClick={() => handleSelectSearchResult('youtube', account)}
+                        className="w-full p-4 bg-neutral-800 border border-neutral-700 rounded hover:border-neutral-500 transition text-left"
+                      >
+                        <div className="text-sm font-medium text-white">{account.youtubeEmail}</div>
+                        {account.nickname && <div className="text-xs text-neutral-400 mt-1">닉네임: {account.nickname}</div>}
+                        {account.memo && <div className="text-xs text-neutral-400 mt-1">{account.memo}</div>}
+                        <div className="text-xs text-neutral-500 mt-1">갱신일: {formatDateOnly(account.renewalDate)}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Members */}
+              {searchResults.members.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-neutral-400 mb-3">회원 ({searchResults.members.length})</h4>
+                  <div className="space-y-2">
+                    {searchResults.members.map(member => (
+                      <button
+                        key={member.id}
+                        onClick={() => handleSelectSearchResult('member', member)}
+                        className="w-full p-4 bg-neutral-800 border border-neutral-700 rounded hover:border-neutral-500 transition text-left"
+                      >
+                        <div className="text-sm font-medium text-white">
+                          {member.nickname} <span className="text-neutral-500 font-normal">({member.name})</span>
+                        </div>
+                        <div className="text-xs text-neutral-400 mt-1">{member.email}</div>
+                        <div className="text-xs text-neutral-500 mt-1">다음 결제일: {formatDateOnly(member.paymentDate)}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
